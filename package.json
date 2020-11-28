@@ -1,0 +1,41 @@
+{
+  "name": "eden",
+  "version": "1.0.0",
+  "description": "Eden 2D",
+  "main": "serve.js",
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack --watch",
+    "dev": "webpack-dev-server --open"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joelgwebber/eden2d.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joelgwebber/2den3d/issues"
+  },
+  "homepage": "https://github.com/joelgwebber/2den3d",
+  "dependencies": {
+    "filament": "^1.8.1",
+    "fs": "0.0.1-security",
+    "gl-matrix": "^3.3.0",
+    "gulp": "^4.0.2",
+    "gulp-sass": "^4.1.0",
+    "gulp-util": "^3.0.8",
+    "pixi-keyboard": "^1.0.0",
+    "pixi-tilemap": "^2.1.4",
+    "pixi.js": "^5.3.3",
+    "twgl.js": "^4.15.2",
+    "webpack": "^4.44.1",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^6.0.3",
+    "ts-loader": "^8.0.2",
+    "typescript": "^3.9.7",
+    "webpack-cli": "^3.3.12"
+  }
+}
