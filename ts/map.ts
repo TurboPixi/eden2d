@@ -31,7 +31,7 @@ const vert = `
 
   void main() {
     uv = mix(view.xw, view.zy, 0.5 * (1.0 + position));
-    gl_Position = vec4(position, 5, 0);
+    gl_Position = vec4(position, 1, 1);
   }
 `
 
@@ -66,7 +66,7 @@ export class Map {
       [
         [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4],
         [4, 4], [0, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [4, 4],
-        [4, 4], [0, 1], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
+        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
         [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
         [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
         [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
@@ -87,14 +87,14 @@ export class Map {
     this.shader = Shader.from(vert, frag, {
       map,
       tiles,
-      tileSize: [8, 8],
+      tileSize: [16, 16],
       mapSize: [this.mapWidth, this.mapHeight],
-      view: [4, 4, 4, 4]
+      view: [0, 0, 0, 0]
     })
 
     const geometry = new Geometry().addAttribute('position', [
-      -1, -5, 0, -1, -1,  1,
-       1,  1, -1,  5, 0, -1
+      -1, -1, 1, -1, -1, 1,
+      1, 1, -1, 1, 1, -1
     ]);
     const tileMesh = new Mesh(geometry, this.shader);
     this.app.stage.addChild(tileMesh);
@@ -104,14 +104,15 @@ export class Map {
     if (this.shader) {
       const boxX = this.mapWidth * this.x / this.app.screen.width;
       const boxY = this.mapHeight * this.y / this.app.screen.height;
-      const boxH = 10;
+      const boxH = 8;
       const boxW = this.app.screen.width / this.app.screen.height * boxH;
 
       this.shader.uniforms.view = [
         boxX - 0.5 * boxW,
         boxY - 0.5 * boxH,
         boxX + 0.5 * boxW,
-        boxY + 0.5 * boxH];
+        boxY + 0.5 * boxH
+      ];
     }
   }
 }
