@@ -1,0 +1,4 @@
+[operator] [subject] [object] => [effect]
+
+collide [actor] [wall] => stop
+
