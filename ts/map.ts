@@ -1,134 +1,83 @@
 import {
   Application,
-  BaseTexture,
   Container,
-  Geometry,
-  Loader,
-  Mesh,
-  MIPMAP_MODES,
-  SCALE_MODES,
-  Shader,
-  Texture
 } from "pixi.js";
+import {
+  GroundLayer,
+  GroundTile,
+  ThingLayer,
+  ThingTile,
+} from "./layer";
 
-const frag = `
-  precision mediump float;
-  uniform sampler2D map, tiles;
-  uniform vec2 mapSize, tileSize;
-  varying vec2 uv;
+export enum Ground {
+  Empty = 0,
+  TileBlue = 1,
+  WallBlue = 2,
+}
 
-  void main() {
-    vec2 tileCoord = floor(255.0 * texture2D(map, floor(uv) / mapSize).ra);
-    gl_FragColor = texture2D(tiles, (tileCoord + fract(uv)) / tileSize);
-  }
-`
+export enum Thing {
+  ChestSilver = 2,
+}
 
-const vert = `
-  precision mediump float;
-  uniform vec4 view;
-  attribute vec2 position;
-  varying vec2 uv;
-
-  void main() {
-    uv = mix(view.xw, view.zy, 0.5 * (1.0 + position));
-    gl_Position = vec4(position, 1, 1);
-  }
-`
+export interface Cell {
+  ground: Ground;
+  things: Thing[];
+}
 
 export class Map {
-  private container: Container;
-  private shader: Shader;
-  private x: number;
-  private y: number;
-  private mapWidth: number;
-  private mapHeight: number;
+  private cells: Cell[];
 
-  constructor(private app: Application) {
+  private container: Container;
+  private ground: GroundLayer;
+  private things: ThingLayer;
+
+  private x = 256;
+  private y = 256;
+
+  constructor(private app: Application, private width: number, private height: number) {
+    this.clearCells();
+
     this.container = new Container();
     this.app.stage.addChild(this.container);
 
-    this.x = 128;
-    this.y = 128;
+    this.ground = new GroundLayer(this.container, width, height);
+    this.things = new ThingLayer(this.container, width, height);
 
-    new Loader("images/")
-      .add('tiles', 'rogue/environment.png')
-      .load(() => this.loaded());
-  }
-
-  private loaded() {
-    const tiles = Texture.from("tiles");
-
-    tiles.baseTexture.scaleMode = SCALE_MODES.NEAREST;
-    tiles.baseTexture.mipmap = MIPMAP_MODES.OFF;
-
-    this.mapWidth = this.mapHeight = 16;
-    const mapData = [
-      [
-        [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4],
-        [4, 4], [0, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [2, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [4, 4],
-        [4, 4], [0, 2], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0], [5, 0],
-      ]
-    ];
-    const map = BaseTexture.fromBuffer(parseMap(mapData), this.mapWidth, this.mapHeight);
-
-    this.shader = Shader.from(vert, frag, {
-      map,
-      tiles,
-      tileSize: [16, 16],
-      mapSize: [this.mapWidth, this.mapHeight],
-      view: [0, 0, 0, 0]
-    })
-
-    const geometry = new Geometry().addAttribute('position', [
-      -1, -1, 1, -1, -1, 1,
-      1, 1, -1, 1, 1, -1
-    ]);
-    const tileMesh = new Mesh(geometry, this.shader);
-    this.app.stage.addChild(tileMesh);
+    this.updateLayers();
   }
 
   tick() {
-    if (this.shader) {
-      const boxX = this.mapWidth * this.x / this.app.screen.width;
-      const boxY = this.mapHeight * this.y / this.app.screen.height;
-      const boxH = 8;
-      const boxW = this.app.screen.width / this.app.screen.height * boxH;
-
-      this.shader.uniforms.view = [
-        boxX - 0.5 * boxW,
-        boxY - 0.5 * boxH,
-        boxX + 0.5 * boxW,
-        boxY + 0.5 * boxH
-      ];
-    }
+    let w = this.app.view.width;
+    let h = this.app.view.height;
+    this.ground.tick(this.x, this.y, w, h);
+    this.things.tick(this.x, this.y, w, h);
   }
-}
 
-function parseMap(map: number[][][]): Uint8Array {
-  var data = [];
-  let count = 0;
-
-  for (var i = 0; i < map.length; i++) {
-    for (var j = 0; j < map[i].length; j++) {
-      data[count++] = map[i][j][0];
-      data[count++] = 0
-      data[count++] = 0;
-      data[count++] = map[i][j][1];
+  private clearCells() {
+    this.cells = [];
+    for (var y = 0; y < this.height; y++) {
+      for (var x = 0; x < this.width; x++) {
+        this.cells.push({
+          ground: Ground.Empty,
+          things: [],
+        });
+      }
     }
   }
 
-  return new Uint8Array(data)
+  private updateLayers() {
+    for (var y = 0; y < this.height; y++) {
+      for (var x = 0; x < this.width; x++) {
+        this.ground.setTile(x, y, GroundTile.Empty);
+        this.things.setTile(x, y, ThingTile.Empty);
+      }
+    }
+
+    this.ground.setTile(1, 1, GroundTile.WallBlue0);
+    this.ground.setTile(2, 1, GroundTile.TileBlue0);
+    this.ground.setTile(2, 1, GroundTile.TileBlue0);
+    this.ground.setTile(3, 1, GroundTile.TileBlue0);
+
+    this.things.setTile(2, 1, ThingTile.ChestClosedLocked);
+  }
 }
