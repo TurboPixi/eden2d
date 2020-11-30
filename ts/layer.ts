@@ -1,5 +1,4 @@
 import {
-  Application,
   BaseTexture,
   Container,
   FORMATS,
@@ -37,12 +36,12 @@ const vert = `
   }
 `
 
-export class Layer {
+export abstract class Layer {
   private shader: Shader;
   private buf: Uint8Array;
   private dirty = false;
 
-  constructor(container: Container, private width: number, private height: number) {
+  constructor(container: Container, private width: number, private height: number, private img: string, tileWidth: number, tileHeight: number) {
     const blank = Texture.fromBuffer(new Uint8Array(4), 1, 1);
 
     this.buf = new Uint8Array(width * height * 2);
@@ -54,7 +53,7 @@ export class Layer {
     this.shader = Shader.from(vert, frag, {
       map: this.mapTex(),
       tiles: blank,
-      tileSize: [16, 16],
+      tileSize: [tileWidth, tileHeight],
       mapSize: [width, height],
       view: [0, 0, 0, 0]
     })
@@ -68,12 +67,11 @@ export class Layer {
     const tileMesh = new Mesh(geometry, this.shader);
     container.addChild(tileMesh);
 
-    new Loader("images/")
-      .add('tiles', 'rogue/environment.png')
-      .load(() => this.loaded());
+    new Loader("images/").add(img, img).load(() => this.loaded());
   }
 
-  setTile(x: number, y: number, u: number, v: number) {
+  setTile(x: number, y: number, t: number) {
+    let u = t & 0xf, v = t >> 4;
     const idx = (y * this.width + x) * 2;
     this.buf[idx] = u;
     this.buf[idx + 1] = v;
@@ -88,7 +86,7 @@ export class Layer {
   }
 
   private loaded() {
-    const tiles = Texture.from("tiles");
+    const tiles = Texture.from(this.img);
 
     tiles.baseTexture.scaleMode = SCALE_MODES.NEAREST;
     tiles.baseTexture.mipmap = MIPMAP_MODES.OFF;
@@ -104,7 +102,7 @@ export class Layer {
 
     const boxX = this.width * x / w;
     const boxY = this.height * y / h;
-    const boxH = 8;
+    const boxH = 16;
     const boxW = w / h * boxH;
 
     this.shader.uniforms.view = [
@@ -113,5 +111,64 @@ export class Layer {
       boxX + 0.5 * boxW,
       boxY + 0.5 * boxH
     ];
+  }
+}
+
+function tile(u: number, v: number): number {
+  return v * 16 + u;
+}
+
+// Ground
+
+export enum GroundTile {
+  Empty = tile(4, 4),
+  WallBlue0 = tile(4, 1),
+  TileBlue0 = tile(5, 0),
+}
+
+export class GroundLayer extends Layer {
+
+  constructor(container: Container, width: number, height: number) {
+    super(container, width, height, "rogue/environment.png", 16, 16);
+  }
+
+  setTile(x: number, y: number, t: GroundTile) {
+    super.setTile(x, y, t);
+  }
+}
+
+// Things
+
+export enum ThingTile {
+  Empty = tile(4, 4),
+  ChestClosedLocked = tile(0, 12),
+}
+
+export class ThingLayer extends Layer {
+
+  constructor(container: Container, width: number, height: number) {
+    super(container, width, height, "rogue/environment.png", 16, 16);
+  }
+
+  setTile(x: number, y: number, t: ThingTile) {
+    super.setTile(x, y, t);
+  }
+}
+
+// Actors
+
+export enum ActorTile {
+  Empty = tile(0, 0),
+  Player0 = tile(1, 0),
+}
+
+export class ActorLayer extends Layer {
+
+  constructor(container: Container, width: number, height: number) {
+    super(container, width, height, "rogue/player0.png", 16, 16);
+  }
+
+  setTile(x: number, y: number, t: ActorTile) {
+    super.setTile(x, y, t);
   }
 }

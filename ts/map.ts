@@ -2,41 +2,51 @@ import {
   Application,
   Container,
 } from "pixi.js";
-import { Layer } from "./layer";
+import {
+  ActorLayer,
+  ActorTile,
+  GroundLayer,
+  GroundTile,
+  Layer,
+  ThingLayer,
+  ThingTile,
+} from "./layer";
 
 export enum Ground {
   Empty = 0,
-  WallBlue = 1,
+  TileBlue = 1,
+  WallBlue = 2,
 }
 
 export enum Thing {
   ChestSilver = 2,
 }
 
-export interface Tile {
+export interface Cell {
   ground: Ground;
   things: Thing[];
 }
 
 export class Map {
-  private tiles: Tile[];
+  private cells: Cell[];
 
   private container: Container;
-  private terrain: Layer;
-  private things: Layer;
+  private ground: GroundLayer;
+  private things: ThingLayer;
+  private actors: ActorLayer;
 
-  private x = 0;
-  private y = 0;
+  private x = 256;
+  private y = 256;
 
   constructor(private app: Application, private width: number, private height: number) {
+    this.clearCells();
+
     this.container = new Container();
     this.app.stage.addChild(this.container);
 
-    this.terrain = new Layer(this.container, width, height);
-    this.things = new Layer(this.container, width, height);
-
-    this.x = 128;
-    this.y = 128;
+    this.ground = new GroundLayer(this.container, width, height);
+    this.things = new ThingLayer(this.container, width, height);
+    this.actors = new ActorLayer(this.container, width, height);
 
     this.updateLayers();
   }
@@ -44,19 +54,38 @@ export class Map {
   tick() {
     let w = this.app.view.width;
     let h = this.app.view.height;
-    this.terrain.tick(this.x, this.y, w, h);
+    this.ground.tick(this.x, this.y, w, h);
     this.things.tick(this.x, this.y, w, h);
+  }
+
+  private clearCells() {
+    this.cells = [];
+    for (var y = 0; y < this.height; y++) {
+      for (var x = 0; x < this.width; x++) {
+        this.cells.push({
+          ground: Ground.Empty,
+          things: [],
+        });
+      }
+    }
   }
 
   private updateLayers() {
     for (var y = 0; y < this.height; y++) {
       for (var x = 0; x < this.width; x++) {
-        this.terrain.setTile(x, y, 4, 4);
-        this.things.setTile(x, y, 4, 4);
+        this.ground.setTile(x, y, GroundTile.Empty);
+        this.things.setTile(x, y, ThingTile.Empty);
+        this.actors.setTile(x, y, ActorTile.Empty);
       }
     }
 
-    this.terrain.setTile(1, 1, 0, 0);
-    this.terrain.setTile(2, 1, 2, 0);
+    this.ground.setTile(1, 1, GroundTile.WallBlue0);
+    this.ground.setTile(2, 1, GroundTile.TileBlue0);
+    this.ground.setTile(2, 1, GroundTile.TileBlue0);
+    this.ground.setTile(3, 1, GroundTile.TileBlue0);
+
+    this.things.setTile(2, 1, ThingTile.ChestClosedLocked);
+
+    this.actors.setTile(3, 1, ActorTile.Player0);
   }
 }
