@@ -1,8 +1,8 @@
 import { Application } from "pixi.js";
-import { Entity, player, tile, wall } from "./entity";
+import { Entity } from "./entity";
 import { Key } from "./key";
 import { Map } from "./map";
-import { Resources } from "./res";
+import { ImageKey, Resources } from "./res";
 
 class Eden {
   private _app: Application;
@@ -18,17 +18,21 @@ class Eden {
     document.body.appendChild(this._app.view);
     document.addEventListener('keydown', (evt) => this.keyDown(evt), true);
 
-    new Resources(() => {
+    Resources.load(() => {
       this._map = new Map(this._app, 16, 16);
 
       for (let y = 0; y < 10; y++) {
         for (let x = 0; x < 10; x++) {
-          this._map.addEntity(new Entity(tile), x, y);
+          this._map.addEntity(new Entity(ImageKey.TileBlueTile), x, y);
         }
       }
-      this._map.addEntity(new Entity(wall), 0, 0)
+      this._map.addEntity(new Entity(ImageKey.TileBlueWallE), 0, 0)
+      for (let x = 1; x < 9; x++) {
+        this._map.addEntity(new Entity(ImageKey.TileBlueWallEW), x, 0)
+      }
+      this._map.addEntity(new Entity(ImageKey.TileBlueWallW), 9, 0)
 
-      this._player = new Entity(player);
+      this._player = new Entity(ImageKey.Player0);
       this._map.addEntity(this._player);
       this.move(2, 2);
 
