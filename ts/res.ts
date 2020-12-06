@@ -28,7 +28,7 @@ const _imageMap: { [key: string]: Image } = {
   "tile-blue-tile-1": img(TexKey.Tiles, 5 * 16, 1 * 16),
   "tile-blue-wall": img(TexKey.Tiles, 4 * 16, 1 * 16),
   "tile-blue-wall-w": img(TexKey.Tiles, 1 * 16, 1 * 16),
-  "tile-blue-wall-e": img(TexKey.Tiles, 2 * 16, 0 * 16),
+  "tile-blue-wall-e": img(TexKey.Tiles, 2 * 16, 1 * 16),
   "tile-blue-wall-ew": img(TexKey.Tiles, 2 * 16, 0 * 16),
 
   "player-0": img(TexKey.Player, 16, 0, 16, 24, 0, 1-(12/24)),

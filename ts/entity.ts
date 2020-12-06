@@ -1,27 +1,47 @@
-import { BaseTexture, MIPMAP_MODES, Rectangle, SCALE_MODES, Sprite, Spritesheet, SpritesheetLoader, Texture } from "pixi.js";
+import { Sprite } from "pixi.js";
 import { Map } from "./map";
 import { ImageKey, Resources } from "./res";
 
-export type EntityId = number;
-
-export interface EntityDef {
-  img: ImageKey;
-  sprX?: number;
-  sprY?: number;
-  sprW?: number;
-  sprH?: number;
-  ofsX?: number;
-  ofsY?: number;
+export enum EntityId {
+  Unknown = -1,
+  System = 0,
 }
+
+export enum EntityType {
+  Player = "player",
+  TileBlue = "tile-blue",
+  WallBlue = "wall-blue",
+}
+
+interface EntityDef {
+  img: ImageKey,
+}
+
+const _entityDefs: { [key: string]: EntityDef} = {
+  "player": {
+    img: ImageKey.Player0,
+  },
+  "tile-blue": {
+    img: ImageKey.TileBlueTile,
+  },
+  "wall-blue": {
+    img: ImageKey.TileBlueWall,
+  },
+};
 
 export class Entity {
   private _map: Map;
-  private _id = -1;
+  private _def: EntityDef;
+  private _id = EntityId.Unknown;
   private _x = 0;
   private _y = 0;
   private _spr: Sprite;
 
-  constructor(private _img: ImageKey) {
+  constructor(type: EntityType) {
+    if (!(type in _entityDefs)) {
+      throw "invalid entity type";
+    }
+    this._def = _entityDefs[type];
   }
 
   get map(): Map { return this._map; }
@@ -31,12 +51,12 @@ export class Entity {
 
   get sprite(): Sprite {
     if (!this._spr) {
-      this._spr = Resources.sprite(this._img)
+      this._spr = Resources.sprite(this._def.img)
     }
     return this._spr;
   }
 
-  setMap(map: Map, id: number) {
+  setMap(map: Map, id: EntityId) {
     this._map = map;
     this._id = id;
   }

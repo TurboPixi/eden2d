@@ -1,5 +1,6 @@
 import { Application } from "pixi.js";
-import { Entity } from "./entity";
+import { actCreate, Actions, ActionType, actMove } from "./actions";
+import { Entity, EntityId, EntityType } from "./entity";
 import { Key } from "./key";
 import { Map } from "./map";
 import { ImageKey, Resources } from "./res";
@@ -19,22 +20,11 @@ class Eden {
     document.addEventListener('keydown', (evt) => this.keyDown(evt), true);
 
     Resources.load(() => {
-      this._map = new Map(this._app, 16, 16);
+      this._map = toyMap(this._app);
 
-      for (let y = 0; y < 10; y++) {
-        for (let x = 0; x < 10; x++) {
-          this._map.addEntity(new Entity(ImageKey.TileBlueTile), x, y);
-        }
-      }
-      this._map.addEntity(new Entity(ImageKey.TileBlueWallE), 0, 0)
-      for (let x = 1; x < 9; x++) {
-        this._map.addEntity(new Entity(ImageKey.TileBlueWallEW), x, 0)
-      }
-      this._map.addEntity(new Entity(ImageKey.TileBlueWallW), 9, 0)
-
-      this._player = new Entity(ImageKey.Player0);
+      let playerId = Actions.eval(this._map, actCreate(EntityId.System, EntityType.Player, 1, 1))
+      this._player = this._map.entity(playerId);
       this._map.addEntity(this._player);
-      this.move(2, 2);
 
       this._app.stage.interactive = true;
       this._app.ticker.add(() => this.tick())
@@ -52,7 +42,7 @@ class Eden {
   }
 
   private move(dx: number, dy: number) {
-    this._player.move(this._player.x + dx, this._player.y + dy);
+    Actions.eval(this._map, actMove(EntityId.System, this._player.id, dx, dy));
   }
 
   private tick() {
@@ -60,6 +50,22 @@ class Eden {
     this._map.y = (this._player.y - 4) * 16;
     this._map.tick();
   }
+}
+
+function toyMap(app: Application): Map {
+  let map = new Map(app, 16, 16);
+
+  for (let y = 0; y < 10; y++) {
+    for (let x = 0; x < 10; x++) {
+      Actions.eval(map, actCreate(EntityId.System, EntityType.TileBlue, x, y))
+    }
+  }
+
+  for (let x = 1; x < 9; x++) {
+    Actions.eval(map, actCreate(EntityId.System, EntityType.WallBlue, x, 0))
+  }
+
+  return map;
 }
 
 new Eden();

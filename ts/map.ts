@@ -1,15 +1,5 @@
 import { Application, Container } from "pixi.js";
-import { Entity } from "./entity";
-
-export enum ActionType {
-  Move = 1,
-}
-
-export interface Action {
-  type: ActionType;
-  actor: Entity;
-  target: Entity;
-}
+import { Entity, EntityId } from "./entity";
 
 export class Map {
   private _entities: { [id: number]: Entity } = {};
@@ -32,6 +22,10 @@ export class Map {
   set x(x: number) { this._x = x; }
   set y(y: number) { this._y = y; }
   set z(z: number) { this._z = z; }
+
+  entity(id: EntityId): Entity {
+    return this._entities[id];
+  }
 
   addEntity(entity: Entity, x?: number, y?: number) {
     if (entity.map) {
