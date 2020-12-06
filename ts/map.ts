@@ -12,6 +12,22 @@ export interface Cell {
   ground: GroundType;
 }
 
+const _groundTiles = {
+  0: Tile.Empty,
+  1: Tile.TileBlue0,
+  2: Tile.WallBlue0,
+}
+
+export enum ActionType {
+  Move = 1,
+}
+
+export interface Action {
+  type: ActionType;
+  actor: Entity;
+  target: Entity;
+}
+
 export class Map {
   private _cells: Cell[];
   private _entities: { [id: number]: Entity } = {};
@@ -24,12 +40,20 @@ export class Map {
   private _y = 0;
   private _z = 4;
 
-  constructor(private app: Application, private width: number, private height: number) {
+  constructor(private app: Application, private _width: number, private _height: number) {
     this.clearCells();
+    for (let y = 1; y < this._height - 2; y++) {
+      for (let x = 1; x < this._width - 2; x++) {
+        this.setGround(x, y, GroundType.TileBlue);
+      }
+    }
+    this.setGround(1, 1, GroundType.WallBlue);
+    this.setGround(2, 1, GroundType.WallBlue);
+    this.setGround(3, 1, GroundType.WallBlue);
 
     this._container = new Container();
     this.app.stage.addChild(this._container);
-    this._ground = new Layer(this._container, width, height);
+    this._ground = new Layer(this._container, _width, _height);
 
     this.updateLayers();
   }
@@ -41,38 +65,35 @@ export class Map {
   set y(y: number) { this._y = y; }
   set z(z: number) { this._z = z; }
 
+  setGround(x: number, y: number, typ: GroundType) {
+    this._cells[y * this._width + x].ground = typ;
+  }
+
+  cell(x: number, y: number): Cell {
+    return this._cells[y * this._width + x];
+  }
+
   addEntity(entity: Entity) {
-    if (entity._map && entity._map != this) {
-      entity._map.removeEntity(entity);
-    }
-
-    if (entity._id in this._entities) {
-      if (this._entities[entity._id] != entity) {
-        throw "inconsistent entity id";
+    if (entity.map) {
+      if (entity.map == this) {
+        return;
       }
-      return;
+      entity.map.removeEntity(entity);
     }
 
-    entity._map = this;
-    entity._id = this._nextId++;
-    this._entities[entity._id] = entity;
-
-    this._container.addChild(entity._spr);
+    entity.setMap(this, this._nextId++);
+    this._entities[entity.id] = entity;
+    this._container.addChild(entity.sprite);
   }
 
   removeEntity(entity: Entity) {
-    if (entity._map != this) {
+    if (entity.map != this) {
       return;
     }
 
-    if (this._entities[entity._id] != entity) {
-      throw "inconsistent entity id";
-    }
-
-    delete this._entities[entity._id];
-    entity._map = null;
-
-    this._container.removeChild(entity._spr);
+    entity.setMap(null, 0);
+    delete this._entities[entity.id];
+    this._container.removeChild(entity.sprite);
   }
 
   tick() {
@@ -86,8 +107,8 @@ export class Map {
 
   private clearCells() {
     this._cells = [];
-    for (var y = 0; y < this.height; y++) {
-      for (var x = 0; x < this.width; x++) {
+    for (var y = 0; y < this._height; y++) {
+      for (var x = 0; x < this._width; x++) {
         this._cells.push({
           ground: GroundType.Empty,
         });
@@ -96,11 +117,11 @@ export class Map {
   }
 
   private updateLayers() {
-    for (var y = 0; y < this.height; y++) {
-      for (var x = 0; x < this.width; x++) {
-        this._ground.setTile(x, y, Tile.TileBlue0);
+    for (var y = 0; y < this._height; y++) {
+      for (var x = 0; x < this._width; x++) {
+        let tile = _groundTiles[this.cell(x, y).ground];
+        this._ground.setTile(x, y, tile);
       }
     }
-    this._ground.setTile(1, 1, Tile.WallBlue0);
   }
 }
