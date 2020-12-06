@@ -1,4 +1,4 @@
-import { Loader } from "pixi.js";
+import { Loader, Spritesheet, SpritesheetLoader } from "pixi.js";
 
 export enum ResourceKey {
   Tiles = "tiles",

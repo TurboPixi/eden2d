@@ -1,5 +1,5 @@
 import { Application } from "pixi.js";
-import { Entity, player } from "./entity";
+import { Entity, player, tile, wall } from "./entity";
 import { Key } from "./key";
 import { Map } from "./map";
 import { Resources } from "./res";
@@ -20,6 +20,13 @@ class Eden {
 
     new Resources(() => {
       this._map = new Map(this._app, 16, 16);
+
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          this._map.addEntity(new Entity(tile), x, y);
+        }
+      }
+      this._map.addEntity(new Entity(wall), 0, 0)
 
       this._player = new Entity(player);
       this._map.addEntity(this._player);
