@@ -1,35 +1,54 @@
 import { Application } from "pixi.js";
-import { actCreate, Actions, ActionType, actMove } from "./actions";
-import { Entity, EntityId, EntityType } from "./entity";
+import { actCreate, Actions, actMove, actTransfer } from "./actions";
+import { Chunk } from "./chunk";
+import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Key } from "./key";
-import { Map } from "./map";
-import { ImageKey, Resources } from "./res";
+import { Resources } from "./res";
+import { World } from "./world";
 
 class Eden {
   private _app: Application;
-  private _map: Map;
+  private _world: World;
+  private _chunk: Chunk;
   private _player: Entity;
 
   constructor() {
-    this._app = new Application({
-      backgroundColor: 0x1099bb
-    });
+    this._app = new Application({ backgroundColor: 0x1099bb });
     this._app.resizeTo = window;
 
     document.body.appendChild(this._app.view);
     document.addEventListener('keydown', (evt) => this.keyDown(evt), true);
 
-    Resources.load(() => {
-      this._map = toyMap(this._app);
+    Resources.load(() => this.ready());
+  }
 
-      let playerId = Actions.eval(this._map, actCreate(EntityId.System, EntityType.Player, 1, 1))
-      this._player = this._map.entity(playerId);
-      this._map.addEntity(this._player);
+  private ready() {
+    this._world = new World();
 
-      this._app.stage.interactive = true;
-      this._app.ticker.add(() => this.tick())
-      this._app.start();
-    });
+    this.createChunk();
+    this._player = this.createPlayer();
+
+    this._app.stage.interactive = true;
+    this._app.ticker.add(() => this.tick())
+    this._app.start();
+  }
+
+  private createChunk() {
+    this._chunk = this._world.toyChunk();
+    this._app.stage.addChild(this._chunk.container);
+  }
+
+  private createPlayer(): Entity {
+    let playerId = Actions.eval(this._world, actCreate(EntityId.System, this._chunk.id, EntityType.Player, 1, 1))
+    let player = this._chunk.entity(playerId);
+    this._chunk.addEntity(player);
+
+    let inv = this._world.newChunk(10, 1);
+    player.setChunk(Var.Contents, inv.id)
+    this._app.stage.addChild(inv.container);
+    Actions.eval(this._world, actCreate(player.id, inv.id, EntityType.ObjectKey, 0, 0));
+
+    return player;
   }
 
   private keyDown(evt: KeyboardEvent) {
@@ -38,34 +57,35 @@ class Eden {
       case Key.S: this.move(0, 1); break;
       case Key.A: this.move(-1, 0); break;
       case Key.D: this.move(1, 0); break;
+      case Key.C: this.create(EntityType.ObjectKey); break;
+      case Key.T: this.take(); break;
     }
   }
 
   private move(dx: number, dy: number) {
-    Actions.eval(this._map, actMove(EntityId.System, this._player.id, dx, dy));
+    Actions.eval(this._world, actMove(EntityId.System, this._chunk.id, this._player.id, dx, dy));
+  }
+
+  private take() {
+    let target = null; // TODO
+    Actions.eval(this._world, actTransfer(this._player.id, this._chunk.id, target, this._player.getChunk(Var.Contents), 0, 0));
+  }
+
+  private create(typ: EntityType) {
+    Actions.eval(this._world, actCreate(this._player.id, this._chunk.id, typ, this._player.x, this._player.y));
   }
 
   private tick() {
-    this._map.x = (this._player.x - 4) * 16;
-    this._map.y = (this._player.y - 4) * 16;
-    this._map.tick();
+    let w = this._app.view.width;
+    let h = this._app.view.height;
+
+    let invId = this._player.getChunk(Var.Contents);
+    this._world.chunk(invId).container.setTransform(0, h - 64, 4, 4);
+
+    let x = (this._player.x - 4) * 16;
+    let y = (this._player.y - 4) * 16;
+    this._chunk.tick(x, y, 4, w, h);
   }
-}
-
-function toyMap(app: Application): Map {
-  let map = new Map(app, 16, 16);
-
-  for (let y = 0; y < 10; y++) {
-    for (let x = 0; x < 10; x++) {
-      Actions.eval(map, actCreate(EntityId.System, EntityType.TileBlue, x, y))
-    }
-  }
-
-  for (let x = 1; x < 9; x++) {
-    Actions.eval(map, actCreate(EntityId.System, EntityType.WallBlue, x, 0))
-  }
-
-  return map;
 }
 
 new Eden();

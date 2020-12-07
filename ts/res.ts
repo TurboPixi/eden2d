@@ -3,12 +3,15 @@ import { BaseTexture, Loader, MIPMAP_MODES, Rectangle, SCALE_MODES, Sprite, Text
 export enum TexKey {
   Tiles = "tiles",
   Player = "player",
+  Items = "items",
 }
 
 const _texMap: { [key: string]: string } = {
   "tiles": "rogue/environment.png",
   "player": "rogue/player0.png",
+  "items": "rogue/items.png",
 };
+
 
 export enum ImageKey {
   TileEmpty = "tile-empty",
@@ -20,6 +23,7 @@ export enum ImageKey {
   TileBlueWallE = "tile-blue-wall-e",
 
   Player0 = "player-0",
+  ObjectKey = "object-key"
 }
 
 const _imageMap: { [key: string]: Image } = {
@@ -32,6 +36,7 @@ const _imageMap: { [key: string]: Image } = {
   "tile-blue-wall-ew": img(TexKey.Tiles, 2 * 16, 0 * 16),
 
   "player-0": img(TexKey.Player, 16, 0, 16, 24, 0, 1-(12/24)),
+  "object-key": img(TexKey.Items, 0, 0),
 };
 
 interface Image {
