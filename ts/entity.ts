@@ -5,6 +5,10 @@ import { ImageKey, Resources } from "./res";
 export enum Var {
   Contents = "contents",
   Portable = "portable",
+  Portal = "portal",
+  PortalChunk = "portalchunk",
+  PortalX = "portalx",
+  PortalY = "portaly",
 }
 
 enum Type {
@@ -23,6 +27,8 @@ export enum EntityType {
   Player = "player",
   TileBlue = "tile-blue",
   WallBlue = "wall-blue",
+  StairDown = "stair-down",
+  StairUp = "stair-up",
   ObjectKey = "object-key",
 }
 
@@ -49,7 +55,19 @@ const _entityDefs: { [key: string]: EntityDef } = {
     vars: {
       "portable-bool": true,
     },
-  }
+  },
+  "stair-down": {
+    img: ImageKey.TileStairDown,
+    vars: {
+      "portal-bool": true,
+    },
+  },
+  "stair-up": {
+    img: ImageKey.TileStairUp,
+    vars: {
+      "portal-bool": true,
+    },
+  },
 };
 
 function varKey(key: Var, typ: Type): string {

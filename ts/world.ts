@@ -1,7 +1,6 @@
-import { Application } from "pixi.js";
 import { actCreate, Actions } from "./actions";
 import { Chunk, ChunkId } from "./chunk";
-import { EntityId, EntityType } from "./entity";
+import { EntityId, EntityType, Var } from "./entity";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World {

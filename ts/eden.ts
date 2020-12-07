@@ -1,6 +1,6 @@
 import { Application } from "pixi.js";
 import { actCreate, Actions, actMove, actTransfer } from "./actions";
-import { Chunk } from "./chunk";
+import { Chunk, ChunkId } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Key } from "./key";
 import { Resources } from "./res";
@@ -26,29 +26,42 @@ class Eden {
   private ready() {
     this._world = new World();
 
-    this.createChunk();
-    this._player = this.createPlayer();
+    let chunk = this.createChunk();
+    this._player = this.createPlayer(chunk);
+    this.showChunk(this._player.chunk);
 
     this._app.stage.interactive = true;
     this._app.ticker.add(() => this.tick())
     this._app.start();
   }
 
-  private createChunk() {
-    this._chunk = this._world.toyChunk();
-    this._app.stage.addChild(this._chunk.container);
+  private createChunk(): Chunk {
+    let chunk0 = this._world.toyChunk();
+    let chunk1 = this._world.toyChunk();
+
+    portal(this._world, EntityType.StairDown, chunk0.id, 1, 5, chunk1.id, 2, 5);
+    portal(this._world, EntityType.StairUp, chunk1.id, 1, 5, chunk0.id, 2, 5);
+    return chunk0;
   }
 
-  private createPlayer(): Entity {
-    let playerId = Actions.eval(this._world, actCreate(EntityId.System, this._chunk.id, EntityType.Player, 1, 1))
-    let player = this._chunk.entity(playerId);
-    this._chunk.addEntity(player);
+  private createPlayer(chunk: Chunk): Entity {
+    let playerId = Actions.eval(this._world, actCreate(EntityId.System, chunk.id, EntityType.Player, 1, 1))
+    let player = chunk.entity(playerId);
+    chunk.addEntity(player);
 
     let inv = this._world.newChunk(10, 1);
     player.setChunk(Var.Contents, inv.id)
     this._app.stage.addChild(inv.container);
 
     return player;
+  }
+
+  private showChunk(chunk: Chunk) {
+    if (this._chunk) {
+      this._app.stage.removeChild(this._chunk.container);
+    }
+    this._chunk = chunk;
+    this._app.stage.addChild(this._chunk.container);
   }
 
   private keyDown(evt: KeyboardEvent) {
@@ -58,6 +71,9 @@ class Eden {
       case Key.S: this.move(0, 1); break;
       case Key.A: this.move(-1, 0); break;
       case Key.D: this.move(1, 0); break;
+
+      // Go.
+      case Key.G: this.go(); break;
 
       // Create.
       case Key.C: this.create(EntityType.ObjectKey); break;
@@ -79,28 +95,39 @@ class Eden {
     Actions.eval(this._world, actMove(EntityId.System, this._chunk.id, this._player.id, dx, dy));
   }
 
+  private go() {
+    let portal = topWithVar(this._chunk, Var.Portal, this._player.x, this._player.y);
+    if (portal) {
+      let toChunk = portal.getChunk(Var.PortalChunk);
+      let toX = portal.getNum(Var.PortalX);
+      let toY = portal.getNum(Var.PortalY);
+      Actions.eval(this._world, actTransfer(this._player.id, this._chunk.id, this._player.id, toChunk, toX, toY));
+    }
+  }
+
   private take() {
     let x = this._player.x;
     let y = this._player.y;
-    let target = topPortable(this._chunk, x, y);
-    if (target) {
-      Actions.eval(this._world, actTransfer(this._player.id, this._chunk.id, target, this._player.getChunk(Var.Contents), this._invSlot, 0));
+    let target = topWithVar(this._chunk, Var.Portable, x, y);
+    if (target != null) {
+      let invChunk = this._player.getChunk(Var.Contents);
+      Actions.eval(this._world, actTransfer(this._player.id, this._chunk.id, target.id, invChunk, this._invSlot, 0));
     }
   }
 
   private put() {
     let invChunkId = this._player.getChunk(Var.Contents);
     let invChunk = this._world.chunk(invChunkId);
-    let target = topPortable(invChunk, this._invSlot, 0);
-    if (target) {
+    let target = topWithVar(invChunk, Var.Portable, this._invSlot, 0);
+    if (target != null) {
       let x = this._player.x;
       let y = this._player.y;
-      Actions.eval(this._world, actTransfer(this._player.id, invChunkId, target, this._chunk.id, x, y));
+      Actions.eval(this._world, actTransfer(this._player.id, invChunkId, target.id, this._chunk.id, x, y));
     }
   }
 
-  private create(typ: EntityType) {
-    Actions.eval(this._world, actCreate(this._player.id, this._chunk.id, typ, this._player.x, this._player.y));
+  private create(type: EntityType) {
+    Actions.eval(this._world, actCreate(this._player.id, this._chunk.id, type, this._player.x, this._player.y));
   }
 
   private selectInv(slot: number) {
@@ -112,6 +139,11 @@ class Eden {
   }
 
   private tick() {
+    // Follow the player across chunks.
+    if (this._player.chunk != this._chunk) {
+      this.showChunk(this._player.chunk);
+    }
+
     let w = this._app.view.width;
     let h = this._app.view.height;
 
@@ -124,14 +156,23 @@ class Eden {
   }
 }
 
-function topPortable(chunk: Chunk, x: number, y: number): EntityId {
+function portal(world: World, type: EntityType, fromId: ChunkId, fx: number, fy: number, toId: ChunkId, tx: number, ty: number) {
+  let from = world.chunk(fromId);
+  let entId = Actions.eval(world, actCreate(EntityId.System, fromId, type, fx, fy));
+  let ent = from.entity(entId);
+  ent.setChunk(Var.PortalChunk, toId);
+  ent.setNum(Var.PortalX, tx);
+  ent.setNum(Var.PortalY, ty);
+}
+
+function topWithVar(chunk: Chunk, boolVar: Var, x: number, y: number): Entity {
   let ents = chunk.entitiesAt(x, y);
   for (var ent of ents) {
-    if (ent.getBool(Var.Portable)) {
-      return ent.id;
+    if (ent.getBool(boolVar)) {
+      return ent;
     }
   }
-  return EntityId.Unknown;
+  return null;
 }
 
 new Eden();

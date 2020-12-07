@@ -21,6 +21,8 @@ export enum ImageKey {
   TileBlueWallW = "tile-blue-wall-w",
   TileBlueWallEW = "tile-blue-wall-ew",
   TileBlueWallE = "tile-blue-wall-e",
+  TileStairDown = "tile-stair-down",
+  TileStairUp = "tile-stair-up",
 
   Player0 = "player-0",
   ObjectKey = "object-key"
@@ -34,6 +36,8 @@ const _imageMap: { [key: string]: Image } = {
   "tile-blue-wall-w": img(TexKey.Tiles, 1 * 16, 1 * 16),
   "tile-blue-wall-e": img(TexKey.Tiles, 2 * 16, 1 * 16),
   "tile-blue-wall-ew": img(TexKey.Tiles, 2 * 16, 0 * 16),
+  "tile-stair-down": img(TexKey.Tiles, 5 * 16, 7 * 16),
+  "tile-stair-up": img(TexKey.Tiles, 6 * 16, 7 * 16),
 
   "player-0": img(TexKey.Player, 16, 0, 16, 24, 0, 1-(12/24)),
   "object-key": img(TexKey.Items, 0, 0),
