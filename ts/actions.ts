@@ -1,5 +1,5 @@
-import { Entity, EntityId, EntityType } from "./entity";
-import { ChunkId } from "./chunk";
+import { Entity, EntityId, EntityType, Var } from "./entity";
+import { Chunk, ChunkId } from "./chunk";
 import { World } from "./world";
 
 export enum ActionType {
@@ -85,4 +85,23 @@ export class Actions {
 
     return EntityId.Unknown;
   }
+}
+
+export function portal(world: World, type: EntityType, fromId: ChunkId, fx: number, fy: number, toId: ChunkId, tx: number, ty: number) {
+  let from = world.chunk(fromId);
+  let entId = Actions.eval(world, actCreate(EntityId.System, fromId, type, fx, fy));
+  let ent = from.entity(entId);
+  ent.setChunk(Var.PortalChunk, toId);
+  ent.setNum(Var.PortalX, tx);
+  ent.setNum(Var.PortalY, ty);
+}
+
+export function topWithVar(chunk: Chunk, boolVar: Var, x: number, y: number): Entity {
+  let ents = chunk.entitiesAt(x, y);
+  for (var ent of ents) {
+    if (ent.getBool(boolVar)) {
+      return ent;
+    }
+  }
+  return null;
 }

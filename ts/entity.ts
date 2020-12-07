@@ -3,12 +3,13 @@ import { Chunk, ChunkId } from "./chunk";
 import { ImageKey, Resources } from "./res";
 
 export enum Var {
-  Contents = "contents",
-  Portable = "portable",
-  Portal = "portal",
-  PortalChunk = "portalchunk",
-  PortalX = "portalx",
-  PortalY = "portaly",
+  UI = "ui",                    // Bool marking entity as UI element.
+  Contents = "contents",        // Chunk representing a container entity's contents.
+  Portable = "portable",        // Bool marking an entity as moveable.
+  Portal = "portal",            // Bool marking an entity as a portal.
+  PortalChunk = "portalchunk",  // A portal's target chunk.
+  PortalX = "portalx",          // ... target coordinates.
+  PortalY = "portaly",          // ...
 }
 
 enum Type {
@@ -24,6 +25,7 @@ export enum EntityId {
 }
 
 export enum EntityType {
+  Cursor = "cursor",
   Player = "player",
   TileBlue = "tile-blue",
   WallBlue = "wall-blue",
@@ -34,10 +36,16 @@ export enum EntityType {
 
 interface EntityDef {
   img: ImageKey;
-  vars: { [key: string]: any};
+  vars: { [key: string]: any };
 }
 
 const _entityDefs: { [key: string]: EntityDef } = {
+  "cursor": {
+    img: ImageKey.TileBlueTile,
+    vars: {
+      "ui-bool": true,
+    },
+  },
   "player": {
     img: ImageKey.Player0,
     vars: {},
@@ -80,7 +88,7 @@ export class Entity {
   private _chunk: Chunk;
   private _x = 0;
   private _y = 0;
-  private _vars: { [key: string]: any};
+  private _vars: { [key: string]: any };
   private _spr: Sprite;
 
   constructor(type: EntityType) {
