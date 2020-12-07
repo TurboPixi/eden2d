@@ -11,6 +11,7 @@ class Eden {
   private _world: World;
   private _chunk: Chunk;
   private _player: Entity;
+  private _invSlot = 0;
 
   constructor() {
     this._app = new Application({ backgroundColor: 0x1099bb });
@@ -46,19 +47,31 @@ class Eden {
     let inv = this._world.newChunk(10, 1);
     player.setChunk(Var.Contents, inv.id)
     this._app.stage.addChild(inv.container);
-    Actions.eval(this._world, actCreate(player.id, inv.id, EntityType.ObjectKey, 0, 0));
 
     return player;
   }
 
   private keyDown(evt: KeyboardEvent) {
     switch (evt.keyCode) {
+      // Move.
       case Key.W: this.move(0, -1); break;
       case Key.S: this.move(0, 1); break;
       case Key.A: this.move(-1, 0); break;
       case Key.D: this.move(1, 0); break;
+
+      // Create.
       case Key.C: this.create(EntityType.ObjectKey); break;
+
+      // Take, put.
       case Key.T: this.take(); break;
+      case Key.P: this.put(); break;
+
+      // Selection.
+      case Key._0: this.selectInv(9); break;
+      case Key._1: case Key._2: case Key._3: case Key._4:
+      case Key._5: case Key._6: case Key._7: case Key._8: case Key._9:
+        this.selectInv(evt.keyCode - Key._1)
+        break;
     }
   }
 
@@ -67,12 +80,35 @@ class Eden {
   }
 
   private take() {
-    let target = null; // TODO
-    Actions.eval(this._world, actTransfer(this._player.id, this._chunk.id, target, this._player.getChunk(Var.Contents), 0, 0));
+    let x = this._player.x;
+    let y = this._player.y;
+    let target = topPortable(this._chunk, x, y);
+    if (target) {
+      Actions.eval(this._world, actTransfer(this._player.id, this._chunk.id, target, this._player.getChunk(Var.Contents), this._invSlot, 0));
+    }
+  }
+
+  private put() {
+    let invChunkId = this._player.getChunk(Var.Contents);
+    let invChunk = this._world.chunk(invChunkId);
+    let target = topPortable(invChunk, this._invSlot, 0);
+    if (target) {
+      let x = this._player.x;
+      let y = this._player.y;
+      Actions.eval(this._world, actTransfer(this._player.id, invChunkId, target, this._chunk.id, x, y));
+    }
   }
 
   private create(typ: EntityType) {
     Actions.eval(this._world, actCreate(this._player.id, this._chunk.id, typ, this._player.x, this._player.y));
+  }
+
+  private selectInv(slot: number) {
+    if (slot < 0 || slot > 9) {
+      throw "invalid inventory slot";
+    }
+    this._invSlot = slot;
+    // TODO: Something visual.
   }
 
   private tick() {
@@ -86,6 +122,16 @@ class Eden {
     let y = (this._player.y - 4) * 16;
     this._chunk.tick(x, y, 4, w, h);
   }
+}
+
+function topPortable(chunk: Chunk, x: number, y: number): EntityId {
+  let ents = chunk.entitiesAt(x, y);
+  for (var ent of ents) {
+    if (ent.getBool(Var.Portable)) {
+      return ent.id;
+    }
+  }
+  return EntityId.Unknown;
 }
 
 new Eden();

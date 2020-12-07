@@ -21,6 +21,18 @@ export class Chunk {
     return this._container;
   }
 
+  entitiesAt(x: number, y: number): Entity[] {
+    // TODO: Do some indexing to not make this obscenely slow.
+    let ents: Entity[] = [];
+    for (let id in this._entities) {
+      let ent = this._entities[id];
+      if (ent.x == x && ent.y == y) {
+        ents.push(ent);
+      }
+    }
+    return ents;
+  }
+
   entity(id: EntityId): Entity {
     return this._entities[id];
   }

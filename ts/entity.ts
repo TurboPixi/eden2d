@@ -3,7 +3,15 @@ import { Chunk, ChunkId } from "./chunk";
 import { ImageKey, Resources } from "./res";
 
 export enum Var {
-  Contents = "contents"
+  Contents = "contents",
+  Portable = "portable",
+}
+
+enum Type {
+  Bool = "bool",
+  Num = "num",
+  Str = "str",
+  Chunk = "chunk",
 }
 
 export enum EntityId {
@@ -19,37 +27,42 @@ export enum EntityType {
 }
 
 interface EntityDef {
-  img: ImageKey,
+  img: ImageKey;
+  vars: { [key: string]: any};
 }
 
 const _entityDefs: { [key: string]: EntityDef } = {
   "player": {
     img: ImageKey.Player0,
+    vars: {},
   },
   "tile-blue": {
     img: ImageKey.TileBlueTile,
+    vars: {},
   },
   "wall-blue": {
     img: ImageKey.TileBlueWall,
+    vars: {},
   },
   "object-key": {
     img: ImageKey.ObjectKey,
+    vars: {
+      "portable-bool": true,
+    },
   }
 };
+
+function varKey(key: Var, typ: Type): string {
+  return key + "-" + typ;
+}
 
 export class Entity {
   private _def: EntityDef;
   private _id = EntityId.Unknown;
-
   private _chunk: Chunk;
   private _x = 0;
   private _y = 0;
-
-  // TODO: Lazy init because so many empty ents.
-  private _numVals: { [key: string]: number} = {};
-  private _strVals: { [key: string]: string} = {};
-  private _chunkVals: { [key: string]: ChunkId} = {};
-
+  private _vars: { [key: string]: any};
   private _spr: Sprite;
 
   constructor(type: EntityType) {
@@ -71,12 +84,30 @@ export class Entity {
     return this._spr;
   }
 
-  setNum(key: Var, val: number) { this._numVals[key] = val; }
-  getNum(key: Var): number { return this._numVals[key]; }
-  setStr(key: Var, val: string) { this._strVals[key] = val; }
-  getStr(key: Var): string { return this._strVals[key]; }
-  setChunk(key: Var, val: ChunkId) { this._chunkVals[key] = val; }
-  getChunk(key: Var): ChunkId { return this._chunkVals[key]; }
+  getBool(key: Var): boolean { return this.getVar(key, Type.Bool) as boolean }
+  getNum(key: Var): number { return this.getVar(key, Type.Num) as number }
+  getStr(key: Var): string { return this.getVar(key, Type.Str) as string }
+  getChunk(key: Var): ChunkId { return this.getVar(key, Type.Chunk) as ChunkId }
+
+  setBool(key: Var, val: boolean) { this.setVar(key, Type.Bool, val) }
+  setNum(key: Var, val: number) { this.setVar(key, Type.Num, val) }
+  setStr(key: Var, val: string) { this.setVar(key, Type.Str, val) }
+  setChunk(key: Var, val: ChunkId) { this.setVar(key, Type.Chunk, val) }
+
+  private setVar(key: Var, typ: Type, val: any) {
+    if (!this._vars) {
+      this._vars = {};
+    }
+    this._vars[varKey(key, typ)] = val;
+  }
+
+  private getVar(key: Var, typ: Type): any {
+    let fullKey = varKey(key, typ);
+    if (this._vars && (fullKey in this._vars)) {
+      return this._vars[fullKey];
+    }
+    return this._def.vars[fullKey];
+  }
 
   setChunkId(chunk: Chunk, id: EntityId) {
     this._chunk = chunk;
