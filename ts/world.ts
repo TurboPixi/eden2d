@@ -10,9 +10,9 @@ export class World {
   constructor() {
   }
 
-  newChunk(width: number, height: number): Chunk {
+  newChunk(): Chunk {
     let id = this._nextId++;
-    this._chunks[id] = new Chunk(id, width, height);
+    this._chunks[id] = new Chunk(id);
     return this._chunks[id];
   }
 
@@ -21,7 +21,7 @@ export class World {
   }
 
   toyChunk(): Chunk {
-    let chunk = this.newChunk(16, 16);
+    let chunk = this.newChunk();
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {

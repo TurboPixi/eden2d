@@ -49,7 +49,7 @@ class Eden {
     let player = chunk.entity(playerId);
     chunk.addEntity(player);
 
-    let inv = this._world.newChunk(10, 1);
+    let inv = this._world.newChunk();
     player.setChunk(Var.Contents, inv.id)
     this._app.stage.addChild(inv.container);
 

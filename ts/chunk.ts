@@ -9,7 +9,7 @@ export class Chunk {
   private _nextId = 1;
   private _container: Container;
 
-  constructor(private _id: ChunkId, private _width: number, private _height: number) {
+  constructor(private _id: ChunkId) {
     this._container = new Container();
   }
 
