@@ -46,7 +46,7 @@ class Eden {
   }
 
   private createPlayer(chunk: Chunk): Entity {
-    let playerId = Actions.eval(this._world, actCreate(EntityId.System, chunk.id, EntityType.Player, 1, 1))
+    let playerId = this._world.eval(actCreate(EntityId.System, chunk.id, EntityType.Player, 1, 1)) as EntityId;
     let player = chunk.entity(playerId);
     chunk.addEntity(player);
 
@@ -66,10 +66,10 @@ class Eden {
   private keyDown(evt: KeyboardEvent) {
     switch (evt.keyCode) {
       // Move.
-      case Key.W: this.move(0, -1); break;
-      case Key.S: this.move(0, 1); break;
-      case Key.A: this.move(-1, 0); break;
-      case Key.D: this.move(1, 0); break;
+      case Key.UP: case Key.W: this.move(0, -1); break;
+      case Key.DOWN: case Key.S: this.move(0, 1); break;
+      case Key.LEFT: case Key.A: this.move(-1, 0); break;
+      case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
       // Go.
       case Key.G: this.go(); break;
@@ -91,7 +91,7 @@ class Eden {
   }
 
   private move(dx: number, dy: number) {
-    Actions.eval(this._world, actMove(EntityId.System, this._chunk.id, this._player.id, dx, dy));
+    this._world.eval(actMove(EntityId.System, this._chunk.id, this._player.id, dx, dy));
   }
 
   private go() {
@@ -100,7 +100,7 @@ class Eden {
       let toChunk = portal.getChunk(Var.PortalChunk);
       let toX = portal.getNum(Var.PortalX);
       let toY = portal.getNum(Var.PortalY);
-      Actions.eval(this._world, actTransfer(this._player.id, this._chunk.id, this._player.id, toChunk, toX, toY));
+      this._world.eval(actTransfer(this._player.id, this._chunk.id, this._player.id, toChunk, toX, toY));
     }
   }
 
@@ -120,7 +120,7 @@ class Eden {
   }
 
   private create(type: EntityType) {
-    Actions.eval(this._world, actCreate(this._player.id, this._chunk.id, type, this._player.x, this._player.y));
+    this._world.eval(actCreate(this._player.id, this._chunk.id, type, this._player.x, this._player.y));
   }
 
   private tick() {

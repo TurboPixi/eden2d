@@ -3,9 +3,9 @@ import { Chunk, ChunkId } from "./chunk";
 import { World } from "./world";
 
 export enum ActionType {
-  Create = 0,   // [chunk, ent-type, x, y]
-  Move = 1,     // [chunk, ent, dx, dy]
-  Transfer = 2, // [from, ent, to, x, y]
+  Create = 0,   // (chunk, ent-type, x, y) => ent
+  Move = 1,     // (chunk, ent, dx, dy)
+  Transfer = 2, // (from, ent, to, x, y)
 }
 
 export interface Action {
@@ -38,11 +38,27 @@ export function actTransfer(actor: EntityId, from: ChunkId, target: EntityId, to
   }
 }
 
+interface Rule {
+  eval(action: Action): Action;
+}
+
 export class Actions {
+  private _rules: Rule[] = [];
 
-  private constructor() { }
+  constructor(private _world: World) { }
 
-  static eval(world: World, action: Action): EntityId {
+  addRules(rule: Rule) {
+    this._rules.push(rule);
+  }
+
+  eval(action: Action): any {
+    for (var rule of this._rules) {
+      action = rule.eval(action);
+    }
+    return this.exec(action);
+  }
+
+  private exec(action: Action): any {
     switch (action.type) {
       case ActionType.Create: {
         let chunkId = action.args[0] as ChunkId;
@@ -50,7 +66,7 @@ export class Actions {
         let x = action.args[2] as number;
         let y = action.args[3] as number;
 
-        let chunk = world.chunk(chunkId);
+        let chunk = this._world.chunk(chunkId);
         let ent = new Entity(entType);
         chunk.addEntity(ent, x, y);
         return ent.id;
@@ -62,7 +78,7 @@ export class Actions {
         let dx = action.args[2] as number;
         let dy = action.args[3] as number;
 
-        let chunk = world.chunk(chunkId);
+        let chunk = this._world.chunk(chunkId);
         let ent = chunk.entity(entId);
         ent.move(ent.x + dx, ent.y + dy);
         break;
@@ -75,21 +91,19 @@ export class Actions {
         let x = action.args[3] as number;
         let y = action.args[4] as number;
 
-        let from = world.chunk(fromId);
+        let from = this._world.chunk(fromId);
         let ent = from.entity(entId);
-        let to = world.chunk(toId);
+        let to = this._world.chunk(toId);
         to.addEntity(ent, x, y);
         break;
       }
     }
-
-    return EntityId.Unknown;
   }
 }
 
 export function portal(world: World, type: EntityType, fromId: ChunkId, fx: number, fy: number, toId: ChunkId, tx: number, ty: number) {
   let from = world.chunk(fromId);
-  let entId = Actions.eval(world, actCreate(EntityId.System, fromId, type, fx, fy));
+  let entId = world.eval(actCreate(EntityId.System, fromId, type, fx, fy)) as EntityId;
   let ent = from.entity(entId);
   ent.setChunk(Var.PortalChunk, toId);
   ent.setNum(Var.PortalX, tx);

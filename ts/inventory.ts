@@ -20,12 +20,12 @@ export class Inventory {
   get container(): Container { return this._invChunk.container }
 
   take(target: Entity) {
-    Actions.eval(this._world, actTransfer(this._player.id, target.chunk.id, target.id, this._invChunk.id, this._invSlot, 0));
+    this._world.eval(actTransfer(this._player.id, target.chunk.id, target.id, this._invChunk.id, this._invSlot, 0));
   }
 
   put(chunk: Chunk, x: number, y: number) {
     let target = topWithVar(this._invChunk, Var.Portable, this._invSlot, 0);
-    Actions.eval(this._world, actTransfer(this._player.id, this._invChunk.id, target.id, chunk.id, x, y));
+    this._world.eval(actTransfer(this._player.id, this._invChunk.id, target.id, chunk.id, x, y));
   }
 
   select(slot: number) {
