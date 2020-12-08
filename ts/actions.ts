@@ -3,12 +3,13 @@ import { Chunk, ChunkId } from "./chunk";
 import { World } from "./world";
 
 export type Prim = string | number | boolean;
-export type Call = [string, { [arg: string]: Prim | Expr }]
-export type Def = ['def', string,
-  { [arg: string]: { [constraint: string]: any } | string },
-  "native" | Expr[]
-];
-export type Expr = Prim | Call | Def
+export type Type = "str" | "num" | "bool" | "ent" | "chunk" | "type";
+export type Call = [string, Args];
+export type Args = { [arg: string]: Expr };
+export type Def = ['def', string, Sig, Impl];
+export type Sig = { [arg: string]: string[] | Type };
+export type Impl = ["native", string] | Expr[];
+export type Expr = Prim | Call | Def;
 
 export const Define = "def";
 export const Native = "native";
@@ -19,18 +20,19 @@ export enum Natives {
   Transfer = "transfer",
 }
 
-var defMove: Def = [
-  Define, Natives.Move, {
-    ent: { type: 'Entity' },
-    x: 'Num',
-    y: 'Num',
-  },
-  Native
+var _nativeDefs: Def[] = [
+  [ Define, Natives.Create, { type: 'type', x: 'num', y: 'num' }, [Native, Natives.Create] ],
+  [ Define, Natives.Move, { ent: 'ent', dx: 'num', dy: 'num' }, [Native, Natives.Move] ],
+  [ Define, Natives.Transfer, { ent: 'ent', chunk: 'chunk', x: 'num', y: 'num' }, [Native, Natives.Transfer] ],
 ];
 
 export class Actions {
+  private _defs: { [name: string]: Def[] } = {};
+
   constructor(private _world: World) {
-    this.define(defMove);
+    for (let def of _nativeDefs) {
+      this.define(def);
+    }
   }
 
   eval(expr: Expr): any {
@@ -55,36 +57,73 @@ export class Actions {
   }
 
   private define(def: Def): any {
-    // TODO
+    let name = def[1];
+    if (!(name in this._defs)) {
+      this._defs[name] = [];
+    }
+    // TODO: validate def syntax.
+    this._defs[name].push(def);
   }
 
   private call(call: Call): any {
     let name = call[0];
     let args = call[1];
-    switch (name) {
-      case Natives.Create: {
-        let chunk = this.eval(args['chunk']);
-        let type = this.eval(args['type']);
-        let x = this.eval(args['x']);
-        let y = this.eval(args['y']);
-        return this.create(chunk, type, x, y);
-      }
 
-      case Natives.Move: {
-        let ent = this.eval(args['ent']);
-        let dx = this.eval(args['dx']);
-        let dy = this.eval(args['dy']);
-        return this.move(ent, dx, dy);
+    let defs = this._defs[name];
+    let last: any = undefined;
+    outer:
+    for (let def of defs) {
+      let sig = def[2];
+      for (let arg in sig) {
+        if (!(arg in args)) {
+          // Missing arg; skip this def.
+          continue outer;
+        }
+        // TODO: validate type
       }
-
-      case Natives.Transfer: {
-        let ent = this.eval(args['ent']);
-        let chunk = this.eval(args['chunk']);
-        let x = this.eval(args['x']);
-        let y = this.eval(args['y']);
-        return this.transfer(ent, chunk, x, y);
-      }
+      let impl = def[3];
+      last = this.exec(impl, args);
     }
+
+    // TODO: Ew, gross. Language design issue -- what to return when multiple defs match?
+    return last;
+  }
+
+  private exec(impl: Impl, args: Args): any {
+    if (impl[0] == Native) {
+      let name = impl[1];
+      switch (name) {
+        case Natives.Create: {
+          let chunk = this.eval(args['chunk']);
+          let type = this.eval(args['type']);
+          let x = this.eval(args['x']);
+          let y = this.eval(args['y']);
+          return this.create(chunk, type, x, y);
+        }
+
+        case Natives.Move: {
+          let ent = this.eval(args['ent']);
+          let dx = this.eval(args['dx']);
+          let dy = this.eval(args['dy']);
+          return this.move(ent, dx, dy);
+        }
+
+        case Natives.Transfer: {
+          let ent = this.eval(args['ent']);
+          let chunk = this.eval(args['chunk']);
+          let x = this.eval(args['x']);
+          let y = this.eval(args['y']);
+          return this.transfer(ent, chunk, x, y);
+        }
+
+        default:
+          // TODO: log.
+          break;
+      }
+      return undefined;
+    }
+
+    // TODO: expressions.
     return undefined;
   }
 

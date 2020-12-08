@@ -97,7 +97,6 @@ class Eden {
 
   private move(dx: number, dy: number) {
     this._world.eval([Natives.Move, {
-      chunk: this._chunk.id,
       ent: this._player.id,
       dx: dx, dy: dy
     }]) as EntityId;
