@@ -1,31 +1,57 @@
-World structure use-cases:
+Action Expressionss
+- Expression tree
+- Prop Name + type (avoid runtime type mismatch)
+  - Runtime type checking (necessary?)
+- Property Matching dispatch (filter, not query)
+  - Physical Scope (depends upon location/target of action)
+  - No recursion (or mutual)
+    - Only other funcs in scope, or down scope
+    - Does this actually prevent runaways?
 
-- Floor/ground:
-  Two types, with transitions
-  Maybe handle things like rugs, alternate flora
+Types
+- int (avoid reals?)
+- string
+- chunk
+- entity
 
-- Wall structure (presence for all four possible walls)
-  One wall type per cell?
-  Wall decorations:
-    Windows
-    Torches, banners.
-    Shelves, etc. (could just be static container objects)
+- Mana as computation driver.
+  - Limits to avoid runaway damage
+  - Preserve progressive disclosure, feeling of discovery
+  - Cost for physical side-effects.
+  - Made by sacrificing entities?
+  - Stored mana
+  - Scarcity breeds creativity; useful driver of game
+- Entities as debugging tools.
+  - Some entities/properties hard to see without special tools.
+- Avoiding artificial "levels"
+  - Actal skill, accumulated knowledge, and possessions drive abilities.
+  - Access controls; related to mana input? Skill?
+- Programs
+  - Simple expression language internally
+  - Intentionally obscure tiled visual language in-game
+    - Different expressions in different areas/cultures?
+  - Expressed as tiles, on/in objects (special chunk?)
+  - Expression chunk size limits program complexity
+  - Maybe special programs expressed in-world
+    - E.g., moving physical objects around to express powerful programs
+  - Alternate media - programs as music?
+- Metaprogramming
+  - Programs as entities - side-effects create new programs
+- Program communication ("IPC")
+  - Done through physical side-effects
+  - "Big" programs created 
+- Aesthetic / consistency feedback
+  - Avoid "weirdness" in the world
+  - Consistency depends upon broad agreement, shared illusion
+  - E.g., rendering a sword as an orange confuses other players, therefore unstable
+  - How to gather feedback?
 
-- Static objects:
-  Tables
-  Chairs (people sitting in them?)
-    Direction?
-  Stairs
-    Direction + up/down?
-  Containers (chests, etc).
-  Trees, other large plants
+(create [chunk] [ent-type])
+(move [chunk] [ent] [dx] [dy])
+(transfer [from-chunk] [ent] [to-chunk] [x] [y])
 
-- Dynamic objects:
-  Inventory objects, food, etc.
-  Small containers
-  Handle things like plates + food?
-
-- Actors:
-  Player, non-player
-  Maybe allow two per cell?
-
+move(
+  chunk,
+  create(chunk, "key"),
+  1, 1
+)
