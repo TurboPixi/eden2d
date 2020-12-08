@@ -1,4 +1,4 @@
-import { Entity, EntityId, EntityType, Var } from "./entity";
+import { entChunk, Entity, EntityId, EntityType, Var } from "./entity";
 import { Chunk, ChunkId } from "./chunk";
 import { World } from "./world";
 
@@ -21,7 +21,6 @@ export enum Natives {
 
 var defMove: Def = [
   Define, Natives.Move, {
-    chunk: 'Chunk',
     ent: { type: 'Entity' },
     x: 'Num',
     y: 'Num',
@@ -72,20 +71,18 @@ export class Actions {
       }
 
       case Natives.Move: {
-        let chunk = this.eval(args['chunk']);
         let ent = this.eval(args['ent']);
         let dx = this.eval(args['dx']);
         let dy = this.eval(args['dy']);
-        return this.move(chunk, ent, dx, dy);
+        return this.move(ent, dx, dy);
       }
 
       case Natives.Transfer: {
-        let from = this.eval(args['from']);
         let ent = this.eval(args['ent']);
-        let to = this.eval(args['to']);
+        let chunk = this.eval(args['chunk']);
         let x = this.eval(args['x']);
         let y = this.eval(args['y']);
-        return this.transfer(from, ent, to, x, y);
+        return this.transfer(ent, chunk, x, y);
       }
     }
     return undefined;
@@ -94,21 +91,22 @@ export class Actions {
   private create(chunkId: ChunkId, entType: EntityType, x: number, y: number): EntityId {
     let chunk = this._world.chunk(chunkId);
     let ent = new Entity(entType);
-    chunk.addEntity(ent, x, y);
-    return ent.id;
+    return chunk.addEntity(ent, x, y);
   }
 
-  private move(chunkId: ChunkId, entId: EntityId, dx: number, dy: number): void {
+  private move(entId: EntityId, dx: number, dy: number): void {
+    let chunkId = entChunk(entId);
     let chunk = this._world.chunk(chunkId);
     let ent = chunk.entity(entId);
     ent.move(ent.x + dx, ent.y + dy);
   }
 
-  private transfer(fromId: ChunkId, entId: EntityId, toId: ChunkId, x: number, y: number): void {
+  private transfer(entId: EntityId, toId: ChunkId, x: number, y: number): EntityId {
+    let fromId = entChunk(entId);
     let from = this._world.chunk(fromId);
     let ent = from.entity(entId);
     let to = this._world.chunk(toId);
-    to.addEntity(ent, x, y);
+    return to.addEntity(ent, x, y);
   }
 }
 

@@ -1,5 +1,5 @@
 import { Container } from "pixi.js";
-import { Entity, EntityId } from "./entity";
+import { entIndex, Entity, EntityId, makeEntId } from "./entity";
 
 export type ChunkId = number;
 
@@ -34,10 +34,10 @@ export class Chunk {
   }
 
   entity(id: EntityId): Entity {
-    return this._entities[id];
+    return this._entities[entIndex(id)];
   }
 
-  addEntity(entity: Entity, x?: number, y?: number) {
+  addEntity(entity: Entity, x?: number, y?: number): EntityId {
     if (entity.chunk) {
       if (entity.chunk == this) {
         return;
@@ -45,10 +45,13 @@ export class Chunk {
       entity.chunk.removeEntity(entity);
     }
 
-    entity.setChunkId(this, this._nextId++);
-    this._entities[entity.id] = entity;
+    let idx = this._nextId++;
+    let entId = makeEntId(this._id, idx);
+    entity.setChunkAndId(this, entId);
+    this._entities[idx] = entity;
     this._container.addChild(entity.sprite);
     entity.move(x || 0, y || 0);
+    return entId;
   }
 
   removeEntity(entity: Entity) {
@@ -56,8 +59,8 @@ export class Chunk {
       return;
     }
 
-    entity.setChunk(null, 0);
-    delete this._entities[entity.id];
+    entity.setChunkAndId(null, EntityId.Unknown);
+    delete this._entities[entIndex(entity.id)];
     this._container.removeChild(entity.sprite);
   }
 

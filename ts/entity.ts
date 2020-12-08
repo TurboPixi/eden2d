@@ -19,9 +19,26 @@ enum Type {
   Chunk = "chunk",
 }
 
+// This is kind of gross. An entity id is a number, and we need to bury both chunk id and index in a single value.
+// In a sane world, we'd do this with a 64-bit value, but this is js, so we're stuck playing float/int tricks to get 52 bits.
+// Note that we can't use bit operators for this because they implicitly coerce numeric values to 32 bits, because... js.
+
 export enum EntityId {
   Unknown = -1,
-  System = 0,
+}
+
+const _2_26 = 67108864;
+export function makeEntId(chunk: ChunkId, idx: number): EntityId {
+  return (chunk * _2_26) + idx as EntityId;
+}
+
+export function entChunk(entId: EntityId): ChunkId {
+  return Math.floor(entId / _2_26) as ChunkId;
+}
+
+export function entIndex(entId: EntityId): number {
+  let chunk = entChunk(entId);
+  return entId - chunk * _2_26;
 }
 
 export enum EntityType {
@@ -135,7 +152,7 @@ export class Entity {
     return this._def.vars[fullKey];
   }
 
-  setChunkId(chunk: Chunk, id: EntityId) {
+  setChunkAndId(chunk: Chunk, id: EntityId) {
     this._chunk = chunk;
     this._id = id;
   }

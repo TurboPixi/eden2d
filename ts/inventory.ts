@@ -21,9 +21,8 @@ export class Inventory {
 
   take(target: Entity) {
     this._world.eval([Natives.Transfer, {
-      from: target.chunk.id,
       ent: target.id,
-      to: this._invChunk.id,
+      chunk: this._invChunk.id,
       x: this._invSlot, y: 0
     }]);
   }
@@ -31,9 +30,8 @@ export class Inventory {
   put(chunk: Chunk, x: number, y: number) {
     let target = topWithVar(this._invChunk, Var.Portable, this._invSlot, 0);
     this._world.eval([Natives.Transfer, {
-      from: this._invChunk.id,
       ent: target.id,
-      to: chunk.id,
+      chunk: chunk.id,
       x: x, y: y
     }])
   }

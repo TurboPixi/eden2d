@@ -1,5 +1,5 @@
 import { Application } from "pixi.js";
-import {  Natives, portal, topWithVar } from "./actions";
+import { Natives, portal, topWithVar } from "./actions";
 import { Chunk } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Inventory } from "./inventory";
@@ -110,9 +110,8 @@ class Eden {
       let toX = portal.getNum(Var.PortalX);
       let toY = portal.getNum(Var.PortalY);
       this._world.eval([Natives.Transfer, {
-        from: this._chunk.id,
         ent: this._player.id,
-        to: toChunk,
+        chunk: toChunk,
         x: toX, y: toY
       }]);
     }
