@@ -2,108 +2,124 @@ import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Chunk, ChunkId } from "./chunk";
 import { World } from "./world";
 
-export enum ActionType {
-  Create = 0,   // (chunk, ent-type, x, y) => ent
-  Move = 1,     // (chunk, ent, dx, dy)
-  Transfer = 2, // (from, ent, to, x, y)
+export type Prim = string | number | boolean;
+export type Call = [string, { [arg: string]: Prim | Expr }]
+export type Def = ['def', string,
+  { [arg: string]: { [constraint: string]: any } | string },
+  "native" | Expr[]
+];
+export type Expr = Prim | Call | Def
+
+export const Define = "def";
+export const Native = "native";
+
+export enum Natives {
+  Create = "create",
+  Move = "move",
+  Transfer = "transfer",
 }
 
-export interface Action {
-  type: ActionType;
-  actor: EntityId;
-  args: any[];
-}
-
-export function actCreate(actor: EntityId, chunk: ChunkId, type: EntityType, x: number, y: number): Action {
-  return {
-    type: ActionType.Create,
-    actor: actor,
-    args: [chunk, type, x, y]
-  }
-}
-
-export function actMove(actor: EntityId, chunk: ChunkId, target: EntityId, dx: number, dy: number): Action {
-  return {
-    type: ActionType.Move,
-    actor: actor,
-    args: [chunk, target, dx, dy]
-  }
-}
-
-export function actTransfer(actor: EntityId, from: ChunkId, target: EntityId, to: ChunkId, x: number, y: number): Action {
-  return {
-    type: ActionType.Transfer,
-    actor: actor,
-    args: [from, target, to, x, y]
-  }
-}
-
-interface Rule {
-  eval(action: Action): Action;
-}
+var defMove: Def = [
+  Define, Natives.Move, {
+    chunk: 'Chunk',
+    ent: { type: 'Entity' },
+    x: 'Num',
+    y: 'Num',
+  },
+  Native
+];
 
 export class Actions {
-  private _rules: Rule[] = [];
-
-  constructor(private _world: World) { }
-
-  addRules(rule: Rule) {
-    this._rules.push(rule);
+  constructor(private _world: World) {
+    this.define(defMove);
   }
 
-  eval(action: Action): any {
-    for (var rule of this._rules) {
-      action = rule.eval(action);
+  eval(expr: Expr): any {
+    switch (typeof expr) {
+      case 'number':
+      case 'string':
+      case 'boolean':
+        return expr;
+
+      case 'object':
+        if (expr.constructor == Array) {
+          if (typeof expr[0] != "string") {
+            return undefined;
+          }
+          switch (expr[0]) {
+            case 'def': return this.define(expr as Def);
+            default: return this.call(expr as Call);
+          }
+        }
+        return undefined;
     }
-    return this.exec(action);
   }
 
-  private exec(action: Action): any {
-    switch (action.type) {
-      case ActionType.Create: {
-        let chunkId = action.args[0] as ChunkId;
-        let entType = action.args[1] as EntityType;
-        let x = action.args[2] as number;
-        let y = action.args[3] as number;
+  private define(def: Def): any {
+    // TODO
+  }
 
-        let chunk = this._world.chunk(chunkId);
-        let ent = new Entity(entType);
-        chunk.addEntity(ent, x, y);
-        return ent.id;
+  private call(call: Call): any {
+    let name = call[0];
+    let args = call[1];
+    switch (name) {
+      case Natives.Create: {
+        let chunk = this.eval(args['chunk']);
+        let type = this.eval(args['type']);
+        let x = this.eval(args['x']);
+        let y = this.eval(args['y']);
+        return this.create(chunk, type, x, y);
       }
 
-      case ActionType.Move: {
-        let chunkId = action.args[0] as ChunkId;
-        let entId = action.args[1] as EntityId;
-        let dx = action.args[2] as number;
-        let dy = action.args[3] as number;
-
-        let chunk = this._world.chunk(chunkId);
-        let ent = chunk.entity(entId);
-        ent.move(ent.x + dx, ent.y + dy);
-        break;
+      case Natives.Move: {
+        let chunk = this.eval(args['chunk']);
+        let ent = this.eval(args['ent']);
+        let dx = this.eval(args['dx']);
+        let dy = this.eval(args['dy']);
+        return this.move(chunk, ent, dx, dy);
       }
 
-      case ActionType.Transfer: {
-        let fromId = action.args[0] as ChunkId;
-        let entId = action.args[1] as EntityId;
-        let toId = action.args[2] as ChunkId;
-        let x = action.args[3] as number;
-        let y = action.args[4] as number;
-
-        let from = this._world.chunk(fromId);
-        let ent = from.entity(entId);
-        let to = this._world.chunk(toId);
-        to.addEntity(ent, x, y);
-        break;
+      case Natives.Transfer: {
+        let from = this.eval(args['from']);
+        let ent = this.eval(args['ent']);
+        let to = this.eval(args['to']);
+        let x = this.eval(args['x']);
+        let y = this.eval(args['y']);
+        return this.transfer(from, ent, to, x, y);
       }
     }
+    return undefined;
+  }
+
+  private create(chunkId: ChunkId, entType: EntityType, x: number, y: number): EntityId {
+    let chunk = this._world.chunk(chunkId);
+    let ent = new Entity(entType);
+    chunk.addEntity(ent, x, y);
+    return ent.id;
+  }
+
+  private move(chunkId: ChunkId, entId: EntityId, dx: number, dy: number): void {
+    let chunk = this._world.chunk(chunkId);
+    let ent = chunk.entity(entId);
+    ent.move(ent.x + dx, ent.y + dy);
+  }
+
+  private transfer(fromId: ChunkId, entId: EntityId, toId: ChunkId, x: number, y: number): void {
+    let from = this._world.chunk(fromId);
+    let ent = from.entity(entId);
+    let to = this._world.chunk(toId);
+    to.addEntity(ent, x, y);
   }
 }
 
 export function portal(world: World, type: EntityType, fromId: ChunkId, fx: number, fy: number, toId: ChunkId, tx: number, ty: number) {
   let from = world.chunk(fromId);
-  let entId = world.eval(actCreate(EntityId.System, fromId, type, fx, fy)) as EntityId;
+  let entId = world.eval([Natives.Create, {
+    chunk: fromId,
+    type: type,
+    x: fx, y: fy
+  }]);
+
   let ent = from.entity(entId);
   ent.setChunk(Var.PortalChunk, toId);
   ent.setNum(Var.PortalX, tx);

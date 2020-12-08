@@ -1,6 +1,6 @@
 import { Application } from "pixi.js";
-import { actCreate, Actions, actMove, actTransfer, portal, topWithVar } from "./actions";
-import { Chunk, ChunkId } from "./chunk";
+import {  Natives, portal, topWithVar } from "./actions";
+import { Chunk } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Inventory } from "./inventory";
 import { Key } from "./key";
@@ -46,7 +46,12 @@ class Eden {
   }
 
   private createPlayer(chunk: Chunk): Entity {
-    let playerId = this._world.eval(actCreate(EntityId.System, chunk.id, EntityType.Player, 1, 1)) as EntityId;
+    let playerId = this._world.eval([Natives.Create, {
+      chunk: chunk.id,
+      type: EntityType.Player,
+      x: 1, y: 1,
+    }]) as EntityId;
+
     let player = chunk.entity(playerId);
     chunk.addEntity(player);
 
@@ -91,7 +96,11 @@ class Eden {
   }
 
   private move(dx: number, dy: number) {
-    this._world.eval(actMove(EntityId.System, this._chunk.id, this._player.id, dx, dy));
+    this._world.eval([Natives.Move, {
+      chunk: this._chunk.id,
+      ent: this._player.id,
+      dx: dx, dy: dy
+    }]) as EntityId;
   }
 
   private go() {
@@ -100,7 +109,12 @@ class Eden {
       let toChunk = portal.getChunk(Var.PortalChunk);
       let toX = portal.getNum(Var.PortalX);
       let toY = portal.getNum(Var.PortalY);
-      this._world.eval(actTransfer(this._player.id, this._chunk.id, this._player.id, toChunk, toX, toY));
+      this._world.eval([Natives.Transfer, {
+        from: this._chunk.id,
+        ent: this._player.id,
+        to: toChunk,
+        x: toX, y: toY
+      }]);
     }
   }
 
@@ -120,7 +134,12 @@ class Eden {
   }
 
   private create(type: EntityType) {
-    this._world.eval(actCreate(this._player.id, this._chunk.id, type, this._player.x, this._player.y));
+    this._world.eval([Natives.Create, {
+      chunk: this._chunk.id,
+      type: type,
+      x: this._player.x,
+      y: this._player.y,
+    }]);
   }
 
   private tick() {

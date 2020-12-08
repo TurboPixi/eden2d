@@ -9,10 +9,11 @@ Action Expressionss
     - Does this actually prevent runaways?
 
 Types
-- int (avoid reals?)
+- boolean
+- number
 - string
-- chunk
-- entity
+- chunk  (id)
+- entity (id)
 
 - Mana as computation driver.
   - Limits to avoid runaway damage
@@ -46,12 +47,25 @@ Types
   - E.g., rendering a sword as an orange confuses other players, therefore unstable
   - How to gather feedback?
 
-(create [chunk] [ent-type])
-(move [chunk] [ent] [dx] [dy])
-(transfer [from-chunk] [ent] [to-chunk] [x] [y])
 
-move(
-  chunk,
-  create(chunk, "key"),
-  1, 1
-)
+
+['def', 'move', {
+    chunk: {type: 'chunk'},
+    ent: {type: 'entity'},
+    x: {type: 'num'},
+    y: {type: 'num'}
+  },
+  [
+    // expressions
+  ]
+]
+
+['move', {
+  chunk: chunk,
+  entity: ['create', {
+    chunk: chunk,
+    type: "key",
+  }],
+  x: 1,
+  y: 1,
+]

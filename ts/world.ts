@@ -1,6 +1,6 @@
-import { actCreate, Action, Actions } from "./actions";
+import { Expr, Actions, Natives } from "./actions";
 import { Chunk, ChunkId } from "./chunk";
-import { EntityId, EntityType, Var } from "./entity";
+import { EntityType } from "./entity";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World {
@@ -22,8 +22,8 @@ export class World {
     return this._chunks[id];
   }
 
-  eval(action: Action): EntityId {
-    return this._actions.eval(action);
+  eval(expr: Expr): any {
+    return this._actions.eval(expr);
   }
 
   toyChunk(): Chunk {
@@ -31,12 +31,20 @@ export class World {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        this.eval(actCreate(EntityId.System, chunk.id, EntityType.TileBlue, x, y))
+        this.eval([Natives.Create, {
+          chunk: chunk.id,
+          type: EntityType.TileBlue,
+          x: x, y: y
+        }]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      this.eval(actCreate(EntityId.System, chunk.id, EntityType.WallBlue, x, 0))
+      this.eval([Natives.Create, {
+        chunk: chunk.id,
+        type: EntityType.WallBlue,
+        x: x, y: 0
+      }]);
     }
 
     return chunk;
