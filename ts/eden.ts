@@ -1,4 +1,5 @@
 import { Application } from "pixi.js";
+import { bindTransformFeedbackInfo } from "twgl.js";
 import { Natives, portal, topWithVar } from "./actions";
 import { Chunk } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
@@ -91,6 +92,13 @@ class Eden {
       case Key._1: case Key._2: case Key._3: case Key._4:
       case Key._5: case Key._6: case Key._7: case Key._8: case Key._9:
         this._inv.select(evt.keyCode - Key._1)
+        break;
+
+      // Testes.
+      case Key.Q:
+        this._world.eval(["testes", {
+          chunk: this._player.chunk.id
+        }]);
         break;
     }
   }

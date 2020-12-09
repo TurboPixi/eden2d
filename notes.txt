@@ -9,11 +9,12 @@ Action Expressionss
     - Does this actually prevent runaways?
 
 Types
-- boolean
-- number
-- string
-- chunk  (id)
-- entity (id)
+- bool
+- num
+- str
+- chunk (id)
+- ent   (id)
+- type  (of entity)
 
 - Mana as computation driver.
   - Limits to avoid runaway damage
