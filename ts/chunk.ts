@@ -37,7 +37,7 @@ export class Chunk {
     return this._entities[entIndex(id)];
   }
 
-  addEntity(entity: Entity, x?: number, y?: number): EntityId {
+  addEntity(entity: Entity): EntityId {
     if (entity.chunk) {
       if (entity.chunk == this) {
         return;
@@ -50,7 +50,6 @@ export class Chunk {
     entity.setChunkAndId(this, entId);
     this._entities[idx] = entity;
     this._container.addChild(entity.sprite);
-    entity.move(x || 0, y || 0);
     return entId;
   }
 

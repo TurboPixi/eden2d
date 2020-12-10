@@ -1,7 +1,7 @@
 import { entChunk, EntityId, Var } from "../entity";
 import { World } from "../world";
 import { builtins } from "./builtins";
-import { EArgs, ECall, EDef, EExpr, EGet, EImpl, ELet, ELoc, ENative, ESet, Frame, KDef, KGet, KLet, KNative, KSet } from "./script";
+import { EArgs, ECall, EDef, EExpr, EGet, EImpl, ELet, ELoc, ENative, ESet, Frame } from "./script";
 
 export class Actions {
   private _defs: { [name: string]: EDef[] } = {};
@@ -24,16 +24,18 @@ export class Actions {
           if (typeof expr[0] != "string") {
             return undefined;
           }
+
+          let e = expr as EExpr;
           switch (expr[0]) {
-            case KDef: return this.def(expr as EDef);
-            case KLet: return this.let(expr as ELet, stack);
-            case KSet: return this.set(expr as ESet, stack);
-            case KGet: return this.get(expr as EGet, stack);
+            case 'def': return this.def(e as EDef);
+            case 'let': return this.let(e as ELet, stack);
+            case 'get': return this.set(e as ESet, stack);
+            case 'set': return this.get(e as EGet, stack);
             default:
               if (expr.length == 1) {
-                return this.loc(expr, stack);
+                return this.loc(e as ELoc, stack);
               } else {
-                return this.call(expr as ECall, stack);
+                return this.call(e as ECall, stack);
               }
           }
         }
@@ -128,7 +130,7 @@ export class Actions {
 
   private exec(impl: EImpl, frame: Frame, stack: Frame[]): any {
     switch (impl[0]) {
-      case KNative: {
+      case 'native': {
         // Call native impl.
         let native = impl as ENative;
         let fn = native[1] as (world: World, frame: Frame) => any;

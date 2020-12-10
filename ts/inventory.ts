@@ -1,7 +1,6 @@
 import { Container } from "pixi.js";
-import { Jump, topWithVar } from "./script/builtins";
 import { Chunk } from "./chunk";
-import { Entity, EntityType, Var } from "./entity";
+import { Entity, EntityId, EntityType, Var } from "./entity";
 import { World } from "./world";
 
 export class Inventory {
@@ -19,13 +18,15 @@ export class Inventory {
 
   get container(): Container { return this._invChunk.container }
 
-  take(target: Entity) {
-    this._world.eval([Jump, { ent: target.id, chunk: this._invChunk.id, x: this._invSlot, y: 0 }]);
+  take(target: EntityId) {
+    this._world.eval(['jump', { ent: target, chunk: this._invChunk.id, x: this._invSlot, y: 0 }]);
   }
 
   put(chunk: Chunk, x: number, y: number) {
-    let target = topWithVar(this._invChunk, Var.Portable, this._invSlot, 0);
-    this._world.eval([Jump, { ent: target.id, chunk: chunk.id, x: x, y: y }])
+    this._world.eval(
+      ['let', { 'target': ['topWithVar', { chunk: this._invChunk.id, x: this._invSlot, y: 0, var: Var.Portable }] }, [
+        ['jump', { ent: ['target'], chunk: chunk.id, x: x, y: y }]
+      ]]);
   }
 
   select(slot: number) {

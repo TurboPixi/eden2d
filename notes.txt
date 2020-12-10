@@ -57,3 +57,28 @@ Actions
   - How to gather feedback?
 - NPC scripts as programs
   - Power to rewrite NPC conversationa nnd behavior
+
+
+['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'], [
+  ['let', { ent: ['new', { chunk: ['from'], type: ['type'] }] }, [
+    ['move', { ent: ['ent'], x: ['fx'], y: ['fy'] }],
+    ['set', ['ent'], Var.PortalChunk, ['to']],
+    ['set', ['ent'], Var.PortalX, ['tx']],
+    ['set', ['ent'], Var.PortalY, ['ty']],
+    ['ent']
+  ]]]],
+
+[def portal [type from fx fy to tx ty]
+  [let {
+    ent:[new {
+      chunk:from
+      type:type
+    }]
+  }] [
+    [move {ent:ent x:fx y:fy}]
+    [set ent portalChunk to]
+    [set ent portalX tx]
+    [set ent portalY ty]
+    [ent]
+  ]
+]

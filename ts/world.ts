@@ -2,7 +2,6 @@ import { EExpr } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { EntityType } from "./entity";
 import { Actions } from "./script/actions";
-import { New } from "./script/builtins";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World {
@@ -33,12 +32,12 @@ export class World {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        this.eval([New, { chunk: chunk.id, type: EntityType.TileBlue, x: x, y: y }]);
+        this.eval(['move', { ent: ['new', { chunk: chunk.id, type: EntityType.TileBlue}], x: x, y: y}]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      this.eval([New, { chunk: chunk.id, type: EntityType.WallBlue, x: x, y: 0 }]);
+      this.eval(['move', { ent: ['new', { chunk: chunk.id, type: EntityType.WallBlue}], x: x, y: 0}]);
     }
 
     return chunk;

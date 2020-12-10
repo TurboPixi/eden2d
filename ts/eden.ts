@@ -1,13 +1,10 @@
 import { Application } from "pixi.js";
-import { Jump, Move, New, Portal } from "./script/builtins";
-import { topWithVar } from "./script/builtins";
 import { Chunk } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Inventory } from "./inventory";
 import { Key } from "./key";
 import { Resources } from "./res";
 import { World } from "./world";
-import { KGet } from "./script/script";
 
 class Eden {
   private _app: Application;
@@ -42,13 +39,13 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    this._world.eval([Portal, { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
-    this._world.eval([Portal, { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
+    this._world.eval(['portal', { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
+    this._world.eval(['portal', { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
     return chunk0;
   }
 
   private createPlayer(chunk: Chunk): Entity {
-    let playerId = this._world.eval([New, { chunk: chunk.id, type: EntityType.Player, x: 1, y: 1 }]) as EntityId;
+    let playerId = this._world.eval(['new', { chunk: chunk.id, type: EntityType.Player, x: 1, y: 1 }]) as EntityId;
 
     let player = chunk.entity(playerId);
     chunk.addEntity(player);
@@ -94,25 +91,23 @@ class Eden {
   }
 
   private move(dx: number, dy: number) {
-    this._world.eval([Move, { ent: this._player.id, dx: dx, dy: dy }]) as EntityId;
+    let x = this._player.x + dx;
+    let y = this._player.y + dy;
+    this._world.eval(['move', { ent: this._player.id, x: x, y: y }]) as EntityId;
   }
 
   private go() {
-    let portal = topWithVar(this._chunk, Var.Portal, this._player.x, this._player.y);
-    if (portal) {
-      this._world.eval([Jump, {
-        ent: this._player.id,
-        chunk: [KGet, portal.id, Var.PortalChunk],
-        x: [KGet, portal.id, Var.PortalX],
-        y: [KGet, portal.id, Var.PortalY],
-      }]);
-    }
+    this._world.eval(
+      ['let', { portal: ['topWithVar', { chunk: this._chunk.id, x: this._player.x, y: this._player.y, var: Var.Portal }] }, [
+        ['jump', { ent: this._player.id, chunk: ['get', ['portal'], Var.PortalChunk] }],
+        ['move', { ent: this._player.id, x: ['get', ['portal'], Var.PortalX], y: ['get', ['portal'], Var.PortalY], }]
+      ]]);
   }
 
   private take() {
     let x = this._player.x;
     let y = this._player.y;
-    let target = topWithVar(this._chunk, Var.Portable, x, y);
+    let target = this._world.eval(['topWithVar', { chunk: this._chunk.id, x: x, y: y, var: Var.Portable }]);
     if (target != null) {
       this._inv.take(target);
     }
@@ -125,12 +120,7 @@ class Eden {
   }
 
   private create(type: EntityType) {
-    this._world.eval([New, {
-      chunk: this._chunk.id,
-      type: type,
-      x: this._player.x,
-      y: this._player.y,
-    }]);
+    this._world.eval(['move', { ent: ['new', { chunk: this._chunk.id, type: type }], x: this._player.x, y: this._player.y }]);
   }
 
   private tick() {

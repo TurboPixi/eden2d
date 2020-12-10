@@ -50,42 +50,13 @@ interface EntityDef {
 }
 
 const _entityDefs: { [key: string]: EntityDef } = {
-  "cursor": {
-    img: ImageKey.TileBlueTile,
-    vars: {
-      ui: true,
-    },
-  },
-  "player": {
-    img: ImageKey.Player0,
-    vars: {},
-  },
-  "tile-blue": {
-    img: ImageKey.TileBlueTile,
-    vars: {},
-  },
-  "wall-blue": {
-    img: ImageKey.TileBlueWall,
-    vars: {},
-  },
-  "object-key": {
-    img: ImageKey.ObjectKey,
-    vars: {
-      portable: true,
-    },
-  },
-  "stair-down": {
-    img: ImageKey.TileStairDown,
-    vars: {
-      portal: true,
-    },
-  },
-  "stair-up": {
-    img: ImageKey.TileStairUp,
-    vars: {
-      portal: true,
-    },
-  },
+  "cursor": { img: ImageKey.TileBlueTile, vars: { ui: true } },
+  "player": { img: ImageKey.Player0, vars: {} },
+  "tile-blue": { img: ImageKey.TileBlueTile, vars: {} },
+  "wall-blue": { img: ImageKey.TileBlueWall, vars: {} },
+  "object-key": { img: ImageKey.ObjectKey, vars: { portable: true } },
+  "stair-down": { img: ImageKey.TileStairDown, vars: { portal: true } },
+  "stair-up": { img: ImageKey.TileStairUp, vars: { portal: true } },
 };
 
 export class Entity {
