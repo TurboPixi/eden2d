@@ -1,6 +1,7 @@
 import { Sprite } from "pixi.js";
 import { Chunk, ChunkId } from "./chunk";
 import { ImageKey, Resources } from "./res";
+import { Type } from "./actions";
 
 export enum Var {
   UI = "ui",                    // Bool marking entity as UI element.
@@ -10,13 +11,6 @@ export enum Var {
   PortalChunk = "portalchunk",  // A portal's target chunk.
   PortalX = "portalx",          // ... target coordinates.
   PortalY = "portaly",          // ...
-}
-
-enum Type {
-  Bool = "bool",
-  Num = "num",
-  Str = "str",
-  Chunk = "chunk",
 }
 
 // This is kind of gross. An entity id is a number, and we need to bury both chunk id and index in a single value.
@@ -95,8 +89,8 @@ const _entityDefs: { [key: string]: EntityDef } = {
   },
 };
 
-function varKey(key: Var, typ: Type): string {
-  return key + "-" + typ;
+function varKey(name: Var, typ: Type): string {
+  return name + "-" + typ;
 }
 
 export class Entity {
@@ -127,29 +121,19 @@ export class Entity {
     return this._spr;
   }
 
-  getBool(key: Var): boolean { return this.getVar(key, Type.Bool) as boolean }
-  getNum(key: Var): number { return this.getVar(key, Type.Num) as number }
-  getStr(key: Var): string { return this.getVar(key, Type.Str) as string }
-  getChunk(key: Var): ChunkId { return this.getVar(key, Type.Chunk) as ChunkId }
-
-  setBool(key: Var, val: boolean) { this.setVar(key, Type.Bool, val) }
-  setNum(key: Var, val: number) { this.setVar(key, Type.Num, val) }
-  setStr(key: Var, val: string) { this.setVar(key, Type.Str, val) }
-  setChunk(key: Var, val: ChunkId) { this.setVar(key, Type.Chunk, val) }
-
-  private setVar(key: Var, typ: Type, val: any) {
+  setVar(name: Var, typ: Type, val: any) {
     if (!this._vars) {
       this._vars = {};
     }
-    this._vars[varKey(key, typ)] = val;
+    this._vars[varKey(name, typ)] = val;
   }
 
-  private getVar(key: Var, typ: Type): any {
-    let fullKey = varKey(key, typ);
-    if (this._vars && (fullKey in this._vars)) {
-      return this._vars[fullKey];
+  getVar(name: Var, typ: Type): any {
+    let key = varKey(name, typ);
+    if (this._vars && (key in this._vars)) {
+      return this._vars[key];
     }
-    return this._def.vars[fullKey];
+    return this._def.vars[key];
   }
 
   setChunkAndId(chunk: Chunk, id: EntityId) {

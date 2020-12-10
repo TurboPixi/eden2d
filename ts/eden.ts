@@ -1,6 +1,5 @@
 import { Application } from "pixi.js";
-import { bindTransformFeedbackInfo } from "twgl.js";
-import { Natives, portal, topWithVar } from "./actions";
+import { Jump, Move, New, TChunk, TNum, topWithVar } from "./actions";
 import { Chunk } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Inventory } from "./inventory";
@@ -41,13 +40,15 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    portal(this._world, EntityType.StairDown, chunk0.id, 1, 5, chunk1.id, 2, 5);
-    portal(this._world, EntityType.StairUp, chunk1.id, 1, 5, chunk0.id, 2, 5);
+    // portal(this._world, EntityType.StairDown, chunk0.id, 1, 5, chunk1.id, 2, 5);
+    this._world.eval(['portal', {type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 2, ty: 5}]);
+    // portal(this._world, EntityType.StairUp, chunk1.id, 1, 5, chunk0.id, 2, 5);
+    this._world.eval(['portal', {type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5}]);
     return chunk0;
   }
 
   private createPlayer(chunk: Chunk): Entity {
-    let playerId = this._world.eval([Natives.Create, {
+    let playerId = this._world.eval([New, {
       chunk: chunk.id,
       type: EntityType.Player,
       x: 1, y: 1,
@@ -96,15 +97,13 @@ class Eden {
 
       // Testes.
       case Key.Q:
-        this._world.eval(["testes", {
-          chunk: this._player.chunk.id
-        }]);
+        this._world.eval(["testes", { chunk: this._player.chunk.id }]);
         break;
     }
   }
 
   private move(dx: number, dy: number) {
-    this._world.eval([Natives.Move, {
+    this._world.eval([Move, {
       ent: this._player.id,
       dx: dx, dy: dy
     }]) as EntityId;
@@ -113,10 +112,10 @@ class Eden {
   private go() {
     let portal = topWithVar(this._chunk, Var.Portal, this._player.x, this._player.y);
     if (portal) {
-      let toChunk = portal.getChunk(Var.PortalChunk);
-      let toX = portal.getNum(Var.PortalX);
-      let toY = portal.getNum(Var.PortalY);
-      this._world.eval([Natives.Transfer, {
+      let toChunk = portal.getVar(Var.PortalChunk, TChunk);
+      let toX = portal.getVar(Var.PortalX, TNum);
+      let toY = portal.getVar(Var.PortalY, TNum);
+      this._world.eval([Jump, {
         ent: this._player.id,
         chunk: toChunk,
         x: toX, y: toY
@@ -140,7 +139,7 @@ class Eden {
   }
 
   private create(type: EntityType) {
-    this._world.eval([Natives.Create, {
+    this._world.eval([New, {
       chunk: this._chunk.id,
       type: type,
       x: this._player.x,
@@ -157,7 +156,7 @@ class Eden {
     let w = this._app.view.width;
     let h = this._app.view.height;
 
-    let invId = this._player.getChunk(Var.Contents);
+    let invId = this._player.getVar(Var.Contents, TChunk);
     this._world.chunk(invId).container.setTransform(0, h - 64, 4, 4);
 
     let x = (this._player.x - 4) * 16;

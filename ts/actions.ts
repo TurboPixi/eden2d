@@ -3,39 +3,49 @@ import { Chunk, ChunkId } from "./chunk";
 import { World } from "./world";
 
 // TODO: Consider matching return type on func defs to further disambiguate.
-export type Expr = Primitive | Call | Definition;
+export type Expr = Primitive | Call | Definition | Let | Get;
+export type Type = "any" | "str" | "num" | "bool" | "ent" | "chunk" | "tent" | "type";
 type Primitive = string | number | boolean;
-type Type = "str" | "num" | "bool" | "ent" | "chunk" | "type";
 type Call = [string, Args];
 type Args = { [arg: string]: Expr };
 type Definition = ['def', string, Params, Impl];
 type Params = { [arg: string]: string[] | Type };
+type Let = ['let', Args, Expr[]];
+type Get = ['get', string]
 type Impl = Native | Expr[];
 type Native = ["native", string];
 
-type Frame = {[name: string]: Primitive};
+type Frame = { [name: string]: Primitive };
 
+// Keywords.
 export const Def = "def";
+export const Let = "let";
+export const Get = "get";
 export const Native = "native";
-export const TStr = "str";
-export const TNum = "num";
-export const TBool = "bool";
-export const TChunk = "chunk";
-export const TEnt = "ent";
-export const TType = "type";
+export const SetVar = "setvar";
+export const GetVar = "getvar";
 
-export enum Natives {
-  Local = "local",
-  Create = "create",
-  Move = "move",
-  Transfer = "transfer",
-}
+// Types.
+export const TAny: Type = "any";
+export const TStr: Type = "str";
+export const TNum: Type = "num";
+export const TBool: Type = "bool";
+export const TChunk: Type = "chunk";
+export const TEnt: Type = "ent";
+export const TType: Type = "type";
+export const TEntType: Type = "tent";
+
+// Builtins.
+export const New = "new";
+export const Move = "move";
+export const Jump = "jump";
 
 var _nativeDefs: Definition[] = [
-  [Def, Natives.Local, { name: TStr }, [Native, Natives.Local]],
-  [Def, Natives.Create, { chunk: TChunk, type: TType, x: TNum, y: TNum }, [Native, Natives.Create]],
-  [Def, Natives.Move, { ent: TEnt, dx: TNum, dy: TNum }, [Native, Natives.Move]],
-  [Def, Natives.Transfer, { ent: TEnt, chunk: TChunk, x: TNum, y: TNum }, [Native, Natives.Transfer]],
+  [Def, SetVar, { ent: TEnt, name: TStr, type: TType, value: TAny }, [Native, SetVar]],
+  [Def, GetVar, { ent: TEnt, name: TStr, type: TType }, [Native, GetVar]],
+  [Def, New, { chunk: TChunk, type: TEntType, x: TNum, y: TNum }, [Native, New]],
+  [Def, Move, { ent: TEnt, dx: TNum, dy: TNum }, [Native, Move]],
+  [Def, Jump, { ent: TEnt, chunk: TChunk, x: TNum, y: TNum }, [Native, Jump]],
 ];
 
 export class Actions {
@@ -43,17 +53,10 @@ export class Actions {
 
   constructor(private _world: World) {
     for (let def of _nativeDefs) {
-      this.define(def);
+      this.def(def);
     }
 
-    // Test def.
-    this.eval([Def, "testes", { chunk: TChunk }, [
-      [Natives.Create, {
-        chunk: [Natives.Local, { name: 'chunk' }],
-        type: EntityType.ObjectKey,
-        x: 2, y: 2,
-      }]
-    ]]);
+    this.builtins();
   }
 
   eval(expr: Expr, stack: Frame[] = []): any {
@@ -69,17 +72,42 @@ export class Actions {
             return undefined;
           }
           switch (expr[0]) {
-            case 'def':
-              return this.define(expr as Definition);
-            default:
-              return this.call(expr as Call, stack);
+            case Def: return this.def(expr as Definition);
+            case Let: return this.let(expr as Let, stack);
+            case Get: return this.get(expr as Get, stack);
+            default: return this.call(expr as Call, stack);
           }
         }
         return undefined;
     }
   }
 
-  private define(def: Definition): any {
+  private let(l: Let, stack: Frame[]): any {
+    let args: Args = l[1];
+    let body: Expr[] = l[2];
+
+    // Eval all args first.
+    let frame: Frame = {};
+    for (let name in args) {
+      frame[name] = this.eval(args[name], stack);
+    }
+
+    for (let expr of body) {
+      this.eval(expr, stack.concat(frame));
+    }
+  }
+
+  private get(g: Get, stack: Frame[]): any {
+    let name: string = g[1];
+    for (let parent of stack) {
+      if (name in parent) {
+        return parent[name];
+      }
+    }
+    return undefined;
+  }
+
+  private def(def: Definition): any {
     let name = def[1];
     if (!(name in this._defs)) {
       this._defs[name] = [];
@@ -92,12 +120,13 @@ export class Actions {
     let name = call[0];
     let args = call[1];
 
-    // Eval all args first.
+    // Eval all args eagerly.
     let frame: Frame = {};
     for (let name in args) {
       frame[name] = this.eval(args[name], stack);
     }
 
+    // Find all matching procedures and execute them.
     let last: any = undefined;
     if (name in this._defs) {
       let defs = this._defs[name];
@@ -109,6 +138,7 @@ export class Actions {
             // Missing arg; skip this def.
             continue outer;
           }
+
           // TODO: validate type
         }
         let impl = def[3];
@@ -124,7 +154,23 @@ export class Actions {
     if (impl[0] == Native) {
       let name = impl[1];
       switch (name) {
-        case Natives.Create: {
+        case SetVar: {
+          let ent = frame['ent'] as EntityId;
+          let name = frame['name'] as string;
+          let type = frame['type'] as Type;
+          let value = frame['value'] as any;
+          this.setVar(ent, name, type, value);
+          break;
+        }
+
+        case GetVar: {
+          let ent = frame['ent'] as EntityId;
+          let name = frame['name'] as string;
+          let type = frame['type'] as Type;
+          return this.getVar(ent, name, type);
+        }
+
+        case New: {
           let chunk = frame['chunk'] as number;
           let type = frame['type'] as EntityType;
           let x = frame['x'] as number;
@@ -132,14 +178,14 @@ export class Actions {
           return this.create(chunk, type, x, y);
         }
 
-        case Natives.Move: {
+        case Move: {
           let ent = frame['ent'] as EntityId;
           let dx = frame['dx'] as number;
           let dy = frame['dy'] as number;
           return this.move(ent, dx, dy);
         }
 
-        case Natives.Transfer: {
+        case Jump: {
           let ent = frame['ent'] as EntityId;
           let chunk = frame['chunk'] as ChunkId;
           let x = frame['x'] as number;
@@ -147,19 +193,8 @@ export class Actions {
           return this.transfer(ent, chunk, x, y);
         }
 
-        case Natives.Local: {
-          // TODO: Actual locals on the stack.
-          let name = frame['name'] as string;
-          for (let parent of stack) {
-            if (name in parent) {
-              return parent[name];
-            }
-          }
-          return undefined;
-        }
-
         default:
-          // TODO: log this error.
+          throw "missing native " + name;
           break;
       }
       return undefined;
@@ -170,6 +205,20 @@ export class Actions {
       this.eval(expr, stack.concat(frame));
     }
     return undefined;
+  }
+
+  private setVar(entId: EntityId, name: string, type: Type, value: any): void {
+    let chunkId = entChunk(entId);
+    let chunk = this._world.chunk(chunkId);
+    let ent = chunk.entity(entId);
+    ent.setVar(name as Var, type, value);
+  }
+
+  private getVar(entId: EntityId, name: string, type: Type): any {
+    let chunkId = entChunk(entId);
+    let chunk = this._world.chunk(chunkId);
+    let ent = chunk.entity(entId);
+    return ent.getVar(name as Var, type);
   }
 
   private create(chunkId: ChunkId, entType: EntityType, x: number, y: number): EntityId {
@@ -192,26 +241,21 @@ export class Actions {
     let to = this._world.chunk(toId);
     return to.addEntity(ent, x, y);
   }
-}
 
-export function portal(world: World, type: EntityType, fromId: ChunkId, fx: number, fy: number, toId: ChunkId, tx: number, ty: number) {
-  let from = world.chunk(fromId);
-  let entId = world.eval([Natives.Create, {
-    chunk: fromId,
-    type: type,
-    x: fx, y: fy
-  }]);
-
-  let ent = from.entity(entId);
-  ent.setChunk(Var.PortalChunk, toId);
-  ent.setNum(Var.PortalX, tx);
-  ent.setNum(Var.PortalY, ty);
+  private builtins() {
+    this.eval([Def, "portal", { type: TEntType, from: TChunk, fx: TNum, fy: TNum, to: TChunk, tx: TNum, ty: TNum }, [
+      [Let, { ent: [New, { chunk: [Get, 'from'], type: [Get, 'type'], x: [Get, 'fx'], y: [Get, 'fy'] }] }, [
+        [SetVar, { ent: [Get, 'ent'], name: Var.PortalChunk, type: TChunk, value: [Get, 'to'] }],
+        [SetVar, { ent: [Get, 'ent'], name: Var.PortalX, type: TNum, value: [Get, 'tx'] }],
+        [SetVar, { ent: [Get, 'ent'], name: Var.PortalY, type: TNum, value: [Get, 'ty'] }],
+      ]]]]);
+  }
 }
 
 export function topWithVar(chunk: Chunk, boolVar: Var, x: number, y: number): Entity {
   let ents = chunk.entitiesAt(x, y);
   for (var ent of ents) {
-    if (ent.getBool(boolVar)) {
+    if (ent.getVar(boolVar, TBool)) {
       return ent;
     }
   }

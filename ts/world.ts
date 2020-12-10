@@ -1,4 +1,4 @@
-import { Expr, Actions, Natives } from "./actions";
+import { Expr, Actions, New } from "./actions";
 import { Chunk, ChunkId } from "./chunk";
 import { EntityType } from "./entity";
 
@@ -31,7 +31,7 @@ export class World {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        this.eval([Natives.Create, {
+        this.eval([New, {
           chunk: chunk.id,
           type: EntityType.TileBlue,
           x: x, y: y
@@ -40,7 +40,7 @@ export class World {
     }
 
     for (let x = 1; x < 9; x++) {
-      this.eval([Natives.Create, {
+      this.eval([New, {
         chunk: chunk.id,
         type: EntityType.WallBlue,
         x: x, y: 0
