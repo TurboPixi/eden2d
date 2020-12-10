@@ -1,4 +1,4 @@
-import { Expr } from "./script/script";
+import { EExpr } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { EntityType } from "./entity";
 import { Actions } from "./script/actions";
@@ -24,7 +24,7 @@ export class World {
     return this._chunks[id];
   }
 
-  eval(expr: Expr): any {
+  eval(expr: EExpr): any {
     return this._actions.eval(expr);
   }
 
@@ -33,20 +33,12 @@ export class World {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        this.eval([New, {
-          chunk: chunk.id,
-          type: EntityType.TileBlue,
-          x: x, y: y
-        }]);
+        this.eval([New, { chunk: chunk.id, type: EntityType.TileBlue, x: x, y: y }]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      this.eval([New, {
-        chunk: chunk.id,
-        type: EntityType.WallBlue,
-        x: x, y: 0
-      }]);
+      this.eval([New, { chunk: chunk.id, type: EntityType.WallBlue, x: x, y: 0 }]);
     }
 
     return chunk;

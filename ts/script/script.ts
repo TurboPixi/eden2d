@@ -1,32 +1,31 @@
 import { World } from "../world";
-
-// TODO: Consider matching return type on func defs to further disambiguate.
-export type Expr = Primitive | Call | Definition | Let | Get;
-export type Type = 'any' | 'str' | 'num' | 'bool' | 'ent' | 'chunk' | 'tent' | 'type';
-export type Primitive = string | number | boolean;
-export type Call = [string, Args];
-export type Args = { [arg: string]: Expr };
-export type Definition = ['def', string, Params, Impl];
-export type Params = { [arg: string]: string[] | Type };
-export type Let = ['let', Args, Expr[]];
-export type Get = ['get', string]
-export type Impl = Native | Expr[];
-export type Native = ['native', (world: World, frame: Frame) => any];
-
-export type Frame = { [name: string]: Primitive };
-
 // Keywords.
-export const Def = "def";
-export const Let = "let";
-export const Get = "get";
-export const Native = "native";
+export const KNew = "new";
+export const KDef = "def";
+export const KLet = "let";
+export const KSet = "set";
+export const KGet = "get";
+export const KNative = "native";
 
-// Types.
-export const TAny: Type = "any";
-export const TStr: Type = "str";
-export const TNum: Type = "num";
-export const TBool: Type = "bool";
-export const TChunk: Type = "chunk";
-export const TEnt: Type = "ent";
-export const TType: Type = "type";
-export const TEntType: Type = "tent";
+type EKDef = typeof KDef;
+type EKLet = typeof KLet;
+type EKSet = typeof KSet;
+type EKGet = typeof KGet;
+type EKNative = typeof KNative;
+
+// Expressions.
+export type EExpr = EPrim | ECall | EDef | ELet | ELoc | ESet | EGet;
+export type EPrim = string | number | boolean;
+export type ECall = [string, EArgs];
+export type ELoc = [string];
+export type ESet = [EKSet, EExpr, string, EExpr]
+export type EGet = [EKGet, EExpr, string]
+export type EArgs = { [arg: string]: EExpr };
+export type EDef = [EKDef, string, EParams, EImpl];
+export type EParams = string[]
+export type ELet = [EKLet, EArgs, EExpr[]];
+export type EImpl = ENative | EExpr[];
+export type ENative = [EKNative, (world: World, frame: Frame) => any];
+
+// Stack frame.
+export type Frame = { [name: string]: EPrim };

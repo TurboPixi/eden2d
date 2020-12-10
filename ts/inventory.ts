@@ -1,5 +1,4 @@
 import { Container } from "pixi.js";
-import { TChunk } from "./script/script";
 import { Jump, topWithVar } from "./script/builtins";
 import { Chunk } from "./chunk";
 import { Entity, EntityType, Var } from "./entity";
@@ -12,7 +11,7 @@ export class Inventory {
 
   constructor(private _world: World, private _player: Entity) {
     this._invChunk = this._world.newChunk();
-    _player.setVar(Var.Contents, TChunk, this._invChunk.id)
+    _player.setVar(Var.Contents, this._invChunk.id)
 
     this._cursor = new Entity(EntityType.Cursor);
     this._invChunk.addEntity(this._cursor);
@@ -21,11 +20,7 @@ export class Inventory {
   get container(): Container { return this._invChunk.container }
 
   take(target: Entity) {
-    this._world.eval([Jump, {
-      ent: target.id,
-      chunk: this._invChunk.id,
-      x: this._invSlot, y: 0
-    }]);
+    this._world.eval([Jump, { ent: target.id, chunk: this._invChunk.id, x: this._invSlot, y: 0 }]);
   }
 
   put(chunk: Chunk, x: number, y: number) {

@@ -1,7 +1,6 @@
 import { Sprite } from "pixi.js";
 import { Chunk, ChunkId } from "./chunk";
 import { ImageKey, Resources } from "./res";
-import { Type } from "./script/script";
 
 export enum Var {
   UI = "ui",                    // Bool marking entity as UI element.
@@ -54,7 +53,7 @@ const _entityDefs: { [key: string]: EntityDef } = {
   "cursor": {
     img: ImageKey.TileBlueTile,
     vars: {
-      "ui-bool": true,
+      ui: true,
     },
   },
   "player": {
@@ -72,26 +71,22 @@ const _entityDefs: { [key: string]: EntityDef } = {
   "object-key": {
     img: ImageKey.ObjectKey,
     vars: {
-      "portable-bool": true,
+      portable: true,
     },
   },
   "stair-down": {
     img: ImageKey.TileStairDown,
     vars: {
-      "portal-bool": true,
+      portal: true,
     },
   },
   "stair-up": {
     img: ImageKey.TileStairUp,
     vars: {
-      "portal-bool": true,
+      portal: true,
     },
   },
 };
-
-function varKey(name: Var, typ: Type): string {
-  return name + "-" + typ;
-}
 
 export class Entity {
   private _def: EntityDef;
@@ -121,19 +116,18 @@ export class Entity {
     return this._spr;
   }
 
-  setVar(name: Var, typ: Type, val: any) {
+  setVar(name: Var, val: any) {
     if (!this._vars) {
       this._vars = {};
     }
-    this._vars[varKey(name, typ)] = val;
+    this._vars[name] = val;
   }
 
-  getVar(name: Var, typ: Type): any {
-    let key = varKey(name, typ);
-    if (this._vars && (key in this._vars)) {
-      return this._vars[key];
+  getVar(name: Var): any {
+    if (this._vars && (name in this._vars)) {
+      return this._vars[name];
     }
-    return this._def.vars[key];
+    return this._def.vars[name];
   }
 
   setChunkAndId(chunk: Chunk, id: EntityId) {

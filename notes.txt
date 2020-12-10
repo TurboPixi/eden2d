@@ -16,6 +16,14 @@ Types
 - ent   (id)
 - type  (of entity)
 
+Actions
+- Timer tick?
+- Move, Jump? Often triggered by other procs.
+- Use
+- Hit
+- Take
+- Drop
+
 - Mana as computation driver.
   - Limits to avoid runaway damage
   - Preserve progressive disclosure, feeling of discovery
@@ -47,3 +55,5 @@ Types
   - Consistency depends upon broad agreement, shared illusion
   - E.g., rendering a sword as an orange confuses other players, therefore unstable
   - How to gather feedback?
+- NPC scripts as programs
+  - Power to rewrite NPC conversationa nnd behavior

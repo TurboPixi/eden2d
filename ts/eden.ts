@@ -7,7 +7,7 @@ import { Inventory } from "./inventory";
 import { Key } from "./key";
 import { Resources } from "./res";
 import { World } from "./world";
-import { TChunk, TNum } from "./script/script";
+import { KGet } from "./script/script";
 
 class Eden {
   private _app: Application;
@@ -42,17 +42,13 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    this._world.eval([Portal, {type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 2, ty: 5}]);
-    this._world.eval([Portal, {type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5}]);
+    this._world.eval([Portal, { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
+    this._world.eval([Portal, { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
     return chunk0;
   }
 
   private createPlayer(chunk: Chunk): Entity {
-    let playerId = this._world.eval([New, {
-      chunk: chunk.id,
-      type: EntityType.Player,
-      x: 1, y: 1,
-    }]) as EntityId;
+    let playerId = this._world.eval([New, { chunk: chunk.id, type: EntityType.Player, x: 1, y: 1 }]) as EntityId;
 
     let player = chunk.entity(playerId);
     chunk.addEntity(player);
@@ -94,31 +90,21 @@ class Eden {
       case Key._5: case Key._6: case Key._7: case Key._8: case Key._9:
         this._inv.select(evt.keyCode - Key._1)
         break;
-
-      // Testes.
-      case Key.Q:
-        this._world.eval(["testes", { chunk: this._player.chunk.id }]);
-        break;
     }
   }
 
   private move(dx: number, dy: number) {
-    this._world.eval([Move, {
-      ent: this._player.id,
-      dx: dx, dy: dy
-    }]) as EntityId;
+    this._world.eval([Move, { ent: this._player.id, dx: dx, dy: dy }]) as EntityId;
   }
 
   private go() {
     let portal = topWithVar(this._chunk, Var.Portal, this._player.x, this._player.y);
     if (portal) {
-      let toChunk = portal.getVar(Var.PortalChunk, TChunk);
-      let toX = portal.getVar(Var.PortalX, TNum);
-      let toY = portal.getVar(Var.PortalY, TNum);
       this._world.eval([Jump, {
         ent: this._player.id,
-        chunk: toChunk,
-        x: toX, y: toY
+        chunk: [KGet, portal.id, Var.PortalChunk],
+        x: [KGet, portal.id, Var.PortalX],
+        y: [KGet, portal.id, Var.PortalY],
       }]);
     }
   }
@@ -156,7 +142,7 @@ class Eden {
     let w = this._app.view.width;
     let h = this._app.view.height;
 
-    let invId = this._player.getVar(Var.Contents, TChunk);
+    let invId = this._player.getVar(Var.Contents);
     this._world.chunk(invId).container.setTransform(0, h - 64, 4, 4);
 
     let x = (this._player.x - 4) * 16;
