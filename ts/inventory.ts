@@ -1,5 +1,6 @@
 import { Container } from "pixi.js";
-import { Jump, TChunk, topWithVar } from "./actions";
+import { TChunk } from "./script/script";
+import { Jump, topWithVar } from "./script/builtins";
 import { Chunk } from "./chunk";
 import { Entity, EntityType, Var } from "./entity";
 import { World } from "./world";

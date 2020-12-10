@@ -1,11 +1,13 @@
 import { Application } from "pixi.js";
-import { Jump, Move, New, TChunk, TNum, topWithVar } from "./actions";
+import { Jump, Move, New, Portal } from "./script/builtins";
+import { topWithVar } from "./script/builtins";
 import { Chunk } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
 import { Inventory } from "./inventory";
 import { Key } from "./key";
 import { Resources } from "./res";
 import { World } from "./world";
+import { TChunk, TNum } from "./script/script";
 
 class Eden {
   private _app: Application;
@@ -40,10 +42,8 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    // portal(this._world, EntityType.StairDown, chunk0.id, 1, 5, chunk1.id, 2, 5);
-    this._world.eval(['portal', {type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 2, ty: 5}]);
-    // portal(this._world, EntityType.StairUp, chunk1.id, 1, 5, chunk0.id, 2, 5);
-    this._world.eval(['portal', {type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5}]);
+    this._world.eval([Portal, {type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 2, ty: 5}]);
+    this._world.eval([Portal, {type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5}]);
     return chunk0;
   }
 

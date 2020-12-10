@@ -1,7 +1,7 @@
 import { Sprite } from "pixi.js";
 import { Chunk, ChunkId } from "./chunk";
 import { ImageKey, Resources } from "./res";
-import { Type } from "./actions";
+import { Type } from "./script/script";
 
 export enum Var {
   UI = "ui",                    // Bool marking entity as UI element.

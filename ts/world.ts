@@ -1,6 +1,8 @@
-import { Expr, Actions, New } from "./actions";
+import { Expr } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { EntityType } from "./entity";
+import { Actions } from "./script/actions";
+import { New } from "./script/builtins";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World {
