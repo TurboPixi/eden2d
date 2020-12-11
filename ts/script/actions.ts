@@ -1,7 +1,7 @@
 import { entChunk, EntityId, Var } from "../entity";
 import { World } from "../world";
 import { builtins } from "./builtins";
-import { EArgs, ECall, EDef, EExpr, EGet, EImpl, ELet, ELoc, ENative, ESet, Frame } from "./script";
+import { EAdd, EArgs, ECall, EDef, EExpr, EGet, EImpl, ELet, ELoc, ENative, ESet, Frame, NativeFn } from "./script";
 
 export class Actions {
   private _defs: { [name: string]: EDef[] } = {};
@@ -30,6 +30,7 @@ export class Actions {
             case 'let': return this.let(expr as ELet, stack);
             case 'get': return this.get(expr as EGet, stack);
             case 'set': return this.set(expr as ESet, stack);
+            case '+': return this.add(expr as EAdd, stack);
             default:
               if (expr.length == 1) {
                 return this.loc(expr as ELoc, stack);
@@ -42,6 +43,12 @@ export class Actions {
     }
   }
 
+  private add(a: EAdd, stack: Frame[]): any {
+    let a0 = this.eval(a[1], stack);
+    let a1 = this.eval(a[2], stack);
+    return a0 + a1;
+  }
+
   private let(l: ELet, stack: Frame[]): any {
     let args: EArgs = l[1];
     let body: EExpr[] = l[2];
@@ -52,9 +59,7 @@ export class Actions {
       frame[name] = this.eval(args[name], stack);
     }
 
-    for (let expr of body) {
-      this.eval(expr, stack.concat(frame));
-    }
+    return this.body(body, frame, stack);
   }
 
   private loc(l: ELoc, stack: Frame[]): any {
@@ -67,7 +72,7 @@ export class Actions {
     return undefined;
   }
 
-  get(g: EGet, stack: Frame[]): any {
+  private get(g: EGet, stack: Frame[]): any {
     let entId = this.eval(g[1], stack) as EntityId;
     let name = g[2];
     let chunkId = entChunk(entId);
@@ -76,7 +81,7 @@ export class Actions {
     return ent.getVar(name as Var);
   }
 
-  set(s: ESet, stack: Frame[]): void {
+  private set(s: ESet, stack: Frame[]): void {
     let entId = this.eval(s[1], stack) as EntityId;
     let name = s[2];
     let value = this.eval(s[3], stack);
@@ -136,23 +141,28 @@ export class Actions {
   }
 
   private exec(impl: EImpl, frame: Frame, stack: Frame[]): any {
-    switch (impl[0]) {
-      case 'native': {
-        // Call native impl.
+    if (impl[0] == 'native') {
+      // Call native impl.
+      try {
         let native = impl as ENative;
-        let fn = native[1] as (world: World, frame: Frame) => any;
+        let fn = native[1] as NativeFn;
         return fn(this._world, frame);
-      }
-
-      default: {
-        // Evaluate body.
-        let body = impl as EExpr[];
-        let last: any;
-        for (let expr of body) {
-          last = this.eval(expr, stack.concat(frame));
-        }
-        return last;
+      } catch (e) {
+        console.error(frame, stack, e);
       }
     }
+
+    // Evaluate body.
+    return this.body(impl as EExpr[], frame, stack);
+  }
+
+  private body(body: EExpr[], frame: Frame, stack: Frame[]): any {
+    stack.push(frame);
+    let last: any;
+    for (let expr of body) {
+      last = this.eval(expr, stack);
+    }
+    stack.pop();
+    return last;
   }
 }

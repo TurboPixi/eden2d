@@ -1,8 +1,8 @@
 import { Application } from "pixi.js";
 import { Chunk } from "./chunk";
-import { Entity, EntityId, EntityType, Var } from "./entity";
-import { Inventory } from "./inventory";
+import { Entity, EntityType, Var } from "./entity";
 import { Key } from "./key";
+import { newPlayer } from "./player";
 import { Resources } from "./res";
 import { World } from "./world";
 
@@ -11,7 +11,6 @@ class Eden {
   private _world: World;
   private _chunk: Chunk;
   private _player: Entity;
-  private _inv: Inventory;
 
   constructor() {
     this._app = new Application({ backgroundColor: 0x1099bb });
@@ -28,7 +27,11 @@ class Eden {
 
     let chunk = this.createChunk();
     this._player = this.createPlayer(chunk);
-    this.showChunk(this._player.chunk);
+    this.showChunk(chunk);
+
+    let invChunkId = this._world.eval(['get', this._player.id, Var.Contents]);
+    let invChunk = this._world.chunk(invChunkId);
+    this._app.stage.addChild(invChunk.container);
 
     this._app.stage.interactive = true;
     this._app.ticker.add(() => this.tick())
@@ -45,14 +48,8 @@ class Eden {
   }
 
   private createPlayer(chunk: Chunk): Entity {
-    let playerId = this._world.eval(['new', { chunk: chunk.id, type: EntityType.Player, x: 1, y: 1 }]) as EntityId;
-
-    let player = chunk.entity(playerId);
-    chunk.addEntity(player);
-
-    this._inv = new Inventory(this._world, player);
-    this._app.stage.addChild(this._inv.container);
-    return player;
+    let playerId = newPlayer(this._world, chunk.id);
+    return chunk.entity(playerId);
   }
 
   private showChunk(chunk: Chunk) {
@@ -82,18 +79,16 @@ class Eden {
       case Key.P: this.put(); break;
 
       // Selection.
-      case Key._0: this._inv.select(9); break;
+      case Key._0: this.select(9); break;
       case Key._1: case Key._2: case Key._3: case Key._4:
       case Key._5: case Key._6: case Key._7: case Key._8: case Key._9:
-        this._inv.select(evt.keyCode - Key._1)
+        this.select(evt.keyCode - Key._1)
         break;
     }
   }
 
   private move(dx: number, dy: number) {
-    let x = this._player.x + dx;
-    let y = this._player.y + dy;
-    this._world.eval(['move', { ent: this._player.id, x: x, y: y }]) as EntityId;
+    this._world.eval(['player:move', { player: this._player.id, dx: dx, dy: dy }]);
   }
 
   private go() {
@@ -101,22 +96,25 @@ class Eden {
       ['let', { portal: ['topWithVar', { chunk: this._chunk.id, x: this._player.x, y: this._player.y, var: Var.Portal }] }, [
         ['jump', { ent: this._player.id, chunk: ['get', ['portal'], Var.PortalChunk] }],
         ['move', { ent: this._player.id, x: ['get', ['portal'], Var.PortalX], y: ['get', ['portal'], Var.PortalY], }]
-      ]]);
+      ]]
+    );
   }
 
   private take() {
     let x = this._player.x;
     let y = this._player.y;
-    let target = this._world.eval(['topWithVar', { chunk: this._chunk.id, x: x, y: y, var: Var.Portable }]);
+    let target = this._world.eval(['topWithVar', { chunk: this._chunk.id, x: this._player.x, y: this._player.y, var: Var.Portable }]);
     if (target != null) {
-      this._inv.take(target);
+      this._world.eval(['player:take', {player: this._player.id, target: target}]);
     }
   }
 
   private put() {
-    let x = this._player.x;
-    let y = this._player.y;
-    this._inv.put(this._player.chunk.id, x, y);
+    this._world.eval(['player:put', {player: this._player.id}]);
+  }
+
+  private select(slot: number) {
+    this._world.eval(['player:select', {player: this._player.id, slot: slot}]);
   }
 
   private create(type: EntityType) {

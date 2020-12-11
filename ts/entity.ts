@@ -3,6 +3,9 @@ import { Chunk, ChunkId } from "./chunk";
 import { ImageKey, Resources } from "./res";
 
 export enum Var {
+  X = "x",
+  Y = "y",
+  Chunk = "chunk",
   UI = "ui",                    // Bool marking entity as UI element.
   Contents = "contents",        // Chunk representing a container entity's contents.
   Portable = "portable",        // Bool marking an entity as moveable.
@@ -88,17 +91,34 @@ export class Entity {
   }
 
   setVar(name: Var, val: any) {
-    if (!this._vars) {
-      this._vars = {};
+    switch (name) {
+      case Var.X:
+      case Var.Y:
+      case Var.Chunk:
+        // Read-only.
+        throw `read-only ${this._id}.${name}`;
+
+      default:
+        if (!this._vars) {
+          this._vars = {};
+        }
+        this._vars[name] = val;
+        break;
     }
-    this._vars[name] = val;
   }
 
   getVar(name: Var): any {
-    if (this._vars && (name in this._vars)) {
-      return this._vars[name];
+    switch (name) {
+      case Var.X: return this._x;
+      case Var.Y: return this._y;
+      case Var.Chunk: return this._chunk.id;
+
+      default:
+        if (this._vars && (name in this._vars)) {
+          return this._vars[name];
+        }
+        return this._def.vars[name];
     }
-    return this._def.vars[name];
   }
 
   setChunkAndId(chunk: Chunk, id: EntityId) {

@@ -1,9 +1,9 @@
-import { EDef } from "./script";
-import { ChunkId } from "../chunk";
+import { EDef, Frame } from "./script";
+import { Chunk, ChunkId } from "../chunk";
 import { entChunk, Entity, EntityId, EntityType, Var } from "../entity";
+import { World } from "../world";
 
 export const builtins: EDef[] = [
-
   ['def', 'new', ['chunk', 'type'],
     ['native', (world, frame) => {
       let chunk = world.chunk(frame['chunk'] as number);
@@ -13,36 +13,25 @@ export const builtins: EDef[] = [
 
   ['def', 'move', ['ent', 'x', 'y'],
     ['native', (world, frame) => {
-      let entId = frame['ent'] as EntityId;
-      let x = frame['x'] as number;
-      let y = frame['y'] as number;
-
-      let chunkId = entChunk(entId);
-      let chunk = world.chunk(chunkId);
-      let ent = chunk.entity(entId);
+      let x = locNum(frame, 'x');
+      let y = locNum(frame, 'y');
+      let [ent, _] = locEnt(world, frame, 'ent');
       ent.move(x, y);
     }]],
 
   ['def', 'jump', ['ent', 'chunk'],
     ['native', (world, frame) => {
-      let entId = frame['ent'] as EntityId;
-      let toId = frame['chunk'] as ChunkId;
-
-      let fromId = entChunk(entId);
-      let from = world.chunk(fromId);
-      let ent = from.entity(entId);
-      let to = world.chunk(toId);
-      entId = to.addEntity(ent);
-      return entId;
+      let [ent, from] = locEnt(world, frame, 'ent');
+      let to = locChunk(world, frame, 'chunk');
+      return to.addEntity(ent);
     }]],
 
   ['def', 'topWithVar', ['chunk', 'x', 'y', 'var'], [
     'native', (world, frame) => {
-      let chunkId = frame['chunk'] as number;
-      let x = frame['x'] as number;
-      let y = frame['y'] as number;
-      let v = frame['var'] as string;
-      let chunk = world.chunk(chunkId);
+      let chunk = locChunk(world, frame, 'chunk');
+      let x = locNum(frame, 'x');
+      let y = locNum(frame, 'y');
+      let v = locStr(frame, 'var');
       let ents = chunk.entitiesAt(x, y);
       for (var ent of ents) {
         if (ent.getVar(v as Var) !== undefined) {
@@ -62,3 +51,44 @@ export const builtins: EDef[] = [
       ['ent']
     ]]]],
 ];
+
+function locNum(frame: Frame, name: string): number {
+  let value = frame[name] as number;
+  if (typeof value != "number") {
+    throw `${name}: ${value} is not a number`;
+  }
+  return value;
+}
+
+function locStr(frame: Frame, name: string): string {
+  let value = frame[name] as string;
+  if (typeof value != "string") {
+    throw `${name}: ${value} is not a string`;
+  }
+  return value;
+}
+
+function locChunk(world: World, frame: Frame, name: string): Chunk {
+  let chunkId = locNum(frame, name);
+  let chunk = world.chunk(chunkId as ChunkId);
+  if (!chunk) {
+    throw `${name}: ${chunkId} is not a chunk`;
+  }
+  return chunk;
+}
+
+function locEnt(world: World, frame: Frame, name: string): [Entity, Chunk] {
+  let entId = locNum(frame, name);
+  let chunkId = entChunk(entId as EntityId);
+  let chunk = world.chunk(chunkId);
+  if (!chunk) {
+    throw `${name}: ${chunkId} is not a chunk`;
+  }
+
+  let ent = chunk.entity(entId);
+  if (!ent) {
+    throw `${name}: ${entId} is not an entity`;
+  }
+
+  return [ent, chunk];
+}
