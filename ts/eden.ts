@@ -116,7 +116,7 @@ class Eden {
   private put() {
     let x = this._player.x;
     let y = this._player.y;
-    this._inv.put(this._player.chunk, x, y);
+    this._inv.put(this._player.chunk.id, x, y);
   }
 
   private create(type: EntityType) {

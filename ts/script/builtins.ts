@@ -1,7 +1,6 @@
-import { Frame, EDef } from "./script";
-import { Chunk, ChunkId } from "../chunk";
+import { EDef } from "./script";
+import { ChunkId } from "../chunk";
 import { entChunk, Entity, EntityId, EntityType, Var } from "../entity";
-import { World } from "../world";
 
 export const builtins: EDef[] = [
 

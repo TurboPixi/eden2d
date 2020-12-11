@@ -1,5 +1,5 @@
 import { Container } from "pixi.js";
-import { Chunk } from "./chunk";
+import { Chunk, ChunkId } from "./chunk";
 import { Entity, EntityId, EntityType, Var } from "./entity";
 import { World } from "./world";
 
@@ -19,14 +19,28 @@ export class Inventory {
   get container(): Container { return this._invChunk.container }
 
   take(target: EntityId) {
-    this._world.eval(['jump', { ent: target, chunk: this._invChunk.id, x: this._invSlot, y: 0 }]);
+    this._world.eval([
+      'move', {
+        'ent': ['jump', { ent: target, chunk: this._invChunk.id }],
+        'x': this._invSlot, 'y': 0
+      }]);
   }
 
-  put(chunk: Chunk, x: number, y: number) {
-    this._world.eval(
-      ['let', { 'target': ['topWithVar', { chunk: this._invChunk.id, x: this._invSlot, y: 0, var: Var.Portable }] }, [
-        ['jump', { ent: ['target'], chunk: chunk.id, x: x, y: y }]
-      ]]);
+  put(chunk: ChunkId, x: number, y: number) {
+    this._world.eval([
+      'let', {
+        'target': ['topWithVar', {
+          chunk: this._invChunk.id,
+          var: Var.Portable,
+          x: this._invSlot, y: 0,
+        }]
+      }, [
+        ['move', {
+          'ent': ['jump', { ent: ['target'], chunk: chunk }],
+          'x': x, 'y': y
+        }]
+      ]
+    ]);
   }
 
   select(slot: number) {

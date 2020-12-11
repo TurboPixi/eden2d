@@ -25,17 +25,16 @@ export class Actions {
             return undefined;
           }
 
-          let e = expr as EExpr;
           switch (expr[0]) {
-            case 'def': return this.def(e as EDef);
-            case 'let': return this.let(e as ELet, stack);
-            case 'get': return this.set(e as ESet, stack);
-            case 'set': return this.get(e as EGet, stack);
+            case 'def': return this.def(expr as EDef);
+            case 'let': return this.let(expr as ELet, stack);
+            case 'get': return this.get(expr as EGet, stack);
+            case 'set': return this.set(expr as ESet, stack);
             default:
               if (expr.length == 1) {
-                return this.loc(e as ELoc, stack);
+                return this.loc(expr as ELoc, stack);
               } else {
-                return this.call(e as ECall, stack);
+                return this.call(expr as ECall, stack);
               }
           }
         }
