@@ -6,8 +6,8 @@ import { World } from "../world";
 export const builtins: EDef[] = [
   ['def', 'new', ['chunk', 'type'],
     ['native', (world, frame) => {
-      let chunk = world.chunk(frame['chunk'] as number);
-      let ent = new Entity(frame['type'] as EntityType);
+      let chunk = locChunk(world, frame, 'chunk');
+      let ent = new Entity(locStr(frame, 'type') as EntityType);
       return chunk.addEntity(ent);
     }]],
 
@@ -53,17 +53,17 @@ export const builtins: EDef[] = [
 ];
 
 function locNum(frame: Frame, name: string): number {
-  let value = frame[name] as number;
+  let value = frame.args[name] as number;
   if (typeof value != "number") {
-    throw `${name}: ${value} is not a number`;
+    throw new Error(`${name}: ${value} is not a number`);
   }
   return value;
 }
 
 function locStr(frame: Frame, name: string): string {
-  let value = frame[name] as string;
+  let value = frame.args[name] as string;
   if (typeof value != "string") {
-    throw `${name}: ${value} is not a string`;
+    throw new Error(`${name}: ${value} is not a string`);
   }
   return value;
 }
@@ -72,7 +72,7 @@ function locChunk(world: World, frame: Frame, name: string): Chunk {
   let chunkId = locNum(frame, name);
   let chunk = world.chunk(chunkId as ChunkId);
   if (!chunk) {
-    throw `${name}: ${chunkId} is not a chunk`;
+    throw new Error(`${name}: ${chunkId} is not a chunk`);
   }
   return chunk;
 }
@@ -82,12 +82,12 @@ function locEnt(world: World, frame: Frame, name: string): [Entity, Chunk] {
   let chunkId = entChunk(entId as EntityId);
   let chunk = world.chunk(chunkId);
   if (!chunk) {
-    throw `${name}: ${chunkId} is not a chunk`;
+    throw new Error(`${name}: ${chunkId} is not a chunk`);
   }
 
   let ent = chunk.entity(entId);
   if (!ent) {
-    throw `${name}: ${entId} is not an entity`;
+    throw new Error(`${name}: ${entId} is not an entity`);
   }
 
   return [ent, chunk];

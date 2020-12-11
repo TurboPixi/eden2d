@@ -79,10 +79,12 @@ class Eden {
       case Key.P: this.put(); break;
 
       // Selection.
-      case Key._0: this.select(9); break;
       case Key._1: case Key._2: case Key._3: case Key._4:
       case Key._5: case Key._6: case Key._7: case Key._8: case Key._9:
         this.select(evt.keyCode - Key._1)
+        break;
+      case Key._0:
+        this.select(9);
         break;
     }
   }
@@ -92,21 +94,11 @@ class Eden {
   }
 
   private go() {
-    this._world.eval(
-      ['let', { portal: ['topWithVar', { chunk: this._chunk.id, x: this._player.x, y: this._player.y, var: Var.Portal }] }, [
-        ['jump', { ent: this._player.id, chunk: ['get', ['portal'], Var.PortalChunk] }],
-        ['move', { ent: this._player.id, x: ['get', ['portal'], Var.PortalX], y: ['get', ['portal'], Var.PortalY], }]
-      ]]
-    );
+    this._world.eval(['player:follow', { player: this._player.id }]);
   }
 
   private take() {
-    let x = this._player.x;
-    let y = this._player.y;
-    let target = this._world.eval(['topWithVar', { chunk: this._chunk.id, x: this._player.x, y: this._player.y, var: Var.Portable }]);
-    if (target != null) {
-      this._world.eval(['player:take', {player: this._player.id, target: target}]);
-    }
+    this._world.eval(['player:take', {player: this._player.id}]);
   }
 
   private put() {

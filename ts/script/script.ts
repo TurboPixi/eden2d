@@ -17,5 +17,9 @@ export type ENative = ['native', NativeFn];
 export type EAdd = ['+', EExpr, EExpr];
 
 // Stack frame.
-export type Frame = { [name: string]: EPrim };
+export type Frame = {
+  name: string,
+  args: { [name: string]: EPrim }
+};
+
 export type NativeFn = (world: World, frame: Frame) => any;
