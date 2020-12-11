@@ -107,6 +107,17 @@ export class Actions {
 
     // Find all matching procedures and execute them.
     let last: any = undefined;
+    for (let def of this.matchingDefs(name, frame)) {
+      let impl = def[3];
+      last = this.exec(impl, frame, stack);
+    }
+
+    // TODO: Ew, gross. Language design issue -- what to return when multiple defs match?
+    return last;
+  }
+
+  private matchingDefs(name: string, frame: Frame): EDef[] {
+    let matching: EDef[] = [];
     if (name in this._defs) {
       let defs = this._defs[name];
       outer:
@@ -118,13 +129,10 @@ export class Actions {
             continue outer;
           }
         }
-        let impl = def[3];
-        last = this.exec(impl, frame, stack);
+        matching.push(def);
       }
     }
-
-    // TODO: Ew, gross. Language design issue -- what to return when multiple defs match?
-    return last;
+    return matching;
   }
 
   private exec(impl: EImpl, frame: Frame, stack: Frame[]): any {
