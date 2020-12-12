@@ -4,7 +4,7 @@ import { World } from "./world";
 
 export function newPlayer(world: World, chunkId: ChunkId): EntityId {
   return world.eval([
-    'let', {invChunk: ['newChunk', {}]}, [
+    'let', { invChunk: ['newChunk', {}] }, [
       ['let', {
         player: ['new', { chunk: chunkId, type: EntityType.Player }],
         cursor: ['new', { chunk: ['invChunk'], type: EntityType.Cursor }],
@@ -48,20 +48,35 @@ export function newPlayer(world: World, chunkId: ChunkId): EntityId {
 
           ['def', 'player:put', ['player'], [
             ['let', {
-              chunk: ['get', ['player'], 'chunk'],
+              chunk: ['get', ['player'], Var.Chunk],
+              inv: ['get', ['player'], Var.Contents],
               slot: ['get', ['player'], 'slot'],
             }, [
                 ['let', {
-                  target: ['topWithVar', { chunk: ['chunk'], var: Var.Portable, x: ['slot'], y: 0 }]
+                  target: ['topWithVar', { chunk: ['inv'], var: Var.Portable, x: ['slot'], y: 0 }]
                 }, [
-                    ['move', {
-                      'ent': ['jump', { ent: ['target'], chunk: ['chunk'] }],
-                      'x': ['get', ['player'], 'x'], 'y': ['get', ['player'], 'y']
-                    }]
+                    [
+                      'move', {
+                        'ent': ['jump', { ent: ['target'], chunk: ['chunk'] }],
+                        'x': ['get', ['player'], 'x'],
+                        'y': ['get', ['player'], 'y']
+                      }
+                    ]
                   ]
                 ]
               ]
             ]
+          ]],
+
+          ['def', 'player:create', ['player', 'type'], [
+            ['move', {
+              ent: ['new', {
+                chunk: ['get', ['player'], Var.Contents],
+                type: ['type']
+              }],
+              x: ['get', ['player'], 'slot'],
+              y: 0
+            }]
           ]],
 
           // TODO: Validate slot range

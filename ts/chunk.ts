@@ -40,7 +40,7 @@ export class Chunk {
   addEntity(entity: Entity): EntityId {
     if (entity.chunk) {
       if (entity.chunk == this) {
-        return;
+        return entity.id;
       }
       entity.chunk.removeEntity(entity);
     }

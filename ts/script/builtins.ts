@@ -4,32 +4,36 @@ import { entChunk, Entity, EntityId, EntityType, Var } from "../entity";
 import { World } from "../world";
 
 export const builtins: EDef[] = [
-  ['def', 'new', ['chunk', 'type'],
-    ['native', (world, frame) => {
+  ['def', 'newChunk', [], [
+    'native', (world, frame) => {
+      return world.newChunk().id;
+    }
+  ]],
+
+  ['def', 'new', ['chunk', 'type'], [
+    'native', (world, frame) => {
       let chunk = locChunk(world, frame, 'chunk');
       let ent = new Entity(locStr(frame, 'type') as EntityType);
       return chunk.addEntity(ent);
-    }]],
+    }
+  ]],
 
-  ['def', 'newChunk', [],
-    ['native', (world, frame) => {
-      return world.newChunk().id;
-    }]],
-
-  ['def', 'move', ['ent', 'x', 'y'],
-    ['native', (world, frame) => {
+  ['def', 'move', ['ent', 'x', 'y'], [
+    'native', (world, frame) => {
       let x = locNum(frame, 'x');
       let y = locNum(frame, 'y');
       let [ent, _] = locEnt(world, frame, 'ent');
       ent.move(x, y);
-    }]],
+    }
+  ]],
 
-  ['def', 'jump', ['ent', 'chunk'],
-    ['native', (world, frame) => {
+  ['def', 'jump', ['ent', 'chunk'], [
+    'native', (world, frame) => {
       let [ent, from] = locEnt(world, frame, 'ent');
       let to = locChunk(world, frame, 'chunk');
       return to.addEntity(ent);
-    }]],
+    }
+  ]],
 
   ['def', 'topWithVar', ['chunk', 'x', 'y', 'var'], [
     'native', (world, frame) => {
@@ -54,7 +58,8 @@ export const builtins: EDef[] = [
       ['set', ['ent'], Var.PortalX, ['tx']],
       ['set', ['ent'], Var.PortalY, ['ty']],
       ['ent']
-    ]]]],
+    ]]
+  ]],
 ];
 
 function locNum(frame: Frame, name: string): number {

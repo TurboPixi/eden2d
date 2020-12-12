@@ -69,14 +69,14 @@ class Eden {
       case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
       // Go.
-      case Key.G: this.go(); break;
+      case Key.G: this._world.eval(['player:follow', { player: this._player.id }]); break;
 
       // Create.
-      case Key.C: this.create(EntityType.ObjectKey); break;
+      case Key.C: this._world.eval(['player:create', { player: this._player.id, type: EntityType.ObjectKey}]); break;
 
       // Take, put.
-      case Key.T: this.take(); break;
-      case Key.P: this.put(); break;
+      case Key.T: this._world.eval(['player:take', {player: this._player.id}]); break;
+      case Key.P: this._world.eval(['player:put', {player: this._player.id}]); break;
 
       // Selection.
       case Key._1: case Key._2: case Key._3: case Key._4:
@@ -93,24 +93,8 @@ class Eden {
     this._world.eval(['player:move', { player: this._player.id, dx: dx, dy: dy }]);
   }
 
-  private go() {
-    this._world.eval(['player:follow', { player: this._player.id }]);
-  }
-
-  private take() {
-    this._world.eval(['player:take', {player: this._player.id}]);
-  }
-
-  private put() {
-    this._world.eval(['player:put', {player: this._player.id}]);
-  }
-
   private select(slot: number) {
     this._world.eval(['player:select', {player: this._player.id, slot: slot}]);
-  }
-
-  private create(type: EntityType) {
-    this._world.eval(['move', { ent: ['new', { chunk: this._chunk.id, type: type }], x: this._player.x, y: this._player.y }]);
   }
 
   private tick() {
