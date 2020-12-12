@@ -32,20 +32,20 @@ export class Actions {
 
         case 'object':
           if (expr.constructor == Array) {
-            if (typeof expr[0] != "string") {
-              return undefined;
-            }
-
             switch (expr[0]) {
               case 'def': return this.def(expr as EDef);
               case 'native': return this.native(expr as ENative, stack);
               case 'let': return this.let(expr as ELet, stack);
-              case 'get': return this.get(expr as EGet, stack);
-              case 'set': return this.set(expr as ESet, stack);
+              // case 'get': return this.get(expr as EGet, stack);
+              // case 'set': return this.set(expr as ESet, stack);
               case '+': return this.add(expr as EAdd, stack);
               default:
                 if (expr.length == 1) {
                   return this.loc(expr as ELoc, stack);
+                } else if (expr.length == 2 && !isMap(expr[1])) {
+                  return this.get(expr as EGet, stack);
+                } else if (expr.length == 3 && !isMap(expr[1])) {
+                  return this.set(expr as ESet, stack);
                 } else {
                   return this.call(expr as ECall, stack);
                 }
@@ -93,8 +93,8 @@ export class Actions {
 
   private get(g: EGet, stack: Frame[]): any {
     // TODO: check that arg was declared.
-    let entId = this._eval(g[1], stack) as EntityId;
-    let name = g[2];
+    let entId = this._eval(g[0], stack) as EntityId;
+    let name = g[1];
     let chunkId = entChunk(entId);
     let chunk = this._world.chunk(chunkId);
     let ent = chunk.entity(entId);
@@ -102,9 +102,9 @@ export class Actions {
   }
 
   private set(s: ESet, stack: Frame[]): void {
-    let entId = this._eval(s[1], stack) as EntityId;
-    let name = s[2];
-    let value = this._eval(s[3], stack);
+    let entId = this._eval(s[0], stack) as EntityId;
+    let name = s[1];
+    let value = this._eval(s[2], stack);
     let chunkId = entChunk(entId);
     let chunk = this._world.chunk(chunkId);
     let ent = chunk.entity(entId);
@@ -182,6 +182,10 @@ export class Actions {
     stack.pop();
     return last;
   }
+}
+
+function isMap(o: any) {
+  return (typeof o == 'object' && o.constructor == Object);
 }
 
 function printStack(stack: Frame[], top?: Frame) {

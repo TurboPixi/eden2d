@@ -9,55 +9,55 @@ export function newPlayer(world: World, chunkId: ChunkId): EntityId {
         player: ['new', { chunk: chunkId, type: EntityType.Player }],
         cursor: ['new', { chunk: ['invChunk'], type: EntityType.Cursor }],
       },
-        ['set', ['player'], 'slot', 0],
-        ['set', ['player'], Var.Contents, ['invChunk']],
-        ['set', ['player'], 'inv:cursor', ['cursor']],
+        [['player'], 'slot', 0],
+        [['player'], Var.Contents, ['invChunk']],
+        [['player'], 'inv:cursor', ['cursor']],
 
         ['def', 'player:move', ['player', 'dx', 'dy'],
           ['move', {
             ent: ['player'],
-            x: ['+', ['get', ['player'], 'x'], ['dx']],
-            y: ['+', ['get', ['player'], 'y'], ['dy']],
+            x: ['+', [['player'], 'x'], ['dx']],
+            y: ['+', [['player'], 'y'], ['dy']],
           }]
         ],
 
         ['def', 'player:topWith', ['player', 'var'],
           ['topWithVar', {
-            chunk: ['get', ['player'], Var.Chunk],
-            x: ['get', ['player'], Var.X],
-            y: ['get', ['player'], Var.Y],
+            chunk: [['player'], Var.Chunk],
+            x: [['player'], Var.X],
+            y: [['player'], Var.Y],
             var: ['var']
           }]
         ],
 
         ['def', 'player:follow', ['player'],
           ['let', { portal: ['player:topWith', { player: ['player'], var: Var.Portal }] },
-            ['jump', { ent: ['player'], chunk: ['get', ['portal'], Var.PortalChunk] }],
-            ['move', { ent: ['player'], x: ['get', ['portal'], Var.PortalX], y: ['get', ['portal'], Var.PortalY], }]
+            ['jump', { ent: ['player'], chunk: [['portal'], Var.PortalChunk] }],
+            ['move', { ent: ['player'], x: [['portal'], Var.PortalX], y: [['portal'], Var.PortalY], }]
           ]
         ],
 
         ['def', 'player:take', ['player'],
           ['let', { target: ['player:topWith', { player: ['player'], var: Var.Portable }] },
             ['move', {
-              ent: ['jump', { ent: ['target'], chunk: ['get', ['player'], Var.Contents] }],
-              x: ['get', ['player'], 'slot'], y: 0
+              ent: ['jump', { ent: ['target'], chunk: [['player'], Var.Contents] }],
+              x: [['player'], 'slot'], y: 0
             }]
           ],
         ],
 
         ['def', 'player:put', ['player'],
           ['let', {
-            chunk: ['get', ['player'], Var.Chunk],
-            inv: ['get', ['player'], Var.Contents],
-            slot: ['get', ['player'], 'slot'],
+            chunk: [['player'], Var.Chunk],
+            inv: [['player'], Var.Contents],
+            slot: [['player'], 'slot'],
           },
             ['let',
               { target: ['topWithVar', { chunk: ['inv'], var: Var.Portable, x: ['slot'], y: 0 }] },
               ['move', {
                 'ent': ['jump', { ent: ['target'], chunk: ['chunk'] }],
-                'x': ['get', ['player'], 'x'],
-                'y': ['get', ['player'], 'y']
+                'x': [['player'], 'x'],
+                'y': [['player'], 'y']
               }]
             ]
           ]
@@ -65,16 +65,16 @@ export function newPlayer(world: World, chunkId: ChunkId): EntityId {
 
         ['def', 'player:create', ['player', 'type'],
           ['move', {
-            ent: ['new', { chunk: ['get', ['player'], Var.Contents], type: ['type'] }],
-            x: ['get', ['player'], 'slot'],
+            ent: ['new', { chunk: [['player'], Var.Contents], type: ['type'] }],
+            x: [['player'], 'slot'],
             y: 0
           }]
         ],
 
         // TODO: Validate slot range
         ['def', 'player:select', ['player', 'slot'],
-          ['let', { cursor: ['get', ['player'], 'inv:cursor'] },
-            ['set', ['player'], 'slot', ['slot']],
+          ['let', { cursor: [['player'], 'inv:cursor'] },
+            [['player'], 'slot', ['slot']],
             ['move', { ent: ['cursor'], x: ['slot'], y: 0 }],
           ],
         ],

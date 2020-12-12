@@ -29,7 +29,7 @@ class Eden {
     this._player = this.createPlayer(chunk);
     this.showChunk(chunk);
 
-    let invChunkId = this._world.eval(['get', this._player.id, Var.Contents]);
+    let invChunkId = this._world.eval([this._player.id, Var.Contents]);
     let invChunk = this._world.chunk(invChunkId);
     this._app.stage.addChild(invChunk.container);
 
