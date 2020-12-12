@@ -11,6 +11,11 @@ export const builtins: EDef[] = [
       return chunk.addEntity(ent);
     }]],
 
+  ['def', 'newChunk', [],
+    ['native', (world, frame) => {
+      return world.newChunk().id;
+    }]],
+
   ['def', 'move', ['ent', 'x', 'y'],
     ['native', (world, frame) => {
       let x = locNum(frame, 'x');
