@@ -22,7 +22,7 @@ export function newPlayer(world: World, chunkId: ChunkId): EntityId {
         ],
 
         ['def', 'player:topWith', ['player', 'var'],
-          ['topWithVar', {
+          ['topWith', {
             chunk: [['player'], Var.Chunk],
             x: [['player'], Var.X],
             y: [['player'], Var.Y],
@@ -53,7 +53,7 @@ export function newPlayer(world: World, chunkId: ChunkId): EntityId {
             slot: [['player'], 'slot'],
           },
             ['let',
-              { target: ['topWithVar', { chunk: ['inv'], var: Var.Portable, x: ['slot'], y: 0 }] },
+              { target: ['topWith', { chunk: ['inv'], var: Var.Portable, x: ['slot'], y: 0 }] },
               ['move', {
                 'ent': ['jump', { ent: ['target'], chunk: ['chunk'] }],
                 'x': [['player'], 'x'],

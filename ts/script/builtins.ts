@@ -35,7 +35,7 @@ export const builtins: EDef[] = [
     }
   ]],
 
-  ['def', 'topWithVar', ['chunk', 'x', 'y', 'var'], [
+  ['def', 'topWith', ['chunk', 'x', 'y', 'var'], [
     'native', (world, frame) => {
       let chunk = locChunk(world, frame, 'chunk');
       let x = locNum(frame, 'x');
