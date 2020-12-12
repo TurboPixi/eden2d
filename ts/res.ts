@@ -25,7 +25,8 @@ export enum ImageKey {
   TileStairUp = "tile-stair-up",
 
   Player0 = "player-0",
-  ObjectKey = "object-key"
+  ObjectKey = "object-key",
+  ObjectCrate = "object-crate"
 }
 
 const _imageMap: { [key: string]: Image } = {
@@ -41,6 +42,7 @@ const _imageMap: { [key: string]: Image } = {
 
   "player-0": img(TexKey.Player, 16, 0, 16, 24, 0, 1-(12/24)),
   "object-key": img(TexKey.Items, 0, 0),
+  "object-crate": img(TexKey.Tiles, 7 * 16, 9 * 16),
 };
 
 interface Image {

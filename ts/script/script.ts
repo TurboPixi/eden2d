@@ -1,6 +1,9 @@
 import { World } from "../world";
 
 // Expressions.
+// TODO: Funcs as expressions that can be evaluated. Def => just a named func.
+// TODO: Way to call (eval?) into parent scope.
+// TODO: 'this'?
 export type EExpr = EPrim | ECall | EDef | ENative | ELet | ELoc | ESet | EGet | EAdd;
 export type EPrim = string | number | boolean;
 export type ELoc = [string];
@@ -11,7 +14,7 @@ export type EGet = [EExpr, string]
 export type ESet = [EExpr, string, EExpr]
 export type ENative = ['native', NativeFn];
 export type EArgs = { [arg: string]: EExpr };
-export type EParams = string[]
+export type EParams = string[];
 
 export type EAdd = ['+', EExpr, EExpr];
 

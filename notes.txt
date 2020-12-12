@@ -60,7 +60,9 @@ Actions
 
 
 ['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
-  ['let', { ent: ['new', { chunk: ['from'], type: ['type'] }] },
+  ['let', {
+    ent: ['new', { chunk: ['from'], type: ['type'] }]
+  },
     ['move', { ent: ['ent'], x: ['fx'], y: ['fy'] }],
     [['ent'], 'portalChunk', ['to']],
     [['ent'], 'portalX', ['tx']],
@@ -70,7 +72,9 @@ Actions
 ]
 
 [def portal [type from fx fy to tx ty]
-  [let { ent: [new { chunk:from type:type }] }
+  [let {
+    ent: [new { chunk: from type: type }]
+  }
     [move {ent: ent x: fx y: fy}]
     [ent portalChunk to]
     [ent portalX tx]

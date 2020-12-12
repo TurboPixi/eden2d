@@ -1,21 +1,21 @@
 import { EExpr } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { EntityType } from "./entity";
-import { Actions } from "./script/actions";
+import { Scope } from "./script/scope";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World {
   private _chunks: { [id: number]: Chunk } = {};
   private _nextId: ChunkId = 1;
-  private _actions: Actions;
+  private _scope: Scope;
 
   constructor() {
-    this._actions = new Actions(this);
+    this._scope = new Scope(this);
   }
 
   newChunk(): Chunk {
     let id = this._nextId++;
-    this._chunks[id] = new Chunk(id);
+    this._chunks[id] = new Chunk(this, id);
     return this._chunks[id];
   }
 
@@ -23,8 +23,10 @@ export class World {
     return this._chunks[id];
   }
 
+  get scope() { return this._scope }
+
   eval(expr: EExpr): any {
-    return this._actions.eval(expr);
+    return this._scope.eval(expr);
   }
 
   toyChunk(): Chunk {

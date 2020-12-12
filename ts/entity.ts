@@ -45,6 +45,7 @@ export enum EntityType {
   StairDown = "stair-down",
   StairUp = "stair-up",
   ObjectKey = "object-key",
+  ObjectCrate = "object-crate",
 }
 
 interface EntityDef {
@@ -57,9 +58,10 @@ const _entityDefs: { [key: string]: EntityDef } = {
   "player": { img: ImageKey.Player0, vars: {} },
   "tile-blue": { img: ImageKey.TileBlueTile, vars: {} },
   "wall-blue": { img: ImageKey.TileBlueWall, vars: {} },
-  "object-key": { img: ImageKey.ObjectKey, vars: { portable: true } },
   "stair-down": { img: ImageKey.TileStairDown, vars: { portal: true } },
   "stair-up": { img: ImageKey.TileStairUp, vars: { portal: true } },
+  "object-key": { img: ImageKey.ObjectKey, vars: { portable: true } },
+  "object-crate": { img: ImageKey.ObjectCrate, vars: { portable: true } },
 };
 
 export class Entity {

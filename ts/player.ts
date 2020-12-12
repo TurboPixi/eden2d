@@ -37,6 +37,7 @@ export function newPlayer(world: World, chunkId: ChunkId): EntityId {
           ]
         ],
 
+        // TODO: Validate ent exists.
         ['def', 'player:take', ['player'],
           ['let', { target: ['player:topWith', { player: ['player'], var: Var.Portable }] },
             ['move', {
@@ -46,6 +47,7 @@ export function newPlayer(world: World, chunkId: ChunkId): EntityId {
           ],
         ],
 
+        // TODO: Validate ent exists.
         ['def', 'player:put', ['player'],
           ['let', {
             chunk: [['player'], Var.Chunk],

@@ -1,5 +1,8 @@
 import { Container } from "pixi.js";
 import { entIndex, Entity, EntityId, makeEntId } from "./entity";
+import { Scope } from "./script/scope";
+import { EExpr } from "./script/script";
+import { World } from "./world";
 
 export type ChunkId = number;
 
@@ -8,17 +11,19 @@ export class Chunk {
   private _entities: { [id: number]: Entity } = {};
   private _nextId = 1;
   private _container: Container;
+  private _scope: Scope;
 
-  constructor(private _id: ChunkId) {
+  constructor(private _world: World, private _id: ChunkId) {
     this._container = new Container();
+    this._scope = new Scope(_world);
   }
 
-  get id(): ChunkId {
-    return this._id;
-  }
+  get id(): ChunkId { return this._id }
+  get scope(): Scope { return this._scope }
+  get container(): Container { return this._container }
 
-  get container(): Container {
-    return this._container;
+  eval(expr: EExpr): any {
+    return this._scope.eval(expr, this._world.scope);
   }
 
   entitiesAt(x: number, y: number): Entity[] {

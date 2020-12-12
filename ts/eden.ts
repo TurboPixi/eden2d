@@ -44,6 +44,9 @@ class Eden {
 
     this._world.eval(['portal', { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
     this._world.eval(['portal', { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
+
+    chunk1.eval(['def', 'foo', [], ['new', { chunk: chunk1.id, type: EntityType.ObjectCrate }]]);
+
     return chunk0;
   }
 
@@ -72,11 +75,11 @@ class Eden {
       case Key.G: this._world.eval(['player:follow', { player: this._player.id }]); break;
 
       // Create.
-      case Key.C: this._world.eval(['player:create', { player: this._player.id, type: EntityType.ObjectKey}]); break;
+      case Key.C: this._world.eval(['player:create', { player: this._player.id, type: EntityType.ObjectKey }]); break;
 
       // Take, put.
-      case Key.T: this._world.eval(['player:take', {player: this._player.id}]); break;
-      case Key.P: this._world.eval(['player:put', {player: this._player.id}]); break;
+      case Key.T: this._world.eval(['player:take', { player: this._player.id }]); break;
+      case Key.P: this._world.eval(['player:put', { player: this._player.id }]); break;
 
       // Selection.
       case Key._1: case Key._2: case Key._3: case Key._4:
@@ -86,6 +89,10 @@ class Eden {
       case Key._0:
         this.select(9);
         break;
+
+      case Key.Q:
+        this._chunk.eval(['foo', {}]);
+        break;
     }
   }
 
@@ -94,7 +101,7 @@ class Eden {
   }
 
   private select(slot: number) {
-    this._world.eval(['player:select', {player: this._player.id, slot: slot}]);
+    this._world.eval(['player:select', { player: this._player.id, slot: slot }]);
   }
 
   private tick() {

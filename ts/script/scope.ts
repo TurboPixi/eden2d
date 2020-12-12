@@ -5,7 +5,7 @@ import { EAdd, EArgs, ECall, EDef, EExpr, EGet, ELet, ELoc, ENative, ESet, Frame
 
 const ScriptError = 'script error';
 
-export class Actions {
+export class Scope {
   private _defs: { [name: string]: EDef[] } = {};
 
   constructor(private _world: World) {
@@ -14,7 +14,7 @@ export class Actions {
     }
   }
 
-  eval(expr: EExpr): any {
+  eval(expr: EExpr, parent?: Scope): any {
     try {
       return this._eval(expr, []);
     } catch (e) {
@@ -36,17 +36,19 @@ export class Actions {
               case 'def': return this.def(expr as EDef);
               case 'native': return this.native(expr as ENative, stack);
               case 'let': return this.let(expr as ELet, stack);
-              // case 'get': return this.get(expr as EGet, stack);
-              // case 'set': return this.set(expr as ESet, stack);
               case '+': return this.add(expr as EAdd, stack);
               default:
                 if (expr.length == 1) {
+                  // Local read has form ['local'].
                   return this.loc(expr as ELoc, stack);
                 } else if (expr.length == 2 && !isMap(expr[1])) {
+                  // Var get has form [entity, var].
                   return this.get(expr as EGet, stack);
                 } else if (expr.length == 3 && !isMap(expr[1])) {
+                  // Var set has form [entity, var, value].
                   return this.set(expr as ESet, stack);
                 } else {
+                  // Func call has form [name, { arg: value, ...}].
                   return this.call(expr as ECall, stack);
                 }
             }
