@@ -59,22 +59,22 @@ Actions
   - Power to rewrite NPC conversationa nnd behavior
 
 
-['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'], [
-  ['let', { ent: ['new', { chunk: ['from'], type: ['type'] }] }, [
+['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
+  ['let', { ent: ['new', { chunk: ['from'], type: ['type'] }] },
     ['move', { ent: ['ent'], x: ['fx'], y: ['fy'] }],
     ['set', ['ent'], 'portalChunk', ['to']],
     ['set', ['ent'], 'portalX', ['tx']],
     ['set', ['ent'], 'portalY', ['ty']],
     ['ent']
-]]]]
+  ]
+]
 
 [def portal [type from fx fy to tx ty]
-  [let { ent:[new { chunk:from type:type }] }
-  [
-    [move {ent:ent x:fx y:fy}]
+  [let { ent: [new { chunk:from type:type }] }
+    [move {ent: ent x: fx y: fy}]
     [set ent portalChunk to]
     [set ent portalX tx]
     [set ent portalY ty]
     [ent]
-  ]]
+  ]
 ]

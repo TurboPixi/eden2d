@@ -51,15 +51,15 @@ export const builtins: EDef[] = [
     }
   ]],
 
-  ['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'], [
-    ['let', { ent: ['new', { chunk: ['from'], type: ['type'] }] }, [
+  ['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
+    ['let', { ent: ['new', { chunk: ['from'], type: ['type'] }] },
       ['move', { ent: ['ent'], x: ['fx'], y: ['fy'] }],
       ['set', ['ent'], Var.PortalChunk, ['to']],
       ['set', ['ent'], Var.PortalX, ['tx']],
       ['set', ['ent'], Var.PortalY, ['ty']],
       ['ent']
-    ]]
-  ]],
+    ]
+  ],
 ];
 
 function locNum(frame: Frame, name: string): number {

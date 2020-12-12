@@ -1,7 +1,7 @@
 import { entChunk, EntityId, Var } from "../entity";
 import { World } from "../world";
 import { builtins } from "./builtins";
-import { EAdd, EArgs, ECall, EDef, EExpr, EGet, EImpl, ELet, ELoc, ENative, ESet, Frame, NativeFn } from "./script";
+import { EAdd, EArgs, ECall, EDef, EExpr, EGet, ELet, ELoc, ENative, ESet, Frame, NativeFn } from "./script";
 
 const ScriptError = 'script error';
 
@@ -38,6 +38,7 @@ export class Actions {
 
             switch (expr[0]) {
               case 'def': return this.def(expr as EDef);
+              case 'native': return this.native(expr as ENative, stack);
               case 'let': return this.let(expr as ELet, stack);
               case 'get': return this.get(expr as EGet, stack);
               case 'set': return this.set(expr as ESet, stack);
@@ -68,7 +69,7 @@ export class Actions {
 
   private let(l: ELet, stack: Frame[]): any {
     let args: EArgs = l[1];
-    let body: EExpr[] = l[2];
+    let body = l.slice(2) as EExpr[]; // Type checker isn't quite *that* smart.
 
     // Eval all args first.
     let frame: Frame = { name: "let", args: {} };
@@ -119,6 +120,19 @@ export class Actions {
     this._defs[name].push(def);
   }
 
+  private native(nat: ENative, stack: Frame[]): any {
+    try {
+      // Call native impl.
+      let fn = nat[1] as NativeFn;
+      return fn(this._world, stack[stack.length - 1]);
+    } catch (e) {
+      if (e != ScriptError) {
+        console.log(printStack(stack), e);
+      }
+      throw ScriptError;
+    }
+  }
+
   private call(call: ECall, stack: Frame[]): any {
     let name = call[0];
     let args = call[1];
@@ -132,8 +146,8 @@ export class Actions {
     // Find all matching procedures and execute them.
     let last: any = undefined;
     for (let def of this.matchingDefs(name, frame)) {
-      let impl = def[3];
-      last = this.exec(impl, frame, stack);
+      let impl = def.slice(3) as EExpr[];
+      last = this.body(impl, frame, stack);
     }
 
     // TODO: Ew, gross. Language design issue -- what to return when multiple defs match?
@@ -159,25 +173,6 @@ export class Actions {
     return matching;
   }
 
-  private exec(impl: EImpl, frame: Frame, stack: Frame[]): any {
-    if (impl[0] == 'native') {
-      try {
-        // Call native impl.
-        let native = impl as ENative;
-        let fn = native[1] as NativeFn;
-        return fn(this._world, frame);
-      } catch (e) {
-        if (e != ScriptError) {
-          console.log(printStack(stack, frame), e);
-        }
-        throw ScriptError;
-      }
-    }
-
-    // Evaluate body.
-    return this.body(impl as EExpr[], frame, stack);
-  }
-
   private body(body: EExpr[], frame: Frame, stack: Frame[]): any {
     stack.push(frame);
     let last: any;
@@ -191,7 +186,7 @@ export class Actions {
 
 function printStack(stack: Frame[], top?: Frame) {
   let msg = "";
-  let print = function(frame: Frame) {
+  let print = function (frame: Frame) {
     let name = frame.name;
     if (!name) {
       name = "expr"
