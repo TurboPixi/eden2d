@@ -29,7 +29,7 @@ class Eden {
     this._player = this.createPlayer(chunk);
     this.showChunk(chunk);
 
-    let invChunkId = this._world.eval([this._player.id, Var.Contents]);
+    let invChunkId = this._chunk.eval([this._player.id, Var.Contents]);
     let invChunk = this._world.chunk(invChunkId);
     this._app.stage.addChild(invChunk.container);
 
@@ -42,11 +42,10 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    this._world.eval(['portal', { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
-    this._world.eval(['portal', { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
+    chunk0.eval(['portal', { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
+    chunk1.eval(['portal', { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
 
     chunk1.eval(['def', 'foo', [], ['new', { chunk: chunk1.id, type: EntityType.ObjectCrate }]]);
-
     return chunk0;
   }
 
@@ -72,14 +71,14 @@ class Eden {
       case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
       // Go.
-      case Key.G: this._world.eval(['player:follow', { player: this._player.id }]); break;
+      case Key.G: this._chunk.eval(['player:follow', { player: this._player.id }]); break;
 
       // Create.
-      case Key.C: this._world.eval(['player:create', { player: this._player.id, type: EntityType.ObjectKey }]); break;
+      case Key.C: this._chunk.eval(['player:create', { player: this._player.id, type: EntityType.ObjectKey }]); break;
 
       // Take, put.
-      case Key.T: this._world.eval(['player:take', { player: this._player.id }]); break;
-      case Key.P: this._world.eval(['player:put', { player: this._player.id }]); break;
+      case Key.T: this._chunk.eval(['player:take', { player: this._player.id }]); break;
+      case Key.P: this._chunk.eval(['player:put', { player: this._player.id }]); break;
 
       // Selection.
       case Key._1: case Key._2: case Key._3: case Key._4:
@@ -97,11 +96,11 @@ class Eden {
   }
 
   private move(dx: number, dy: number) {
-    this._world.eval(['player:move', { player: this._player.id, dx: dx, dy: dy }]);
+    this._chunk.eval(['player:move', { player: this._player.id, dx: dx, dy: dy }]);
   }
 
   private select(slot: number) {
-    this._world.eval(['player:select', { player: this._player.id, slot: slot }]);
+    this._chunk.eval(['player:select', { player: this._player.id, slot: slot }]);
   }
 
   private tick() {
