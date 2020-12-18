@@ -47,12 +47,12 @@ export class World {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        this.eval(['move', { ent: ['new', { chunk: chunk.id, type: EntityType.TileBlue}], x: x, y: y}]);
+        this.eval(['move', { ent: ['new', chunk.id, [EntityType.TileBlue]], x: x, y: y}]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      this.eval(['move', { ent: ['new', { chunk: chunk.id, type: EntityType.WallBlue}], x: x, y: 0}]);
+      this.eval(['move', { ent: ['new', chunk.id, [EntityType.WallBlue]], x: x, y: 0}]);
     }
 
     return chunk;

@@ -29,7 +29,7 @@ class Eden {
     this._player = this.createPlayer(chunk);
     this.showChunk(chunk);
 
-    let invChunkId = this._chunk.eval([this._player.id, Var.Contents]);
+    let invChunkId = this._chunk.eval(['get', this._player.id, Var.Contents]);
     let invChunk = this._world.chunk(invChunkId);
     this._app.stage.addChild(invChunk.container);
 
@@ -42,10 +42,10 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    chunk0.eval(['portal', { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
-    chunk1.eval(['portal', { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
+    chunk0.eval(['portal', { type: [EntityType.StairDown], from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
+    chunk1.eval(['portal', { type: [EntityType.StairUp], from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
 
-    chunk1.eval(['def', 'foo', [], ['new', { chunk: chunk1.id, type: EntityType.ObjectCrate }]]);
+    chunk1.eval(['def', 'foo', ['func', [], ['new', { chunk: chunk1.id, type: [EntityType.ObjectCrate] }]]]);
     return chunk0;
   }
 
@@ -74,7 +74,7 @@ class Eden {
       case Key.G: this._chunk.eval(['player:follow', { player: this._player.id }]); break;
 
       // Create.
-      case Key.C: this._chunk.eval(['player:create', { player: this._player.id, type: EntityType.ObjectKey }]); break;
+      case Key.C: this._chunk.eval(['player:create', { player: this._player.id, type: [EntityType.ObjectKey] }]); break;
 
       // Take, put.
       case Key.T: this._chunk.eval(['player:take', { player: this._player.id }]); break;

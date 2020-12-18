@@ -1,6 +1,6 @@
 import { entChunk, EntityId, Var } from "../entity";
 import { World } from "../world";
-import { EAdd, EArgs, ECall, EDef, EExpr, EGet, ELet, ELoc, ENative, ESet, Frame, NativeFn } from "./script";
+import { EArgs, ECall, ECallable, EDef, EExpr, EGet, EInvokable, EInvoke, ELet, EParams, ESet, ESym, Frame, NativeFunc } from "./script";
 
 const ScriptError = 'script error';
 
@@ -11,7 +11,7 @@ export interface Context {
 }
 
 export class Scope {
-  private _defs: { [name: string]: EDef[] } = {};
+  private _defs: { [name: string]: EExpr } = {};
 
   constructor(private _world: World) {
   }
@@ -28,30 +28,42 @@ export class Scope {
     try {
       switch (typeof expr) {
         case 'number':
-        case 'string':
         case 'boolean':
           return expr;
 
+        case 'string':
+          // Raw strings are treated as symbol references, as they're far more common than literal strings.
+          return this.sym(ctx, expr, stack);
+
         case 'object':
-          if (expr.constructor == Array) {
+          if ((expr.constructor == Array) && (expr.length > 0)) {
             switch (expr[0]) {
               case 'def': return this.def(ctx, expr as EDef);
-              case 'native': return this.native(ctx, expr as ENative, stack);
               case 'let': return this.let(ctx, expr as ELet, stack);
-              case '+': return this.add(ctx, expr as EAdd, stack);
+              case 'get': return this.get(ctx, expr as EGet, stack);
+              case 'set': return this.set(ctx, expr as ESet, stack);
+
+              case 'func':
+              case 'action':
+              case 'native': {
+                // TODO: Validate structure.
+                return expr;
+              }
+
               default:
                 if (expr.length == 1) {
-                  // Local read has form ['local'].
-                  return this.loc(ctx, expr as ELoc, stack);
-                } else if (expr.length == 2 && !isMap(expr[1])) {
-                  // Var get has form [entity, var].
-                  return this.get(ctx, expr as EGet, stack);
-                } else if (expr.length == 3 && !isMap(expr[1])) {
-                  // Var set has form [entity, var, value].
-                  return this.set(ctx, expr as ESet, stack);
-                } else {
-                  // Func call has form [name, { arg: value, ...}].
+                  // Literal strings have the form ["whatevs"].
+                  return expr[0];
+                } else if (isMap(expr[1])) {
+                  // Event call has form [name, { arg: value, ...}].
                   return this.call(ctx, expr as ECall, stack);
+                } else {
+                  // Func invoke has form [name, value*].
+                  if (expr.length == 2 && expr[1] == []) {
+                    // Special case -- ['fn', []] is a no-arg function invocation.
+                    expr.length = 1;
+                  }
+                  return this.invoke(ctx, expr as EInvoke, stack);
                 }
             }
           }
@@ -63,12 +75,6 @@ export class Scope {
       }
       throw ScriptError;
     }
-  }
-
-  private add(ctx: Context, a: EAdd, stack: Frame[]): any {
-    let a0 = this._eval(ctx, a[1], stack);
-    let a1 = this._eval(ctx, a[2], stack);
-    return a0 + a1;
   }
 
   private let(ctx: Context, l: ELet, stack: Frame[]): any {
@@ -84,21 +90,29 @@ export class Scope {
     return this.body(ctx, body, frame, stack);
   }
 
-  private loc(ctx: Context, l: ELoc, stack: Frame[]): any {
-    let name: string = l[0];
+  private sym(ctx: Context, name: ESym, stack: Frame[]): any {
     for (let i = stack.length - 1; i >= 0; i--) {
       let frame = stack[i];
       if (name in frame.args) {
         return frame.args[name];
       }
     }
+
+    // TODO: Something with context/parent scopes. At present, we only lookup names in the current scope.
+    while (ctx) {
+      let def = ctx.scope()._defs[name];
+      if (def) {
+        return def;
+      }
+      ctx = ctx.parent();
+    }
     return undefined;
   }
 
   private get(ctx: Context, g: EGet, stack: Frame[]): any {
     // TODO: check that arg was declared.
-    let entId = this._eval(ctx, g[0], stack) as EntityId;
-    let name = g[1];
+    let entId = this._eval(ctx, g[1], stack) as EntityId;
+    let name = g[2];
     let chunkId = entChunk(entId);
     let chunk = this._world.chunk(chunkId);
     let ent = chunk.entity(entId);
@@ -106,9 +120,9 @@ export class Scope {
   }
 
   private set(ctx: Context, s: ESet, stack: Frame[]): void {
-    let entId = this._eval(ctx, s[0], stack) as EntityId;
-    let name = s[1];
-    let value = this._eval(ctx, s[2], stack);
+    let entId = this._eval(ctx, s[1], stack) as EntityId;
+    let name = s[2];
+    let value = this._eval(ctx, s[3], stack);
     let chunkId = entChunk(entId);
     let chunk = this._world.chunk(chunkId);
     let ent = chunk.entity(entId);
@@ -117,67 +131,65 @@ export class Scope {
 
   private def(ctx: Context, def: EDef): any {
     let name = def[1];
-    if (!(name in this._defs)) {
-      this._defs[name] = [];
+    if (name in this._defs) {
+      throw "illegal redefinition of " + name;
     }
-    // TODO: validate def syntax.
-    this._defs[name].push(def);
+    this._defs[name] = def[2];
   }
 
-  private native(ctx: Context, nat: ENative, stack: Frame[]): any {
-    try {
-      // Call native impl.
-      let fn = nat[1] as NativeFn;
-      return fn(this._world, stack[stack.length - 1]);
-    } catch (e) {
-      if (e != ScriptError) {
-        console.log(printStack(stack), e);
-      }
-      throw ScriptError;
+  private invoke(ctx: Context, invoke: EInvoke, stack: Frame[]): any {
+    let func: EInvokable = this._eval(ctx, invoke[0], stack); // TODO: Validate func-ness.
+    if (!func) {
+      // TODO: Validate action-ness.
+      throw "unable to invoke " + func;
     }
-  }
+    let args = invoke.slice(1)
 
-  private call(ctx: Context, call: ECall, stack: Frame[]): any {
-    let name = call[0];
-    let args = call[1];
+    let native = func[0] == 'native';
+    let params = (native ? func[2] : func[1]) as EParams;
 
     // Eval all args eagerly.
-    let frame: Frame = { name: name, args: {} };
+    // TODO: validate args.
+    let frame: Frame = { name: "[todo]", args: {} };
+    for (let i = 0; i < args.length; i++) {
+      frame.args[params[i]] = this._eval(ctx, args[i], stack);
+    }
+
+    if (native) {
+      let fn = func[3] as NativeFunc;
+      return this.native(ctx, fn, frame, stack);
+    }
+
+    let body = func.slice(2) as EExpr[];
+    return this.body(ctx, body, frame, stack);
+  }
+
+  private call(ctx: Context, call: ECall, stack: Frame[]): void {
+    let action = this._eval(ctx, call[0], stack);
+    if (!action) {
+      // TODO: Validate action-ness.
+      throw "unable to call " + action;
+    }
+    let args = call[1];
+
+    let native = action[0] == 'native';
+    let params = (native ? action[2] : action[1]) as EParams;
+
+    // Eval all args eagerly.
+    // TODO: validate args.
+    let frame: Frame = { name: "[todo]", args: {} };
     for (let name in args) {
       frame.args[name] = this._eval(ctx, args[name], stack);
     }
 
-    // Find all matching procedures and execute them.
-    // TODO: This is all kinds of jacked. Consider all these matching and scoping rules more carefully.
-    let last: any = undefined;
-    while (ctx) {
-      for (let def of ctx.scope().matchingDefs(name, frame)) {
-        let impl = def.slice(3) as EExpr[];
-        last = ctx.scope().body(ctx, impl, frame, stack);
-      }
-      ctx = ctx.parent();
+    // TODO: Find all matching actions.
+    if (native) {
+      let fn = action[3] as NativeFunc;
+      this.native(ctx, fn, frame, stack);
+    } else {
+      let body = action.slice(2) as EExpr[];
+      this.body(ctx, body, frame, stack);
     }
-
-    return last;
-  }
-
-  private matchingDefs(name: string, frame: Frame): EDef[] {
-    let matching: EDef[] = [];
-    if (name in this._defs) {
-      let defs = this._defs[name];
-      outer:
-      for (let def of defs) {
-        let sig = def[2];
-        for (let arg of sig) {
-          if (!(arg in frame.args)) {
-            // Missing arg; skip this def.
-            continue outer;
-          }
-        }
-        matching.push(def);
-      }
-    }
-    return matching;
   }
 
   private body(ctx: Context, body: EExpr[], frame: Frame, stack: Frame[]): any {
@@ -188,6 +200,18 @@ export class Scope {
     }
     stack.pop();
     return last;
+  }
+
+  private native(ctx: Context, fn: NativeFunc, frame: Frame, stack: Frame[]): any {
+    try {
+      // Call native impl.
+      return fn(this._world, frame);
+    } catch (e) {
+      if (e != ScriptError) {
+        console.log(printStack(stack), e);
+      }
+      throw ScriptError;
+    }
   }
 }
 

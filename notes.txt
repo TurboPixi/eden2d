@@ -1,4 +1,4 @@
-Action Expressionss
+Action Expressions
 - Expression tree
 - Prop Name + type (avoid runtime type mismatch)
   - Runtime type checking (necessary?)
@@ -7,14 +7,6 @@ Action Expressionss
   - No recursion (or mutual)
     - Only other funcs in scope, or down scope
     - Does this actually prevent runaways?
-
-Types
-- bool
-- num
-- str
-- chunk (id)
-- ent   (id)
-- type  (of entity)
 
 Actions
 - Timer tick?
@@ -59,26 +51,52 @@ Actions
   - Power to rewrite NPC conversationa nnd behavior
 
 
-['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
-  ['let', {
-    ent: ['new', { chunk: ['from'], type: ['type'] }]
-  },
-    ['move', { ent: ['ent'], x: ['fx'], y: ['fy'] }],
-    [['ent'], 'portalChunk', ['to']],
-    [['ent'], 'portalX', ['tx']],
-    [['ent'], 'portalY', ['ty']],
-    ['ent']
-  ]
-]
+Script:
+- Functions: Positional arguments with return values
+- Actions: Named arguments, no explicit target or return value
+  - Actions maintain reference to actor?
+- Actions occur in a context
+  - Directly referenced entities, surrounding chunk (Area effect within chunk?)
+  - Contained entities?
+- All matching receivers can react to actions, by changing internal state or generating new actions.
+- New actions get resolved next cycle -- inherent limits to propagation rate.
+- Actions move qi
+- Qi is conserved
+  - Though maybe consumed ("entropy") by computation to avoid perpetual motion
+- No entity references across chunks? Preserve world locality.
+  - Notification when reference is broken? Clear reference?
 
-[def portal [type from fx fy to tx ty]
-  [let {
-    ent: [new { chunk: from type: type }]
-  }
-    [move {ent: ent x: fx y: fy}]
-    [ent portalChunk to]
-    [ent portalX tx]
-    [ent portalY ty]
-    [ent]
+
+
+// Weapon
+[def attack [fn [attacker target]
+  [damage {target: target, amt: 5, kind: blunt}]
+]]
+
+// Actor
+[def damage [fn [target amt kind]
+  [set target health [- [get target health] amt]]
+]]
+
+[def repair [fn [target amt]
+  [set target health [+ [get target health] amt]]
+]]
+
+// Shield
+[def damage [fn [target amt kind]
+  [repair {target: target, amt: amt}]
+]]
+
+// Door
+[def use [fn [user target]
+  [if [eq [target type] door]
+    [set door open [not [get door open]]]
   ]
-]
+]]
+
+[def use [fn [user obj target]
+  [if [and [eq [get obj type] 'key']
+           [eq [get target type] 'door']]
+    [set target locked false]
+  ]
+]]

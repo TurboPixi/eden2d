@@ -4,22 +4,28 @@ import { entChunk, Entity, EntityId, EntityType, Var } from "../entity";
 import { World } from "../world";
 
 export const builtins: EDef[] = [
-  ['def', 'newChunk', [], [
-    'native', (world, frame) => {
+  ['def', '+', ['native', 'func', ['x', 'y'],
+    function(world: World, frame: Frame): any {
+      return locNum(frame, 'x') + locNum(frame, 'y');
+    }
+  ]],
+
+  ['def', 'newChunk', ['native', 'func', [],
+    function(world: World, frame: Frame): any {
       return world.newChunk().id;
     }
   ]],
 
-  ['def', 'new', ['chunk', 'type'], [
-    'native', (world, frame) => {
+  ['def', 'new', ['native', 'func', ['chunk', 'type'],
+    function(world: World, frame: Frame): any {
       let chunk = locChunk(world, frame, 'chunk');
       let ent = new Entity(locStr(frame, 'type') as EntityType);
       return chunk.addEntity(ent);
     }
   ]],
 
-  ['def', 'move', ['ent', 'x', 'y'], [
-    'native', (world, frame) => {
+  ['def', 'move', ['native', 'func', ['ent', 'x', 'y'],
+    function(world: World, frame: Frame): any {
       let x = locNum(frame, 'x');
       let y = locNum(frame, 'y');
       let [ent, _] = locEnt(world, frame, 'ent');
@@ -27,16 +33,16 @@ export const builtins: EDef[] = [
     }
   ]],
 
-  ['def', 'jump', ['ent', 'chunk'], [
-    'native', (world, frame) => {
+  ['def', 'jump', ['native', 'func', ['ent', 'chunk'],
+    function(world: World, frame: Frame): any {
       let [ent, from] = locEnt(world, frame, 'ent');
       let to = locChunk(world, frame, 'chunk');
       return to.addEntity(ent);
     }
   ]],
 
-  ['def', 'topWith', ['chunk', 'x', 'y', 'var'], [
-    'native', (world, frame) => {
+  ['def', 'topWith', ['native', 'func', ['chunk', 'x', 'y', 'var'],
+    function(world: World, frame: Frame): any {
       let chunk = locChunk(world, frame, 'chunk');
       let x = locNum(frame, 'x');
       let y = locNum(frame, 'y');
@@ -51,15 +57,15 @@ export const builtins: EDef[] = [
     }
   ]],
 
-  ['def', 'portal', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
-    ['let', { ent: ['new', { chunk: ['from'], type: ['type'] }] },
-      ['move', { ent: ['ent'], x: ['fx'], y: ['fy'] }],
-      [['ent'], Var.PortalChunk, ['to']],
-      [['ent'], Var.PortalX, ['tx']],
-      [['ent'], Var.PortalY, ['ty']],
-      ['ent']
+  ['def', 'portal', ['func', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
+    ['let', { ent: ['new', 'from', 'type'] },
+      ['move', 'ent', 'fx', 'fy'],
+      ['set', 'ent', Var.PortalChunk, 'to'],
+      ['set', 'ent', Var.PortalX, 'tx'],
+      ['set', 'ent', Var.PortalY, 'ty'],
+      'ent'
     ]
-  ],
+  ]],
 ];
 
 function locNum(frame: Frame, name: string): number {
