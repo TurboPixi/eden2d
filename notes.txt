@@ -49,6 +49,8 @@ Actions
   - How to gather feedback?
 - NPC scripts as programs
   - Power to rewrite NPC conversationa nnd behavior
+- Disallow long-distance communication:
+  - Forces players to build systems to communicate across chunks.
 
 
 Script:
