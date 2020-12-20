@@ -1,5 +1,5 @@
 import { Container } from "pixi.js";
-import { entIndex, Entity, EntityId, makeEntId } from "./entity";
+import { Entity } from "./entity";
 import { EVal, Scope } from "./script/script";
 import { World } from "./world";
 
@@ -12,11 +12,11 @@ export class Chunk implements Scope {
   private _container: Container;
   private _defs: { [name: string]: EVal };
 
-  constructor(private _world: World, private _id: ChunkId) {
+  constructor(private _world: World, private _id: number) {
     this._container = new Container();
   }
 
-  get id(): ChunkId { return this._id }
+  get id(): number { return this._id }
   get container(): Container { return this._container }
   get self() { return this }
   get parent() { return this._world }
@@ -39,24 +39,18 @@ export class Chunk implements Scope {
     return ents;
   }
 
-  entity(id: EntityId): Entity {
-    return this._entities[entIndex(id)];
-  }
-
-  addEntity(entity: Entity): EntityId {
+  addEntity(entity: Entity) {
     if (entity.chunk) {
       if (entity.chunk == this) {
-        return entity.id;
+        return;
       }
       entity.chunk.removeEntity(entity);
     }
 
     let idx = this._nextId++;
-    let entId = makeEntId(this._id, idx);
-    entity.setChunkAndId(this, entId);
+    entity.setChunkAndId(this, idx);
     this._entities[idx] = entity;
     this._container.addChild(entity.sprite);
-    return entId;
   }
 
   removeEntity(entity: Entity) {
@@ -64,8 +58,8 @@ export class Chunk implements Scope {
       return;
     }
 
-    entity.setChunkAndId(null, EntityId.Unknown);
-    delete this._entities[entIndex(entity.id)];
+    delete this._entities[entity.id];
+    entity.setChunkAndId(null, 0);
     this._container.removeChild(entity.sprite);
   }
 

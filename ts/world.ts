@@ -38,12 +38,12 @@ export class World implements Scope {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        evaluate(this, [['move'], [['new'], chunk.id, EntityType.TileBlue], x, y]);
+        evaluate(this, [['move'], [['new'], chunk, EntityType.TileBlue], x, y]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      evaluate(this, [['move'], [['new'], chunk.id, EntityType.WallBlue], x, 0]);
+      evaluate(this, [['move'], [['new'], chunk, EntityType.WallBlue], x, 0]);
     }
 
     return chunk;

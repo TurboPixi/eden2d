@@ -1,12 +1,12 @@
-import { ChunkId } from "./chunk";
-import { EntityId, EntityType, Var } from "./entity";
+import { Chunk } from "./chunk";
+import { Entity, EntityType, Var } from "./entity";
 import { evaluate, Scope } from "./script/script";
 
-export function newPlayer(scope: Scope, chunkId: ChunkId): EntityId {
+export function newPlayer(scope: Scope, chunk: Chunk): Entity {
   return evaluate(scope,
     ['let', { 'invChunk': [['newChunk'], []] },
       ['let', {
-        player: [['new'], chunkId, EntityType.Player],
+        player: [['new'], chunk, EntityType.Player],
         cursor: [['new'], ['invChunk'], EntityType.Cursor],
       },
         ['set', ['player'], 'slot', 0],
@@ -97,5 +97,5 @@ export function newPlayer(scope: Scope, chunkId: ChunkId): EntityId {
         ['player']
       ]
     ]
-  ) as EntityId;
+  ) as Entity;
 }

@@ -1,7 +1,7 @@
 import { Sprite } from "pixi.js";
-import { Chunk, ChunkId } from "./chunk";
+import { Chunk } from "./chunk";
 import { ImageKey, Resources } from "./res";
-import { EExpr, EVal, Scope } from "./script/script";
+import { EVal, Scope } from "./script/script";
 import { World } from "./world";
 
 export enum Var {
@@ -20,24 +20,6 @@ export enum Var {
 // This is kind of gross. An entity id is a number, and we need to bury both chunk id and index in a single value.
 // In a sane world, we'd do this with a 64-bit value, but this is js, so we're stuck playing float/int tricks to get 52 bits.
 // Note that we can't use bit operators for this because they implicitly coerce numeric values to 32 bits, because... js.
-
-export enum EntityId {
-  Unknown = -1,
-}
-
-const _2_26 = 67108864;
-export function makeEntId(chunk: ChunkId, idx: number): EntityId {
-  return (chunk * _2_26) + idx as EntityId;
-}
-
-export function entChunk(entId: EntityId): ChunkId {
-  return Math.floor(entId / _2_26) as ChunkId;
-}
-
-export function entIndex(entId: EntityId): number {
-  let chunk = entChunk(entId);
-  return entId - chunk * _2_26;
-}
 
 export enum EntityType {
   Cursor = "cursor",
@@ -68,8 +50,8 @@ const _protos: { [key: string]: Prototype } = {
 
 export class Entity implements Scope {
   private _proto: Prototype;
-  private _id = EntityId.Unknown;
   private _chunk: Chunk;
+  private _id: number;
   private _x = 0;
   private _y = 0;
   private _defs: { [name: string]: EVal };
@@ -82,10 +64,10 @@ export class Entity implements Scope {
     this._proto = _protos[type];
   }
 
-  get chunk(): Chunk { return this._chunk; }
-  get id(): number { return this._id; }
-  get x(): number { return this._x; }
-  get y(): number { return this._y; }
+  get id(): number { return this._id }
+  get chunk(): Chunk { return this._chunk }
+  get x(): number { return this._x }
+  get y(): number { return this._y }
 
   get sprite(): Sprite {
     if (!this._spr) {
@@ -108,7 +90,7 @@ export class Entity implements Scope {
       case Var.Y:
       case Var.Chunk:
         // Read-only.
-        throw `read-only ${this._id}.${name}`;
+        throw `read-only ${name}`;
     }
 
     if (!this._defs) {
@@ -121,7 +103,7 @@ export class Entity implements Scope {
     switch (name) {
       case Var.X: return this._x;
       case Var.Y: return this._y;
-      case Var.Chunk: return this._chunk.id;
+      case Var.Chunk: return this._chunk;
     }
 
     if (this._defs && name in this._defs) {
@@ -130,7 +112,7 @@ export class Entity implements Scope {
     return this._proto.vars[name];
   }
 
-  setChunkAndId(chunk: Chunk, id: EntityId) {
+  setChunkAndId(chunk: Chunk, id: number) {
     this._chunk = chunk;
     this._id = id;
   }

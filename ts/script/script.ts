@@ -1,11 +1,10 @@
-import { entChunk, EntityId } from "../entity";
+import { Chunk } from "../chunk";
+import { Entity } from "../entity";
 import { World } from "../world";
 
 // Expressions.
 export type EExpr = EVal | EInvoke | ECall | EDef | ELet | ERef | ESet | EGet;
-export type EVal = number | boolean | string | EChunk | EEnt | ECallable | EInvokable | ENull;
-export type EChunk = number;
-export type EEnt = number;
+export type EVal = number | boolean | string | Chunk | Entity | ECallable | EInvokable | ENull;
 export type ENull = [];
 export type ERef = [string];                      // TODO: name as expr?
 export type EGet = ['get', EExpr, string];        // TODO: name as expr?
@@ -72,36 +71,45 @@ function _eval(scope: Scope, expr: EExpr): EVal {
       return expr;
 
     case 'object':
-      if (isArray(expr) && (expr.length > 0)) {
-        switch (expr[0]) {
-          case 'def': return evalDef(scope, expr as EDef);
-          case 'let': return evalLet(scope, expr as ELet);
-          case 'get': return evalGet(scope, expr as EGet);
-          case 'set': return evalSet(scope, expr as ESet);
+      let arr = isArray(expr);
+      if (arr) {
+        if (arr.length == 0) {
+          return undefined;
+        }
+
+        switch (arr[0]) {
+          case 'def': return evalDef(scope, arr as EDef);
+          case 'let': return evalLet(scope, arr as ELet);
+          case 'get': return evalGet(scope, arr as EGet);
+          case 'set': return evalSet(scope, arr as ESet);
 
           case 'func':
           case 'action':
           case 'native': {
             // TODO: Validate func/action structure.
-            return expr as EVal;
+            return arr as EVal;
           }
 
           default:
-            if (expr.length == 1) {
+            if (arr.length == 1) {
               // Symbol refs have the form [string]
               return evalRef(scope, expr as ERef);
-            } else if (isMap(expr[1])) {
+            } else if (isMap(arr[1])) {
               // Event invocation has form [name, { arg: value, ...}].
               evalInvoke(scope, expr as EInvoke);
             } else {
               // Func call has form [name, value*].
-              if (expr.length == 2 && expr[1] == []) {
+              if (arr.length == 2 && arr[1] == []) {
                 // Special case -- ['fn', []] is a no-arg function invocation.
-                expr.length = 1;
+                arr.length = 1;
               }
-              return evalCall(scope, expr as ECall);
+              return evalCall(scope, arr as ECall);
             }
         }
+      } else if (expr instanceof Chunk) {
+        return expr as Chunk;
+      } else if (expr instanceof Entity) {
+        return expr as Entity;
       }
       return undefined;
   }
@@ -137,22 +145,16 @@ function evalRef(scope: Scope, ref: ERef): EVal {
 
 function evalGet(scope: Scope, g: EGet): EVal {
   // TODO: This should work with any scope, not just entities.
-  let entId = _eval(scope, g[1]) as EntityId;
+  let ent = _eval(scope, g[1]) as Entity;
   let name = g[2];
-  let chunkId = entChunk(entId);
-  let chunk = scope.world.chunk(chunkId);
-  let ent = chunk.entity(entId);
   return ent.ref(name);
 }
 
 function evalSet(scope: Scope, s: ESet): EVal {
   // TODO: This should work with any scope, not just entities.
-  let entId = _eval(scope, s[1]) as EntityId;
+  let ent = _eval(scope, s[1]) as Entity;
   let name = s[2];
   let value = _eval(scope, s[3]);
-  let chunkId = entChunk(entId);
-  let chunk = scope.world.chunk(chunkId);
-  let ent = chunk.entity(entId);
   ent.def(name, value);
   return value;
 }
@@ -271,7 +273,7 @@ function isFuncy(val: EVal, funciness: string): boolean {
   return true;
 }
 
-function isArray(val: any): [any] {
+function isArray(val: any): any[] {
   if (typeof val == "object" && val.constructor == Array) {
     return val as [any];
   }
@@ -303,6 +305,8 @@ function printVal(val: EVal): string {
     case "object":
       if (isCallable(val)) return "[func]";
       if (isInvokable(val)) return "[action]";
+      if (val instanceof Chunk) return `[chunk ${(val as Chunk).id}]`
+      if (val instanceof Entity) return `[ent ${(val as Entity).id}]`
       return "[expr]";
     default:
       return "" + val;

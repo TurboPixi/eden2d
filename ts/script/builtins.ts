@@ -1,6 +1,6 @@
 import { chuck, EDef, EVal, Scope } from "./script";
-import { Chunk, ChunkId } from "../chunk";
-import { entChunk, Entity, EntityId, EntityType, Var } from "../entity";
+import { Chunk } from "../chunk";
+import { Entity, EntityType, Var } from "../entity";
 
 export const builtins: EDef[] = [
   ['def', '+', ['native', 'func', ['x', 'y'],
@@ -11,7 +11,7 @@ export const builtins: EDef[] = [
 
   ['def', 'newChunk', ['native', 'func', [],
     function (scope: Scope): EVal {
-      return scope.world.newChunk().id;
+      return scope.world.newChunk();
     }
   ]],
 
@@ -19,7 +19,8 @@ export const builtins: EDef[] = [
     function (scope: Scope): EVal {
       let chunk = locChunk(scope, 'chunk');
       let ent = new Entity(scope.world, locStr(scope, 'type') as EntityType);
-      return chunk.addEntity(ent);
+      chunk.addEntity(ent);
+      return ent;
     }
   ]],
 
@@ -27,7 +28,7 @@ export const builtins: EDef[] = [
     function (scope: Scope): EVal {
       let x = locNum(scope, 'x');
       let y = locNum(scope, 'y');
-      let [ent, _] = locEnt(scope, 'ent');
+      let ent = locEnt(scope, 'ent');
       ent.move(x, y);
       return undefined;
     }
@@ -35,9 +36,10 @@ export const builtins: EDef[] = [
 
   ['def', 'jump', ['native', 'func', ['ent', 'chunk'],
     function (scope: Scope): EVal {
-      let [ent, from] = locEnt(scope, 'ent');
+      let ent = locEnt(scope, 'ent');
       let to = locChunk(scope, 'chunk');
-      return to.addEntity(ent);
+      to.addEntity(ent);
+      return ent;
     }
   ]],
 
@@ -50,7 +52,7 @@ export const builtins: EDef[] = [
       let ents = chunk.entitiesAt(x, y);
       for (var ent of ents) {
         if (ent.ref(v) !== undefined) {
-          return ent.id;
+          return ent;
         }
       }
       return undefined;
@@ -85,26 +87,17 @@ function locStr(scope: Scope, name: string): string {
 }
 
 function locChunk(scope: Scope, name: string): Chunk {
-  let chunkId = locNum(scope, name);
-  let chunk = scope.world.chunk(chunkId as ChunkId);
-  if (!chunk) {
-    chuck(scope, `${name}: ${chunkId} is not a chunk`);
+  let chunk = scope.ref(name);
+  if (!(chunk instanceof Chunk)) {
+    chuck(scope, `${name} is not a chunk`);
   }
-  return chunk;
+  return chunk as Chunk;
 }
 
-function locEnt(scope: Scope, name: string): [Entity, Chunk] {
-  let entId = locNum(scope, name);
-  let chunkId = entChunk(entId as EntityId);
-  let chunk = scope.world.chunk(chunkId);
-  if (!chunk) {
-    chuck(scope, `${name}: ${chunkId} is not a chunk`);
+function locEnt(scope: Scope, name: string): Entity {
+  let ent = scope.ref(name);
+  if (!(ent instanceof Entity)) {
+    chuck(scope, `${name} is not an entity`);
   }
-
-  let ent = chunk.entity(entId);
-  if (!ent) {
-    chuck(scope, `${name}: ${entId} is not an entity`);
-  }
-
-  return [ent, chunk];
+  return ent as Entity;
 }
