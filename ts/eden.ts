@@ -1,9 +1,10 @@
 import { Application } from "pixi.js";
-import { Chunk } from "./chunk";
+import { Chunk, ChunkId } from "./chunk";
 import { Entity, EntityType, Var } from "./entity";
 import { Key } from "./key";
 import { newPlayer } from "./player";
 import { Resources } from "./res";
+import { evaluate } from "./script/script";
 import { World } from "./world";
 
 class Eden {
@@ -29,8 +30,8 @@ class Eden {
     this._player = this.createPlayer(chunk);
     this.showChunk(chunk);
 
-    let invChunkId = this._chunk.eval(['get', this._player.id, Var.Contents]);
-    let invChunk = this._world.chunk(invChunkId);
+    let invChunkId = evaluate(this._chunk, ['get', this._player.id, Var.Contents]);
+    let invChunk = this._world.chunk(invChunkId as ChunkId);
     this._app.stage.addChild(invChunk.container);
 
     this._app.stage.interactive = true;
@@ -42,10 +43,9 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    chunk0.eval(['portal', { type: [EntityType.StairDown], from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
-    chunk1.eval(['portal', { type: [EntityType.StairUp], from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
-
-    chunk1.eval(['def', 'foo', ['func', [], ['new', { chunk: chunk1.id, type: [EntityType.ObjectCrate] }]]]);
+    evaluate(chunk0, [['portal'], { type: EntityType.StairDown, from: chunk0.id, fx: 1, fy: 5, to: chunk1.id, tx: 0, ty: 5 }]);
+    evaluate(chunk1, [['portal'], { type: EntityType.StairUp, from: chunk1.id, fx: 1, fy: 5, to: chunk0.id, tx: 2, ty: 5 }]);
+    evaluate(chunk1, ['def', 'foo', ['action', [], [['new'], chunk1.id, EntityType.ObjectCrate]]]);
     return chunk0;
   }
 
@@ -71,14 +71,14 @@ class Eden {
       case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
       // Go.
-      case Key.G: this._chunk.eval(['player:follow', { player: this._player.id }]); break;
+      case Key.G: evaluate(this._player, [['player:follow'], { player: this._player.id }]); break;
 
       // Create.
-      case Key.C: this._chunk.eval(['player:create', { player: this._player.id, type: [EntityType.ObjectKey] }]); break;
+      case Key.C: evaluate(this._player, [['player:create'], { player: this._player.id, type: EntityType.ObjectKey }]); break;
 
       // Take, put.
-      case Key.T: this._chunk.eval(['player:take', { player: this._player.id }]); break;
-      case Key.P: this._chunk.eval(['player:put', { player: this._player.id }]); break;
+      case Key.T: evaluate(this._player, [['player:take'], { player: this._player.id }]); break;
+      case Key.P: evaluate(this._player, [['player:put'], { player: this._player.id }]); break;
 
       // Selection.
       case Key._1: case Key._2: case Key._3: case Key._4:
@@ -90,17 +90,17 @@ class Eden {
         break;
 
       case Key.Q:
-        this._chunk.eval(['foo', {}]);
+        evaluate(this._player, [['foo'], {}]);
         break;
     }
   }
 
   private move(dx: number, dy: number) {
-    this._chunk.eval(['player:move', { player: this._player.id, dx: dx, dy: dy }]);
+    evaluate(this._player, [['player:move'], { player: this._player.id, dx: dx, dy: dy }]);
   }
 
   private select(slot: number) {
-    this._chunk.eval(['player:select', { player: this._player.id, slot: slot }]);
+    evaluate(this._player, [['player:select'], { player: this._player.id, slot: slot }]);
   }
 
   private tick() {
@@ -112,7 +112,7 @@ class Eden {
     let w = this._app.view.width;
     let h = this._app.view.height;
 
-    let invId = this._player.getVar(Var.Contents);
+    let invId = this._player.ref(Var.Contents) as ChunkId;
     this._world.chunk(invId).container.setTransform(0, h - 64, 4, 4);
 
     let x = (this._player.x - 4) * 16;

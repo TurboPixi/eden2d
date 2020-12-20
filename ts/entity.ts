@@ -1,6 +1,8 @@
 import { Sprite } from "pixi.js";
 import { Chunk, ChunkId } from "./chunk";
 import { ImageKey, Resources } from "./res";
+import { EExpr, EVal, Scope } from "./script/script";
+import { World } from "./world";
 
 export enum Var {
   X = "x",
@@ -48,12 +50,12 @@ export enum EntityType {
   ObjectCrate = "object-crate",
 }
 
-interface EntityDef {
+interface Prototype {
   img: ImageKey;
-  vars: { [key: string]: any };
+  vars: { [key: string]: EVal };
 }
 
-const _entityDefs: { [key: string]: EntityDef } = {
+const _protos: { [key: string]: Prototype } = {
   "cursor": { img: ImageKey.TileBlueTile, vars: { ui: true } },
   "player": { img: ImageKey.Player0, vars: {} },
   "tile-blue": { img: ImageKey.TileBlueTile, vars: {} },
@@ -64,20 +66,20 @@ const _entityDefs: { [key: string]: EntityDef } = {
   "object-crate": { img: ImageKey.ObjectCrate, vars: { portable: true } },
 };
 
-export class Entity {
-  private _def: EntityDef;
+export class Entity implements Scope {
+  private _proto: Prototype;
   private _id = EntityId.Unknown;
   private _chunk: Chunk;
   private _x = 0;
   private _y = 0;
-  private _vars: { [key: string]: any };
+  private _defs: { [name: string]: EVal };
   private _spr: Sprite;
 
-  constructor(type: EntityType) {
-    if (!(type in _entityDefs)) {
+  constructor(public world: World, type: EntityType) {
+    if (!(type in _protos)) {
       throw "invalid entity type";
     }
-    this._def = _entityDefs[type];
+    this._proto = _protos[type];
   }
 
   get chunk(): Chunk { return this._chunk; }
@@ -87,40 +89,45 @@ export class Entity {
 
   get sprite(): Sprite {
     if (!this._spr) {
-      this._spr = Resources.sprite(this._def.img)
+      this._spr = Resources.sprite(this._proto.img)
     }
     return this._spr;
   }
 
-  setVar(name: Var, val: any) {
+  get name(): string { return "[ent]" }
+  get parent(): Scope { return this._chunk }
+
+  get names(): string[] {
+    let keys = this._defs ? Object.keys(this._defs) : [];
+    return [...keys, Var.X, Var.Y, Var.Chunk];
+  }
+
+  def(name: string, value: EVal): void {
     switch (name) {
       case Var.X:
       case Var.Y:
       case Var.Chunk:
         // Read-only.
         throw `read-only ${this._id}.${name}`;
-
-      default:
-        if (!this._vars) {
-          this._vars = {};
-        }
-        this._vars[name] = val;
-        break;
     }
+
+    if (!this._defs) {
+      this._defs = {};
+    }
+    this._defs[name] = value;
   }
 
-  getVar(name: Var): any {
+  ref(name: string): EVal {
     switch (name) {
       case Var.X: return this._x;
       case Var.Y: return this._y;
       case Var.Chunk: return this._chunk.id;
-
-      default:
-        if (this._vars && (name in this._vars)) {
-          return this._vars[name];
-        }
-        return this._def.vars[name];
     }
+
+    if (this._defs && name in this._defs) {
+      return this._defs[name];
+    }
+    return this._proto.vars[name];
   }
 
   setChunkAndId(chunk: Chunk, id: EntityId) {

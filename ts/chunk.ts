@@ -1,35 +1,31 @@
 import { Container } from "pixi.js";
 import { entIndex, Entity, EntityId, makeEntId } from "./entity";
-import { Context, Scope } from "./script/scope";
-import { EExpr } from "./script/script";
+import { EVal, Scope } from "./script/script";
 import { World } from "./world";
 
 export type ChunkId = number;
 
 // TODO: Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
-export class Chunk {
+export class Chunk implements Scope {
   private _entities: { [id: number]: Entity } = {};
   private _nextId = 1;
   private _container: Container;
-  private _scope: Scope;
-  private _ctx: Context = {
-    self: () => this,
-    scope: () => this._scope,
-    parent: () => this._world.ctx,
-  }
+  private _defs: { [name: string]: EVal };
 
   constructor(private _world: World, private _id: ChunkId) {
     this._container = new Container();
-    this._scope = new Scope(_world);
   }
 
   get id(): ChunkId { return this._id }
-  get scope(): Scope { return this._scope }
   get container(): Container { return this._container }
+  get self() { return this }
+  get parent() { return this._world }
 
-  eval(expr: EExpr): any {
-    return this._scope.eval(this._ctx, expr);
-  }
+  get name(): string { return "[chunk]" }
+  get world(): World { return this._world }
+  get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
+  ref(name: string): EVal { return this._defs && this._defs[name] }
+  def(name: string, value: EVal): void { (this._defs || (this._defs = {}))[name] = value; }
 
   entitiesAt(x: number, y: number): Entity[] {
     // TODO: Do some indexing to not make this obscenely slow.

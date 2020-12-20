@@ -8,6 +8,7 @@ Action Expressions
     - Only other funcs in scope, or down scope
     - Does this actually prevent runaways?
 
+<<<<<<< HEAD
 Actions
 - Timer tick?
 - Move, Jump? Often triggered by other procs.
@@ -17,17 +18,21 @@ Actions
 - Drop
 
 - Mana as computation driver.
+=======
+Ideas:
+- Qi as computation driver.
+>>>>>>> work
   - Limits to avoid runaway damage
   - Preserve progressive disclosure, feeling of discovery
   - Cost for physical side-effects.
   - Made by sacrificing entities?
-  - Stored mana
+  - Stored qi
   - Scarcity breeds creativity; useful driver of game
 - Entities as debugging tools.
   - Some entities/properties hard to see without special tools.
 - Avoiding artificial "levels"
   - Actal skill, accumulated knowledge, and possessions drive abilities.
-  - Access controls; related to mana input? Skill?
+  - Access controls; related to qi input? Skill?
 - Programs
   - Simple expression language internally
   - Intentionally obscure tiled visual language in-game
@@ -49,8 +54,13 @@ Actions
   - How to gather feedback?
 - NPC scripts as programs
   - Power to rewrite NPC conversationa nnd behavior
+<<<<<<< HEAD
 - Disallow long-distance communication:
   - Forces players to build systems to communicate across chunks.
+=======
+- Gather qi from external sources -- sun, minerals, ...?
+  - Certain functions + entities needed to access different sources.
+>>>>>>> work
 
 
 Script:
@@ -67,7 +77,25 @@ Script:
   - Though maybe consumed ("entropy") by computation to avoid perpetual motion
 - No entity references across chunks? Preserve world locality.
   - Notification when reference is broken? Clear reference?
+<<<<<<< HEAD
 
+=======
+- Allocation + collections:
+  - No built-in collections; only represented by chunks and entities.
+  - Entities can contain entities, but only by owning chunks.
+  - No closures, so you can't abuse stack frames to allocate.
+  - Provide basic functional set operations?
+  - Chunks as containers -- each gets a weird "spatial bag".
+    - Qi as driver of chunk + entity creation, computation, creates natural limits on allocation.
+
+Actions
+- Timer tick?
+- Move, Jump? Often triggered by other procs.
+- Use
+- Hit
+- Take
+- Drop
+>>>>>>> work
 
 
 // Weapon
@@ -96,9 +124,39 @@ Script:
   ]
 ]]
 
-[def use [fn [user obj target]
-  [if [and [eq [get obj type] 'key']
-           [eq [get target type] 'door']]
-    [set target locked false]
+[def 'use' [fn ['user' 'obj' 'target']
+  [if [and [eq [get obj 'type'] 'key']
+           [eq [get target 'type'] 'door']]
+    [target 'locked' false]
+  ]
+]]
+
+
+[def player:follow [action [player]
+  [let {
+    portal: [player:topWith player 'portal']
+  }
+    [let {
+      x: [get portal 'portal-x']
+      y: [get portal 'portal-y']
+    }
+      [jump player [get portal 'portal-chunk']]
+      [move player x y]
+    ]
+  ]
+]]
+
+
+[def player:follow [action [player]
+  [let [
+    [portal [player-topWith player 'portal']]
+  ]
+    [let [
+      [x [get portal 'portal-x']]
+      [y [get portal 'portal-y']]
+    ]
+      [jump player [get portal 'portal-chunk']]
+      [move player x y]
+    ]
   ]
 ]]

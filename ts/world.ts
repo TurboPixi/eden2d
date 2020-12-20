@@ -1,30 +1,27 @@
-import { EExpr } from "./script/script";
+import { EVal, evaluate, Scope } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { EntityType } from "./entity";
-import { Context, Scope } from "./script/scope";
 import { builtins } from "./script/builtins";
 
 // TODO: Reliable garbage-collection on chunks.
-export class World {
+export class World implements Scope {
   private _chunks: { [id: number]: Chunk } = {};
   private _nextId: ChunkId = 1;
-  private _scope: Scope;
-  private _ctx: Context = {
-    self: () => this,
-    scope: () => this._scope,
-    parent: () => null as Context,
-  }
+  private _defs: { [name: string]: EVal } = {};
 
   constructor() {
-    this._scope = new Scope(this);
-
-    // Put built-ins in the root scope.
+    // Put built-ins in the world scope.
     for (let def of builtins) {
-      this.eval(def);
+      evaluate(this, def);
     }
   }
 
-  get ctx(): Context { return this._ctx }
+  get name(): string { return "[world]" }
+  get parent(): Scope { return null }
+  get world(): World { return this }
+  get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
+  ref(name: string): EVal { return this._defs[name] }
+  def(name: string, value: EVal): void { this._defs[name] = value }
 
   newChunk(): Chunk {
     let id = this._nextId++;
@@ -36,23 +33,17 @@ export class World {
     return this._chunks[id];
   }
 
-  get scope() { return this._scope }
-
-  eval(expr: EExpr): any {
-    return this._scope.eval(this._ctx, expr);
-  }
-
   toyChunk(): Chunk {
     let chunk = this.newChunk();
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        this.eval(['move', { ent: ['new', chunk.id, [EntityType.TileBlue]], x: x, y: y}]);
+        evaluate(this, [['move'], [['new'], chunk.id, EntityType.TileBlue], x, y]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      this.eval(['move', { ent: ['new', chunk.id, [EntityType.WallBlue]], x: x, y: 0}]);
+      evaluate(this, [['move'], [['new'], chunk.id, EntityType.WallBlue], x, 0]);
     }
 
     return chunk;
