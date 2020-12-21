@@ -54,7 +54,7 @@ export class World implements Scope {
 
   private funcs() {
     evaluate(this,
-      ['set', ['self'], 'portal', ['action', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
+      ['set', ['self'], 'portal', ['func', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
         ['let', { ent: [['new'], ['from'], ['type']] },
           [['move'], ['ent'], ['fx'], ['fy']],
           ['set', ['ent'], Var.PortalChunk, ['to']],

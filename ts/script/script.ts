@@ -3,10 +3,11 @@ import { Entity, isEntity } from "../entity";
 import { isWorld, World } from "../world";
 
 // Expressions.
-export type EExpr = EVal | EInvoke | ECall | ELet | ERef | ESet | EGet | ESelf;
-export type EVal = number | boolean | string | World | Chunk | Entity | ECallable | EInvokable | ENull;
+export type EExpr = EVal | ECall | ELet | ERef | ESet | EGet | ESelf;
+export type EVal = number | boolean | string | EDict | ECallable | ENull | World | Chunk | Entity;
 export type ENull = [];
 export type ESelf = ['self'];
+export type EDict = { [arg: string]: EExpr };
 export type ERef = [string];                      // TODO: name as expr?
 export type EGet = ['get', EExpr, string];        // TODO: name as expr?
 export type ESet = ['set', EExpr, string, EExpr]; // TODO: Merge into ref without call ambiguity?
@@ -18,13 +19,6 @@ export type ECallable = EFunc | ENativeFunc;
 export type EFunc = ['func', EParams, ...EExpr[]];
 export type ENativeFunc = ['native', 'func', EParams, NativeFunc];
 export type EParams = string[];
-
-// Actions are invokable.
-export type EInvoke = [EExpr, EDict];
-export type EInvokable = EAction | ENativeAction;
-export type EAction = ['action', EParams, ...EExpr[]];
-export type ENativeAction = ['native', 'action', EParams, NativeFunc];
-export type EDict = { [arg: string]: EExpr };
 
 // Native func/action interface.
 export type NativeFunc = (scope: Scope) => EVal;
@@ -103,9 +97,6 @@ function _eval(scope: Scope, expr: EExpr): EVal {
             if (arr.length == 1) {
               // Symbol refs have the form [string]
               return evalRef(scope, expr as ERef);
-            } else if (isMap(arr[1])) {
-              // Event invocation has form [name, { arg: value, ...}].
-              evalInvoke(scope, expr as EInvoke);
             } else {
               // Func call has form [name, value*].
               if (arr.length == 2 && arr[1] == []) {
@@ -123,6 +114,8 @@ function _eval(scope: Scope, expr: EExpr): EVal {
       if (chunk) { return chunk }
       let world = isWorld(expr);
       if (world) { return world }
+      let dict = isDict(expr);
+      if (dict) { return dict }
       return undefined;
   }
 }
@@ -131,7 +124,7 @@ function evalLet(scope: Scope, l: ELet): EVal {
   let dict: EDict = l[1];
   let body = l.slice(2) as EExpr[]; // Type checker isn't quite *that* smart.
 
-  let frame = new Frame(ScopeType.LET, "let", null, scope, scope.world);
+  let frame = new Frame(ScopeType.LET, undefined, 'let', scope, scope.world);
   for (let name in dict) {
     frame.def(name, _eval(scope, dict[name]));
   }
@@ -144,7 +137,7 @@ function evalRef(scope: Scope, ref: ERef): EVal {
   let name = ref[0];
 
   // Special case: self.
-  if (name == "self") {
+  if (name == 'self') {
     return evalSelf(scope);
   }
 
@@ -180,8 +173,13 @@ function evalGet(scope: Scope, g: EGet): EVal {
   let name = g[2];
 
   // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
-  if (typeof target['ref'] == "function") {
+  if (typeof target['ref'] == 'function') {
     return (target as Scope).ref(name);
+  }
+
+  let dict = isDict(target);
+  if (dict) {
+    return dict[name] as EVal;
   }
   return undefined;
 }
@@ -192,8 +190,14 @@ function evalSet(scope: Scope, s: ESet): EVal {
   let value = _eval(scope, s[3]);
 
   // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
-  if (typeof target['def'] == "function") {
+  if (typeof target['def'] == 'function') {
     (target as Scope).def(name, value);
+    return value;
+  }
+
+  let dict = isDict(target);
+  if (dict) {
+    dict[name] = value;
     return value;
   }
   return undefined;
@@ -203,7 +207,7 @@ function evalCall(scope: Scope, call: ECall): EVal {
   let val = _eval(scope, call[0]);
   let func = isCallable(val);
   if (!func) {
-    chuck(scope, "unable to call " + val);
+    chuck(scope, 'unable to call ' + val);
   }
   let args = call.slice(1)
 
@@ -212,7 +216,7 @@ function evalCall(scope: Scope, call: ECall): EVal {
 
   // Eval all args eagerly.
   // TODO: validate args, lazy evaluation.
-  let frame = new Frame(ScopeType.FUNC, "[call]", null, scope, scope.world);
+  let frame = new Frame(ScopeType.FUNC, undefined, '[call]', scope, scope.world);
   for (let i = 0; i < args.length; i++) {
     frame.def(params[i], _eval(scope, args[i]));
   }
@@ -224,34 +228,6 @@ function evalCall(scope: Scope, call: ECall): EVal {
 
   let body = func.slice(2) as EExpr[];
   return evalBody(frame, body);
-}
-
-function evalInvoke(scope: Scope, call: EInvoke): void {
-  let val = _eval(scope, call[0]);
-  let action = isInvokable(val);
-  if (!action) {
-    chuck(scope, "unable to invoke " + val);
-  }
-  let dict = call[1] as EDict;
-
-  let native = action[0] == 'native';
-  let params = (native ? action[2] : action[1]) as EParams; // TODO: Validate these or something?
-
-  // Eval all args eagerly.
-  // TODO: validate args, lazy evaluation.
-  let frame: Frame = new Frame(ScopeType.FUNC, "[call]", null, scope, scope.world);
-  for (let name in dict) {
-    frame.def(name, _eval(scope, dict[name]));
-  }
-
-  // TODO: Find all matching actions.
-  if (native) {
-    let fn = action[3] as NativeFunc;
-    evalNative(frame, fn);
-  } else {
-    let body = action.slice(2) as EExpr[];
-    evalBody(frame, body);
-  }
 }
 
 function evalBody(scope: Scope, body: EExpr[]): EVal {
@@ -272,43 +248,36 @@ function isMap(o: any) {
 }
 
 function isCallable(val: EVal): ECallable {
-  if (isFuncy(val, "func")) {
-    return val as ECallable;
-  }
-  return undefined;
-}
-
-function isInvokable(val: EVal): EInvokable {
-  if (isFuncy(val, "action")) {
-    return val as EInvokable;
-  }
-  return undefined;
-}
-
-function isFuncy(val: EVal, funciness: string): boolean {
   let arr = isArray(val);
   if (!arr) {
-    return false;
+    return undefined;
   }
   let i = 0;
   if (arr[i] == 'native') {
     i++;
   }
-  if (arr[i] != funciness) {
-    return false;
+  if (arr[i] != 'func') {
+    return undefined;
   }
   if (!isArray(arr[++i])) {
-    return false;
+    return undefined;
   }
   if (arr[i] === undefined) {
-    return false;
+    return undefined;
   }
-  return true;
+  return val as ECallable;
 }
 
 function isArray(val: any): any[] {
-  if (typeof val == "object" && val.constructor == Array) {
+  if (typeof val == 'object' && val.constructor == Array) {
     return val as [any];
+  }
+  return undefined;
+}
+
+function isDict(val: any): EDict {
+  if (typeof val == 'object' && val.constructor == Object) {
+    return val as EDict;
   }
   return undefined;
 }
@@ -321,13 +290,13 @@ export function chuck(scope: Scope, msg: string) {
 }
 
 function printStack(scope: Scope): string {
-  let msg = "";
+  let msg = '';
   while (scope) {
     msg += `[${scope.name}] - `
     for (let key of scope.names) {
       msg += `${key}: ${printVal(scope.ref(key))} `
     }
-    msg += "\n";
+    msg += '\n';
     scope = scope.parent;
   }
   return msg;
@@ -335,13 +304,12 @@ function printStack(scope: Scope): string {
 
 function printVal(val: EVal): string {
   switch (typeof val) {
-    case "object":
-      if (isCallable(val)) return "[func]";
-      if (isInvokable(val)) return "[action]";
+    case 'object':
+      if (isCallable(val)) return '[func]';
       if (val instanceof Chunk) return `[chunk ${(val as Chunk).id}]`
       if (val instanceof Entity) return `[ent ${(val as Entity).id}]`
-      return "[expr]";
+      return '[expr]';
     default:
-      return "" + val;
+      return '' + val;
   }
 }

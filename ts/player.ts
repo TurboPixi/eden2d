@@ -23,16 +23,20 @@ export function newPlayer(scope: Scope, chunk: Chunk): Entity {
           ]
         ]],
 
-        ['set', ['player'], 'player:move', ['action', ['player', 'dx', 'dy'],
-          [
+        ['set', ['player'], 'player:move', ['func', ['args'],
+          ['let', {
+            player: ['get', ['args'], 'player'],
+            dx: ['get', ['args'], 'dx'],
+            dy: ['get', ['args'], 'dy']
+          }, [
             ['move'], ['player'],
             [['+'], ['get', ['player'], 'x'], ['dx']],
             [['+'], ['get', ['player'], 'y'], ['dy']]
-          ],
+          ]],
         ]],
 
         // TODO: validate that there's actually something to follow.
-        ['set', ['player'], 'player:follow', ['action', ['player'],
+        ['set', ['player'], 'player:follow', ['func', ['player'],
           ['let', {
             portal: [['player:topWith'], ['player'], Var.Portal],
           },
@@ -47,7 +51,7 @@ export function newPlayer(scope: Scope, chunk: Chunk): Entity {
         ]],
 
         // TODO: Validate ent exists.
-        ['set', ['player'], 'player:take', ['action', ['player'],
+        ['set', ['player'], 'player:take', ['func', ['player'],
           ['let', {
             target: [['player:topWith'], ['player'], Var.Portable]
           },
@@ -60,7 +64,7 @@ export function newPlayer(scope: Scope, chunk: Chunk): Entity {
         ]],
 
         // TODO: Validate ent exists.
-        ['set', ['player'], 'player:put', ['action', ['player'],
+        ['set', ['player'], 'player:put', ['func', ['player'],
           ['let', {
             chunk: ['get', ['player'], Var.Chunk],
             inv: ['get', ['player'], Var.Contents],
@@ -77,7 +81,7 @@ export function newPlayer(scope: Scope, chunk: Chunk): Entity {
           ]
         ]],
 
-        ['set', ['player'], 'player:create', ['action', ['player', 'type'],
+        ['set', ['player'], 'player:create', ['func', ['player', 'type'],
           [
             ['move'],
             [['new'], ['get', ['player'], Var.Contents], ['type']],
@@ -87,7 +91,7 @@ export function newPlayer(scope: Scope, chunk: Chunk): Entity {
         ]],
 
         // TODO: Validate slot range
-        ['set', ['player'], 'player:select', ['action', ['get', 'player', 'slot'],
+        ['set', ['player'], 'player:select', ['func', ['player', 'slot'],
           ['let', { cursor: ['get', ['player'], 'inv:cursor'] },
             ['set', ['player'], 'slot', ['slot']],
             [['move'], ['cursor'], ['slot'], 0],
