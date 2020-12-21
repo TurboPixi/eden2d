@@ -3,10 +3,15 @@ import { Entity, isEntity } from "../entity";
 import { isWorld, World } from "../world";
 
 // Expressions.
+// TODO: Expressions and vals are all mixed up, but not coherently. You can get expressions into a val through
+// the dict type, but there's no way to avoid an expression being evaluated. Fix all this crap up and ensure
+// that either expressions can be values, or that there's no way to sneak them in the back door.
+// Some overlap here with 'if', Lisp-y 'special forms', and possibly lazy evaluation.
 export type EExpr = EVal | ECall | ELet | ERef | ESet | EGet | ESelf;
-export type EVal = number | boolean | string | EDict | ECallable | ENull | World | Chunk | Entity;
+export type EVal = number | boolean | string | EList | EDict | ECallable | ENull | World | Chunk | Entity;
 export type ENull = [];
 export type ESelf = ['self'];
+export type EList = EVal[];
 export type EDict = { [arg: string]: EExpr };
 export type ERef = [string];                      // TODO: name as expr?
 export type EGet = ['get', EExpr, string];        // TODO: name as expr?
@@ -116,6 +121,7 @@ function _eval(scope: Scope, expr: EExpr): EVal {
       if (world) { return world }
       let dict = isDict(expr);
       if (dict) { return dict }
+      // TODO: EList?
       return undefined;
   }
 }
