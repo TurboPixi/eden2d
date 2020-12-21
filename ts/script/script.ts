@@ -3,26 +3,21 @@ import { Entity, isEntity } from "../entity";
 import { isWorld, World } from "../world";
 
 // Expressions.
-// TODO: Expressions and vals are all mixed up, but not coherently. You can get expressions into a val through
-// the dict type, but there's no way to avoid an expression being evaluated. Fix all this crap up and ensure
-// that either expressions can be values, or that there's no way to sneak them in the back door.
-// Some overlap here with 'if', Lisp-y 'special forms', and possibly lazy evaluation.
-export type EExpr = EVal | ECall | ELet | ERef | ESet | EGet | ESelf;
-export type EVal = number | boolean | string | EList | EDict | ECallable | ENull | World | Chunk | Entity;
-export type ENull = [];
+export type EExpr = EVal | ECallable | ECall | ELet | ERef | ESet | EGet | ESelf;
+export type EVal = undefined | number | boolean | string | EList | EDict | World | Chunk | Entity;
 export type ESelf = ['self'];
-export type EList = EVal[];
-export type EDict = { [arg: string]: EExpr };
+export type EList = EExpr[];
+export type EDict = { [arg: string]: EVal };
 export type ERef = [string];                      // TODO: name as expr?
 export type EGet = ['get', EExpr, string];        // TODO: name as expr?
 export type ESet = ['set', EExpr, string, EExpr]; // TODO: Merge into ref without call ambiguity?
 export type ELet = ['let', EDict, ...EExpr[]];    // Create new scope.
 
 // Functions are callable.
-export type ECall = [EExpr, EExpr, ...EExpr[]] | [EExpr, ENull];
+export type ECall = [EExpr, EExpr, ...EExpr[]] | [EExpr, []];
 export type ECallable = EFunc | ENativeFunc;
 export type EFunc = ['func', EParams, ...EExpr[]];
-export type ENativeFunc = ['native', 'func', EParams, NativeFunc];
+export type ENativeFunc = ['native', EParams, NativeFunc];
 export type EParams = string[];
 
 // Native func/action interface.
@@ -49,12 +44,12 @@ export interface Scope {
 }
 
 class Frame implements Scope {
-  private _defs: { [name: string]: EVal } = {};
+  private _defs: EDict = {};
 
   constructor(public type: ScopeType, public self: EVal, public name: string, public parent: Scope, public world: World) { }
   get names(): string[] { return Object.keys(this._defs) }
   def(name: string, value: EVal): void { this._defs[name] = value }
-  ref(name: string): EVal { return this._defs[name] }
+  ref(name: string): EVal { return this._defs[name] as EVal }
 }
 
 export const ScriptError = 'script error';
@@ -170,13 +165,15 @@ function evalSelf(scope: Scope): EVal {
     }
     parent = parent.parent;
   }
-
-  chuck(scope, 'unbound identifier ' + name);
+  chuck(scope, 'missing self');
 }
 
 function evalGet(scope: Scope, g: EGet): EVal {
   let target = _eval(scope, g[1]) as any;
-  let name = g[2];
+  let name = isString(_eval(scope, g[2]));
+  if (!name) {
+    chuck(scope, `cannot get ${g[1]}.${g[2]}`);
+  }
 
   // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
   if (typeof target['ref'] == 'function') {
@@ -187,13 +184,17 @@ function evalGet(scope: Scope, g: EGet): EVal {
   if (dict) {
     return dict[name] as EVal;
   }
-  return undefined;
+
+  chuck(scope, `cannot get ${g[1]}.${g[2]}`);
 }
 
 function evalSet(scope: Scope, s: ESet): EVal {
   let target = _eval(scope, s[1]) as Entity;
-  let name = s[2];
+  let name = isString(_eval(scope, s[2]));
   let value = _eval(scope, s[3]);
+  if (!name) {
+    chuck(scope, `cannot set ${s[1]}.${s[2]}`);
+  }
 
   // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
   if (typeof target['def'] == 'function') {
@@ -206,7 +207,8 @@ function evalSet(scope: Scope, s: ESet): EVal {
     dict[name] = value;
     return value;
   }
-  return undefined;
+
+  chuck(scope, `cannot set ${s[1]}.${s[2]}`);
 }
 
 function evalCall(scope: Scope, call: ECall): EVal {
@@ -217,22 +219,21 @@ function evalCall(scope: Scope, call: ECall): EVal {
   }
   let args = call.slice(1)
 
-  let native = func[0] == 'native';
-  let params = (native ? func[2] : func[1]) as EParams;
+  let params = func[1] as EParams;
 
-  // Eval all args eagerly.
-  // TODO: validate args, lazy evaluation.
+  // Build stack frame.
   let frame = new Frame(ScopeType.FUNC, undefined, '[call]', scope, scope.world);
   for (let i = 0; i < args.length; i++) {
     frame.def(params[i], _eval(scope, args[i]));
   }
 
-  if (native) {
-    let fn = func[3] as NativeFunc;
-    return evalNative(frame, fn);
+  if (func[0] == 'native') {
+    // Call native impl.
+    let fn = func[2] as NativeFunc;
+    return fn(frame);
   }
 
-  let body = func.slice(2) as EExpr[];
+  let body = func.slice(2);
   return evalBody(frame, body);
 }
 
@@ -244,39 +245,33 @@ function evalBody(scope: Scope, body: EExpr[]): EVal {
   return last;
 }
 
-function evalNative(scope: Scope, fn: NativeFunc): EVal {
-  // Call native impl.
-  return fn(scope);
-}
-
-function isMap(o: any) {
-  return (typeof o == 'object' && o.constructor == Object);
-}
-
-function isCallable(val: EVal): ECallable {
+function isCallable(val: EExpr): ECallable {
   let arr = isArray(val);
-  if (!arr) {
+  if (!arr || arr.length < 3) {
+    // Not array or not long enough.
     return undefined;
   }
-  let i = 0;
-  if (arr[i] == 'native') {
-    i++;
-  }
-  if (arr[i] != 'func') {
+  if (arr[0] != 'func' && arr[0] != 'native') {
+    // Missing func keyword.
     return undefined;
   }
-  if (!isArray(arr[++i])) {
-    return undefined;
-  }
-  if (arr[i] === undefined) {
+  if (!isArray(arr[1])) {
+    // No parameter list.
     return undefined;
   }
   return val as ECallable;
 }
 
+function isString(val: any): string {
+  if (typeof val == "string") {
+    return val;
+  }
+  return undefined;
+}
+
 function isArray(val: any): any[] {
   if (typeof val == 'object' && val.constructor == Array) {
-    return val as [any];
+    return val;
   }
   return undefined;
 }
@@ -308,7 +303,7 @@ function printStack(scope: Scope): string {
   return msg;
 }
 
-function printVal(val: EVal): string {
+function printVal(val: EExpr): string {
   switch (typeof val) {
     case 'object':
       if (isCallable(val)) return '[func]';

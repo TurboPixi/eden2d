@@ -3,19 +3,19 @@ import { Chunk, isChunk } from "../chunk";
 import { Entity, EntityType, isEntity } from "../entity";
 
 export const builtins: EExpr[] = [
-  ['set', ['self'], '+', ['native', 'func', ['x', 'y'],
+  ['set', ['self'], '+', ['native', ['x', 'y'],
     function (scope: Scope): EVal {
       return locNum(scope, 'x') + locNum(scope, 'y');
     }
   ]],
 
-  ['set', ['self'], 'newChunk', ['native', 'func', [],
+  ['set', ['self'], 'newChunk', ['native', [],
     function (scope: Scope): EVal {
       return scope.world.newChunk();
     }
   ]],
 
-  ['set', ['self'], 'new', ['native', 'func', ['chunk', 'type'],
+  ['set', ['self'], 'new', ['native', ['chunk', 'type'],
     function (scope: Scope): EVal {
       let chunk = locChunk(scope, 'chunk');
       let ent = new Entity(scope.world, locStr(scope, 'type') as EntityType);
@@ -24,7 +24,7 @@ export const builtins: EExpr[] = [
     }
   ]],
 
-  ['set', ['self'], 'move', ['native', 'func', ['ent', 'x', 'y'],
+  ['set', ['self'], 'move', ['native', ['ent', 'x', 'y'],
     function (scope: Scope): EVal {
       let x = locNum(scope, 'x');
       let y = locNum(scope, 'y');
@@ -34,7 +34,7 @@ export const builtins: EExpr[] = [
     }
   ]],
 
-  ['set', ['self'], 'jump', ['native', 'func', ['ent', 'chunk'],
+  ['set', ['self'], 'jump', ['native', ['ent', 'chunk'],
     function (scope: Scope): EVal {
       let ent = locEnt(scope, 'ent');
       let to = locChunk(scope, 'chunk');
@@ -43,7 +43,7 @@ export const builtins: EExpr[] = [
     }
   ]],
 
-  ['set', ['self'], 'topWith', ['native', 'func', ['chunk', 'x', 'y', 'var'],
+  ['set', ['self'], 'topWith', ['native', ['chunk', 'x', 'y', 'var'],
     function (scope: Scope): EVal {
       let chunk = locChunk(scope, 'chunk');
       let x = locNum(scope, 'x');
