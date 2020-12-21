@@ -1,24 +1,26 @@
-import { Chunk, isChunk } from "../chunk";
-import { Entity, isEntity } from "../entity";
-import { isWorld, World } from "../world";
-
-// Expressions.
-export type EExpr = EVal | ECallable | ECall | ELet | ERef | ESet | EGet | ESelf;
-export type EVal = undefined | number | boolean | string | EList | EDict | World | Chunk | Entity;
-export type ESelf = ['self'];
-export type EList = EExpr[];
+// Values.
+export type EVal = undefined | number | boolean | string | EId | EList | EDict | Scope;
+export type EList = EVal[];
 export type EDict = { [arg: string]: EVal };
-export type ERef = [string];                      // TODO: name as expr?
-export type EGet = ['get', EExpr, string];        // TODO: name as expr?
-export type ESet = ['set', EExpr, string, EExpr]; // TODO: Merge into ref without call ambiguity?
-export type ELet = ['let', EDict, ...EExpr[]];    // Create new scope.
 
-// Functions are callable.
+// Expressions. These overlap with EList, but only when evaluated.
+export type EExpr = EVal | ECallable | ECall | ELet | ESet | EGet;
+export type EId = { _expr_id: EExpr };
+export type ELet = [KLet, EDict, ...EExpr[]];
+export type EGet = [KGet, EExpr, EExpr];        // TODO: Merge into call without ambiguity?
+export type ESet = [KSet, EExpr, EExpr, EExpr]; // ...
 export type ECall = [EExpr, EExpr, ...EExpr[]] | [EExpr, []];
 export type ECallable = EFunc | ENativeFunc;
-export type EFunc = ['func', EParams, ...EExpr[]];
-export type ENativeFunc = ['native', EParams, NativeFunc];
+export type EFunc = [KFunc, EParams, ...EExpr[]];
+export type ENativeFunc = [KNative, EParams, NativeFunc];
 export type EParams = string[];
+
+// Keywords.
+export type KGet = { _expr_key: 'get' };
+export type KSet = { _expr_key: 'set' };
+export type KLet = { _expr_key: 'let' };
+export type KFunc = { _expr_key: 'func' };
+export type KNative = { _expr_key: 'native' };
 
 // Native func/action interface.
 export type NativeFunc = (scope: Scope) => EVal;
@@ -37,7 +39,6 @@ export interface Scope {
   readonly name: string;
   readonly self: EVal;
   readonly parent: Scope;
-  readonly world: World;
   readonly names: string[];
   ref(name: string): EVal;
   def(name: string, value: EVal): void;
@@ -46,13 +47,31 @@ export interface Scope {
 class Frame implements Scope {
   private _defs: EDict = {};
 
-  constructor(public type: ScopeType, public self: EVal, public name: string, public parent: Scope, public world: World) { }
+  constructor(public type: ScopeType, public self: EVal, public name: string, public parent: Scope) { }
   get names(): string[] { return Object.keys(this._defs) }
   def(name: string, value: EVal): void { this._defs[name] = value }
   ref(name: string): EVal { return this._defs[name] as EVal }
 }
 
 export const ScriptError = 'script error';
+
+export const _get: KGet = { _expr_key: 'get' };
+export const _set: KSet = { _expr_key: 'set' };
+export const _let: KLet = { _expr_key: 'let' };
+export const _func: KFunc = { _expr_key: 'func' };
+export const _native: KNative = { _expr_key: 'native' };
+export const _self = _('self');
+
+export function _(e: string): EId {
+  return { _expr_id: e };
+}
+
+export function chuck(scope: Scope, msg: string) {
+  throw {
+    msg: msg,
+    stack: printStack(scope),
+  };
+}
 
 export function evaluate(scope: Scope, expr: EExpr): EVal {
   try {
@@ -81,43 +100,39 @@ function _eval(scope: Scope, expr: EExpr): EVal {
           return undefined;
         }
 
-        switch (arr[0]) {
-          case 'let': return evalLet(scope, arr as ELet);
-          case 'get': return evalGet(scope, arr as EGet);
-          case 'set': return evalSet(scope, arr as ESet);
+        if (arr[0]._expr_key) {
+          switch (arr[0]._expr_key) {
+            case 'let': return evalLet(scope, arr as ELet);
+            case 'get': return evalGet(scope, arr as EGet);
+            case 'set': return evalSet(scope, arr as ESet);
 
-          case 'func':
-          case 'action':
-          case 'native': {
-            // TODO: Validate func/action structure.
-            return arr as EVal;
-          }
-
-          default:
-            if (arr.length == 1) {
-              // Symbol refs have the form [string]
-              return evalRef(scope, expr as ERef);
-            } else {
-              // Func call has form [name, value*].
-              if (arr.length == 2 && arr[1] == []) {
-                // Special case -- ['fn', []] is a no-arg function invocation.
-                arr.length = 1;
-              }
-              return evalCall(scope, arr as ECall);
+            case 'func':
+            case 'action':
+            case 'native': {
+              // TODO: Validate func/action structure.
+              return arr as EVal;
             }
+          }
         }
+
+        // Func call has form [name, value*].
+        if (arr.length == 2 && arr[1] == []) {
+          // Special case -- ['fn', []] is a no-arg function invocation.
+          arr.length = 1;
+        }
+        return evalCall(scope, arr as ECall);
       }
 
-      let ent = isEntity(expr);
-      if (ent) { return ent }
-      let chunk = isChunk(expr);
-      if (chunk) { return chunk }
-      let world = isWorld(expr);
-      if (world) { return world }
+      if ('_expr_id' in expr) {
+        return evalRef(scope, expr as EId);
+      }
+
+      // TODO: EList?
       let dict = isDict(expr);
       if (dict) { return dict }
-      // TODO: EList?
-      return undefined;
+
+      // TODO: Validate is scope or something otherwise legal?
+      return expr as EVal;
   }
 }
 
@@ -125,7 +140,7 @@ function evalLet(scope: Scope, l: ELet): EVal {
   let dict: EDict = l[1];
   let body = l.slice(2) as EExpr[]; // Type checker isn't quite *that* smart.
 
-  let frame = new Frame(ScopeType.LET, undefined, 'let', scope, scope.world);
+  let frame = new Frame(ScopeType.LET, undefined, 'let', scope);
   for (let name in dict) {
     frame.def(name, _eval(scope, dict[name]));
   }
@@ -133,9 +148,8 @@ function evalLet(scope: Scope, l: ELet): EVal {
   return evalBody(frame, body);
 }
 
-function evalRef(scope: Scope, ref: ERef): EVal {
-  // TODO: Eval name as expr?
-  let name = ref[0];
+function evalRef(scope: Scope, id: EId): EVal {
+  let name = isString(_eval(scope, id._expr_id));
 
   // Special case: self.
   if (name == 'self') {
@@ -189,7 +203,7 @@ function evalGet(scope: Scope, g: EGet): EVal {
 }
 
 function evalSet(scope: Scope, s: ESet): EVal {
-  let target = _eval(scope, s[1]) as Entity;
+  let target = _eval(scope, s[1]) as any;
   let name = isString(_eval(scope, s[2]));
   let value = _eval(scope, s[3]);
   if (!name) {
@@ -222,18 +236,18 @@ function evalCall(scope: Scope, call: ECall): EVal {
   let params = func[1] as EParams;
 
   // Build stack frame.
-  let frame = new Frame(ScopeType.FUNC, undefined, '[call]', scope, scope.world);
+  let frame = new Frame(ScopeType.FUNC, undefined, '[call]', scope);
   for (let i = 0; i < args.length; i++) {
     frame.def(params[i], _eval(scope, args[i]));
   }
 
-  if (func[0] == 'native') {
+  if (kNative(func[0])) {
     // Call native impl.
     let fn = func[2] as NativeFunc;
     return fn(frame);
   }
 
-  let body = func.slice(2);
+  let body = func.slice(2) as EExpr[];
   return evalBody(frame, body);
 }
 
@@ -245,13 +259,21 @@ function evalBody(scope: Scope, body: EExpr[]): EVal {
   return last;
 }
 
+function kFunc(expr: any): boolean {
+  return ('_expr_key' in expr) && expr._expr_key == 'func';
+}
+
+function kNative(expr: any): boolean {
+  return ('_expr_key' in expr) && expr._expr_key == 'native';
+}
+
 function isCallable(val: EExpr): ECallable {
   let arr = isArray(val);
   if (!arr || arr.length < 3) {
     // Not array or not long enough.
     return undefined;
   }
-  if (arr[0] != 'func' && arr[0] != 'native') {
+  if (!kFunc(arr[0]) && !kNative(arr[0])) {
     // Missing func keyword.
     return undefined;
   }
@@ -283,13 +305,6 @@ function isDict(val: any): EDict {
   return undefined;
 }
 
-export function chuck(scope: Scope, msg: string) {
-  throw {
-    msg: msg,
-    stack: printStack(scope),
-  };
-}
-
 function printStack(scope: Scope): string {
   let msg = '';
   while (scope) {
@@ -307,9 +322,7 @@ function printVal(val: EExpr): string {
   switch (typeof val) {
     case 'object':
       if (isCallable(val)) return '[func]';
-      if (val instanceof Chunk) return `[chunk ${(val as Chunk).id}]`
-      if (val instanceof Entity) return `[ent ${(val as Entity).id}]`
-      return '[expr]';
+      return `[${val.constructor.name}]`;
     default:
       return '' + val;
   }

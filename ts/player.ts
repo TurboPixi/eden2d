@@ -1,104 +1,106 @@
 import { Chunk } from "./chunk";
 import { Entity, EntityType, Var } from "./entity";
-import { evaluate, Scope } from "./script/script";
+import { _add, _jump, _move, _new, _newChunk, _topWith } from "./script/builtins";
+import { evaluate, _func, _get, Scope, _set, _, _let } from "./script/script";
 
 export function newPlayer(scope: Scope, chunk: Chunk): Entity {
+  let player = _('player');
   return evaluate(scope,
-    ['let', { 'invChunk': [['newChunk'], []] },
-      ['let', {
-        player: [['new'], chunk, EntityType.Player],
-        cursor: [['new'], ['invChunk'], EntityType.Cursor],
+    [_let, { invChunk: [_newChunk, []] },
+      [_let, {
+        player: [_new, chunk, EntityType.Player],
+        cursor: [_new, _('invChunk'), EntityType.Cursor],
       },
-        ['set', ['player'], 'slot', 0],
-        ['set', ['player'], Var.Contents, ['invChunk']],
-        ['set', ['player'], 'inv:cursor', ['cursor']],
+        [_set, player, 'slot', 0],
+        [_set, player, Var.Contents, _('invChunk')],
+        [_set, player, 'inv:cursor', _('cursor')],
 
-        ['set', ['player'], 'player:topWith', ['func', ['player', 'var'],
+        [_set, player, 'player:topWith', [_func, ['player', 'var'],
           [
-            ['topWith'],
-            ['get', ['player'], Var.Chunk],
-            ['get', ['player'], Var.X],
-            ['get', ['player'], Var.Y],
-            ['var']
+            _topWith,
+            [_get, player, Var.Chunk],
+            [_get, player, Var.X],
+            [_get, player, Var.Y],
+            _('var')
           ]
         ]],
 
-        ['set', ['player'], 'player:move', ['func', ['args'],
-          ['let', {
-            player: ['get', ['args'], 'player'],
-            dx: ['get', ['args'], 'dx'],
-            dy: ['get', ['args'], 'dy']
+        [_set, player, 'player:move', [_func, ['args'],
+          [_let, {
+            player: [_get, _('args'), 'player'],
+            dx: [_get, _('args'), 'dx'],
+            dy: [_get, _('args'), 'dy']
           }, [
-            ['move'], ['player'],
-            [['+'], ['get', ['player'], 'x'], ['dx']],
-            [['+'], ['get', ['player'], 'y'], ['dy']]
-          ]],
+              _move, player,
+              [_add, [_get, player, 'x'], _('dx')],
+              [_add, [_get, player, 'y'], _('dy')]
+            ]],
         ]],
 
         // TODO: validate that there's actually something to follow.
-        ['set', ['player'], 'player:follow', ['func', ['player'],
-          ['let', {
-            portal: [['player:topWith'], ['player'], Var.Portal],
+        [_set, player, 'player:follow', [_func, ['player'],
+          [_let, {
+            portal: [_('player:topWith'), player, Var.Portal],
           },
-            ['let', {
-              x: ['get', ['portal'], Var.PortalX],
-              y: ['get', ['portal'], Var.PortalY],
+            [_let, {
+              x: [_get, _('portal'), Var.PortalX],
+              y: [_get, _('portal'), Var.PortalY],
             },
-              [['jump'], ['player'], ['get', ['portal'], Var.PortalChunk]],
-              [['move'], ['player'], ['x'], ['y']]
+              [_jump, player, [_get, _('portal'), Var.PortalChunk]],
+              [_move, player, _('x'), _('y')]
             ]
           ]
         ]],
 
         // TODO: Validate ent exists.
-        ['set', ['player'], 'player:take', ['func', ['player'],
-          ['let', {
-            target: [['player:topWith'], ['player'], Var.Portable]
+        [_set, player, 'player:take', [_func, ['player'],
+          [_let, {
+            target: [_('player:topWith'), player, Var.Portable]
           },
             [
-              ['move'],
-              [['jump'], ['target'], ['get', ['player'], Var.Contents]],
-              ['get', ['player'], 'slot'], 0
+              _move,
+              [_jump, _('target'), [_get, player, Var.Contents]],
+              [_get, player, 'slot'], 0
             ]
           ],
         ]],
 
         // TODO: Validate ent exists.
-        ['set', ['player'], 'player:put', ['func', ['player'],
-          ['let', {
-            chunk: ['get', ['player'], Var.Chunk],
-            inv: ['get', ['player'], Var.Contents],
-            slot: ['get', ['player'], 'slot'],
+        [_set, player, 'player:put', [_func, ['player'],
+          [_let, {
+            chunk: [_get, player, Var.Chunk],
+            inv: [_get, player, Var.Contents],
+            slot: [_get, player, 'slot'],
           },
-            ['let', { target: [['topWith'], ['inv'], ['slot'], 0, Var.Portable] },
+            [_let, { target: [_topWith, _('inv'), _('slot'), 0, Var.Portable] },
               [
-                ['move'],
-                [['jump'], ['target'], ['get', ['player'], 'chunk']],
-                ['get', ['player'], 'x'],
-                ['get', ['player'], 'y']
+                _move,
+                [_jump, _('target'), [_get, player, 'chunk']],
+                [_get, player, 'x'],
+                [_get, player, 'y']
               ]
             ]
           ]
         ]],
 
-        ['set', ['player'], 'player:create', ['func', ['player', 'type'],
+        [_set, player, 'player:create', [_func, ['player', 'type'],
           [
-            ['move'],
-            [['new'], ['get', ['player'], Var.Contents], ['type']],
-            ['get', ['player'], 'slot'],
+            _move,
+            [_new, [_get, player, Var.Contents], _('type')],
+            [_get, player, 'slot'],
             0
           ]
         ]],
 
         // TODO: Validate slot range
-        ['set', ['player'], 'player:select', ['func', ['player', 'slot'],
-          ['let', { cursor: ['get', ['player'], 'inv:cursor'] },
-            ['set', ['player'], 'slot', ['slot']],
-            [['move'], ['cursor'], ['slot'], 0],
+        [_set, player, 'player:select', [_func, ['player', 'slot'],
+          [_let, { cursor: [_get, player, 'inv:cursor'] },
+            [_set, player, 'slot', _('slot')],
+            [_move, _('cursor'), _('slot'), 0],
           ],
         ]],
 
-        ['player']
+        player
       ]
     ]
   ) as Entity;

@@ -53,7 +53,7 @@ export class Entity implements Scope {
   private _defs: { [name: string]: EVal };
   private _spr: Sprite;
 
-  constructor(public world: World, type: EntityType) {
+  constructor(type: EntityType) {
     if (!(type in _protos)) {
       throw "invalid entity type";
     }

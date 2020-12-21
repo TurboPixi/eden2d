@@ -1,30 +1,38 @@
-import { chuck, EExpr, EVal, Scope } from "./script";
+import { chuck, EExpr, EVal, _native, Scope, _self, _set, _ } from "./script";
 import { Chunk, isChunk } from "../chunk";
 import { Entity, EntityType, isEntity } from "../entity";
+import { World } from "../world";
+
+export const _add = _('+');
+export const _newChunk = _('newChunk');
+export const _new = _('new');
+export const _move = _('move');
+export const _jump = _('jump');
+export const _topWith = _('topWith');
 
 export const builtins: EExpr[] = [
-  ['set', ['self'], '+', ['native', ['x', 'y'],
+  [_set, _self, '+', [_native, ['x', 'y'],
     function (scope: Scope): EVal {
       return locNum(scope, 'x') + locNum(scope, 'y');
     }
   ]],
 
-  ['set', ['self'], 'newChunk', ['native', [],
+  [_set, _self, 'newChunk', [_native, [],
     function (scope: Scope): EVal {
-      return scope.world.newChunk();
+      return worldFrom(scope).newChunk();
     }
   ]],
 
-  ['set', ['self'], 'new', ['native', ['chunk', 'type'],
+  [_set, _self, 'new', [_native, ['chunk', 'type'],
     function (scope: Scope): EVal {
       let chunk = locChunk(scope, 'chunk');
-      let ent = new Entity(scope.world, locStr(scope, 'type') as EntityType);
+      let ent = new Entity(locStr(scope, 'type') as EntityType);
       chunk.addEntity(ent);
       return ent;
     }
   ]],
 
-  ['set', ['self'], 'move', ['native', ['ent', 'x', 'y'],
+  [_set, _self, 'move', [_native, ['ent', 'x', 'y'],
     function (scope: Scope): EVal {
       let x = locNum(scope, 'x');
       let y = locNum(scope, 'y');
@@ -34,7 +42,7 @@ export const builtins: EExpr[] = [
     }
   ]],
 
-  ['set', ['self'], 'jump', ['native', ['ent', 'chunk'],
+  [_set, _self, 'jump', [_native, ['ent', 'chunk'],
     function (scope: Scope): EVal {
       let ent = locEnt(scope, 'ent');
       let to = locChunk(scope, 'chunk');
@@ -43,7 +51,7 @@ export const builtins: EExpr[] = [
     }
   ]],
 
-  ['set', ['self'], 'topWith', ['native', ['chunk', 'x', 'y', 'var'],
+  [_set, _self, 'topWith', [_native, ['chunk', 'x', 'y', 'var'],
     function (scope: Scope): EVal {
       let chunk = locChunk(scope, 'chunk');
       let x = locNum(scope, 'x');
@@ -59,6 +67,17 @@ export const builtins: EExpr[] = [
     }
   ]],
 ];
+
+function worldFrom(scope: Scope): World {
+  let cur = scope;
+  while (cur) {
+    if (cur instanceof World) {
+      return cur;
+    }
+    cur = cur.parent;
+  }
+  chuck(scope, "missing world scope");
+}
 
 function locNum(scope: Scope, name: string): number {
   let value = scope.ref(name) as number;

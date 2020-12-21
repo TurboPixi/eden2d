@@ -1,7 +1,7 @@
-import { EExpr, EVal, evaluate, Scope, ScopeType } from "./script/script";
+import { EExpr, EVal, evaluate, Scope, ScopeType, _, _func, _let, _self, _set } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { EntityType, Var } from "./entity";
-import { builtins } from "./script/builtins";
+import { _move, _new } from "./script/builtins";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World implements Scope {
@@ -10,10 +10,6 @@ export class World implements Scope {
   private _defs: { [name: string]: EVal } = {};
 
   constructor() {
-    // Put built-ins in the world scope.
-    for (let def of builtins) {
-      evaluate(this, def);
-    }
     this.funcs();
   }
 
@@ -41,12 +37,12 @@ export class World implements Scope {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        evaluate(this, [['move'], [['new'], chunk, EntityType.TileBlue], x, y]);
+        evaluate(this, [_move, [_new, chunk, EntityType.TileBlue], x, y]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      evaluate(this, [['move'], [['new'], chunk, EntityType.WallBlue], x, 0]);
+      evaluate(this, [_move, [_new, chunk, EntityType.WallBlue], x, 0]);
     }
 
     return chunk;
@@ -54,13 +50,13 @@ export class World implements Scope {
 
   private funcs() {
     evaluate(this,
-      ['set', ['self'], 'portal', ['func', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
-        ['let', { ent: [['new'], ['from'], ['type']] },
-          [['move'], ['ent'], ['fx'], ['fy']],
-          ['set', ['ent'], Var.PortalChunk, ['to']],
-          ['set', ['ent'], Var.PortalX, ['tx']],
-          ['set', ['ent'], Var.PortalY, ['ty']],
-          ['ent']
+      [_set, _self, 'portal', [_func, ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
+        [_let, { ent: [_new, _('from'), _('type')] },
+          [_move, _('ent'), _('fx'), _('fy')],
+          [_set, _('ent'), Var.PortalChunk, _('to')],
+          [_set, _('ent'), Var.PortalX, _('tx')],
+          [_set, _('ent'), Var.PortalY, _('ty')],
+          _('ent')
         ]
       ]]
     );

@@ -128,7 +128,7 @@ Actions
 
 [def player:follow [action [player]
   [let [
-    [portal [player-topWith player 'portal']]
+    [portal [player:topWith player 'portal']]
   ]
     [let [
       [x [get portal 'portal-x']]
