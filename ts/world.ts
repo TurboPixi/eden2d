@@ -1,6 +1,6 @@
-import { EVal, evaluate, Scope } from "./script/script";
+import { EExpr, EVal, evaluate, Scope, ScopeType } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
-import { EntityType } from "./entity";
+import { EntityType, Var } from "./entity";
 import { builtins } from "./script/builtins";
 
 // TODO: Reliable garbage-collection on chunks.
@@ -14,9 +14,12 @@ export class World implements Scope {
     for (let def of builtins) {
       evaluate(this, def);
     }
+    this.funcs();
   }
 
+  get type(): ScopeType { return ScopeType.WORLD }
   get name(): string { return "[world]" }
+  get self(): EVal { return this }
   get parent(): Scope { return null }
   get world(): World { return this }
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
@@ -48,4 +51,25 @@ export class World implements Scope {
 
     return chunk;
   }
+
+  private funcs() {
+    evaluate(this,
+      ['set', ['self'], 'portal', ['action', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
+        ['let', { ent: [['new'], ['from'], ['type']] },
+          [['move'], ['ent'], ['fx'], ['fy']],
+          ['set', ['ent'], Var.PortalChunk, ['to']],
+          ['set', ['ent'], Var.PortalX, ['tx']],
+          ['set', ['ent'], Var.PortalY, ['ty']],
+          ['ent']
+        ]
+      ]]
+    );
+  }
+}
+
+export function isWorld(expr: EExpr): World {
+  if (expr instanceof World) {
+    return expr as World;
+  }
+  return undefined;
 }

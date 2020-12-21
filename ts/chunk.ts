@@ -1,6 +1,6 @@
 import { Container } from "pixi.js";
 import { Entity } from "./entity";
-import { EVal, Scope } from "./script/script";
+import { EExpr, EVal, Scope, ScopeType } from "./script/script";
 import { World } from "./world";
 
 export type ChunkId = number;
@@ -18,10 +18,11 @@ export class Chunk implements Scope {
 
   get id(): number { return this._id }
   get container(): Container { return this._container }
-  get self() { return this }
-  get parent() { return this._world }
 
+  get type(): ScopeType { return ScopeType.CHUNK }
   get name(): string { return "[chunk]" }
+  get self(): EVal { return this }
+  get parent() { return this._world }
   get world(): World { return this._world }
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
   ref(name: string): EVal { return this._defs && this._defs[name] }
@@ -66,4 +67,11 @@ export class Chunk implements Scope {
   tick(x: number, y: number, z: number, w: number, h : number) {
     this._container.setTransform(-x * z, -y * z, z, z);
   }
+}
+
+export function isChunk(expr: EExpr): Chunk {
+  if (expr instanceof Chunk) {
+    return expr as Chunk;
+  }
+  return undefined;
 }

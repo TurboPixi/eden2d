@@ -1,15 +1,15 @@
-import { Chunk } from "../chunk";
-import { Entity } from "../entity";
-import { World } from "../world";
+import { Chunk, isChunk } from "../chunk";
+import { Entity, isEntity } from "../entity";
+import { isWorld, World } from "../world";
 
 // Expressions.
-export type EExpr = EVal | EInvoke | ECall | EDef | ELet | ERef | ESet | EGet;
-export type EVal = number | boolean | string | Chunk | Entity | ECallable | EInvokable | ENull;
+export type EExpr = EVal | EInvoke | ECall | ELet | ERef | ESet | EGet | ESelf;
+export type EVal = number | boolean | string | World | Chunk | Entity | ECallable | EInvokable | ENull;
 export type ENull = [];
+export type ESelf = ['self'];
 export type ERef = [string];                      // TODO: name as expr?
 export type EGet = ['get', EExpr, string];        // TODO: name as expr?
 export type ESet = ['set', EExpr, string, EExpr]; // TODO: Merge into ref without call ambiguity?
-export type EDef = ['def', string, EExpr];        // Define symbol in current scope.
 export type ELet = ['let', EDict, ...EExpr[]];    // Create new scope.
 
 // Functions are callable.
@@ -30,8 +30,18 @@ export type EDict = { [arg: string]: EExpr };
 export type NativeFunc = (scope: Scope) => EVal;
 
 // Symbol resolution scope.
+export enum ScopeType {
+  WORLD = 1,
+  CHUNK = 2,
+  ENT = 3,
+  FUNC = 4,
+  LET = 5,
+}
+
 export interface Scope {
+  readonly type: ScopeType;
   readonly name: string;
+  readonly self: EVal;
   readonly parent: Scope;
   readonly world: World;
   readonly names: string[];
@@ -42,7 +52,7 @@ export interface Scope {
 class Frame implements Scope {
   private _defs: { [name: string]: EVal } = {};
 
-  constructor(public name: string, public parent: Scope, public world: World) { }
+  constructor(public type: ScopeType, public self: EVal, public name: string, public parent: Scope, public world: World) { }
   get names(): string[] { return Object.keys(this._defs) }
   def(name: string, value: EVal): void { this._defs[name] = value }
   ref(name: string): EVal { return this._defs[name] }
@@ -78,7 +88,6 @@ function _eval(scope: Scope, expr: EExpr): EVal {
         }
 
         switch (arr[0]) {
-          case 'def': return evalDef(scope, arr as EDef);
           case 'let': return evalLet(scope, arr as ELet);
           case 'get': return evalGet(scope, arr as EGet);
           case 'set': return evalSet(scope, arr as ESet);
@@ -106,11 +115,14 @@ function _eval(scope: Scope, expr: EExpr): EVal {
               return evalCall(scope, arr as ECall);
             }
         }
-      } else if (expr instanceof Chunk) {
-        return expr as Chunk;
-      } else if (expr instanceof Entity) {
-        return expr as Entity;
       }
+
+      let ent = isEntity(expr);
+      if (ent) { return ent }
+      let chunk = isChunk(expr);
+      if (chunk) { return chunk }
+      let world = isWorld(expr);
+      if (world) { return world }
       return undefined;
   }
 }
@@ -119,7 +131,7 @@ function evalLet(scope: Scope, l: ELet): EVal {
   let dict: EDict = l[1];
   let body = l.slice(2) as EExpr[]; // Type checker isn't quite *that* smart.
 
-  let frame = new Frame("let", scope, scope.world);
+  let frame = new Frame(ScopeType.LET, "let", null, scope, scope.world);
   for (let name in dict) {
     frame.def(name, _eval(scope, dict[name]));
   }
@@ -130,6 +142,11 @@ function evalLet(scope: Scope, l: ELet): EVal {
 function evalRef(scope: Scope, ref: ERef): EVal {
   // TODO: Eval name as expr?
   let name = ref[0];
+
+  // Special case: self.
+  if (name == "self") {
+    return evalSelf(scope);
+  }
 
   let parent = scope;
   while (parent) {
@@ -143,27 +160,43 @@ function evalRef(scope: Scope, ref: ERef): EVal {
   chuck(scope, 'unbound identifier ' + name);
 }
 
+function evalSelf(scope: Scope): EVal {
+  let parent = scope;
+  while (parent) {
+    switch (parent.type) {
+      case ScopeType.WORLD:
+      case ScopeType.CHUNK:
+      case ScopeType.ENT:
+        return parent.self;
+    }
+    parent = parent.parent;
+  }
+
+  chuck(scope, 'unbound identifier ' + name);
+}
+
 function evalGet(scope: Scope, g: EGet): EVal {
-  // TODO: This should work with any scope, not just entities.
-  let ent = _eval(scope, g[1]) as Entity;
+  let target = _eval(scope, g[1]) as any;
   let name = g[2];
-  return ent.ref(name);
+
+  // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
+  if (typeof target['ref'] == "function") {
+    return (target as Scope).ref(name);
+  }
+  return undefined;
 }
 
 function evalSet(scope: Scope, s: ESet): EVal {
-  // TODO: This should work with any scope, not just entities.
-  let ent = _eval(scope, s[1]) as Entity;
+  let target = _eval(scope, s[1]) as Entity;
   let name = s[2];
   let value = _eval(scope, s[3]);
-  ent.def(name, value);
-  return value;
-}
 
-function evalDef(scope: Scope, def: EDef): EVal {
-  let name = def[1];
-  let value = _eval(scope, def[2]);
-  scope.def(name, value);
-  return value;
+  // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
+  if (typeof target['def'] == "function") {
+    (target as Scope).def(name, value);
+    return value;
+  }
+  return undefined;
 }
 
 function evalCall(scope: Scope, call: ECall): EVal {
@@ -179,7 +212,7 @@ function evalCall(scope: Scope, call: ECall): EVal {
 
   // Eval all args eagerly.
   // TODO: validate args, lazy evaluation.
-  let frame = new Frame("[call]", scope, scope.world);
+  let frame = new Frame(ScopeType.FUNC, "[call]", null, scope, scope.world);
   for (let i = 0; i < args.length; i++) {
     frame.def(params[i], _eval(scope, args[i]));
   }
@@ -206,7 +239,7 @@ function evalInvoke(scope: Scope, call: EInvoke): void {
 
   // Eval all args eagerly.
   // TODO: validate args, lazy evaluation.
-  let frame: Frame = new Frame("[call]", scope, scope.world);
+  let frame: Frame = new Frame(ScopeType.FUNC, "[call]", null, scope, scope.world);
   for (let name in dict) {
     frame.def(name, _eval(scope, dict[name]));
   }

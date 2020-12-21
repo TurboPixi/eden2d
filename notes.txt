@@ -8,20 +8,8 @@ Action Expressions
     - Only other funcs in scope, or down scope
     - Does this actually prevent runaways?
 
-<<<<<<< HEAD
-Actions
-- Timer tick?
-- Move, Jump? Often triggered by other procs.
-- Use
-- Hit
-- Take
-- Drop
-
-- Mana as computation driver.
-=======
 Ideas:
 - Qi as computation driver.
->>>>>>> work
   - Limits to avoid runaway damage
   - Preserve progressive disclosure, feeling of discovery
   - Cost for physical side-effects.
@@ -54,13 +42,8 @@ Ideas:
   - How to gather feedback?
 - NPC scripts as programs
   - Power to rewrite NPC conversationa nnd behavior
-<<<<<<< HEAD
-- Disallow long-distance communication:
-  - Forces players to build systems to communicate across chunks.
-=======
 - Gather qi from external sources -- sun, minerals, ...?
   - Certain functions + entities needed to access different sources.
->>>>>>> work
 
 
 Script:
@@ -77,9 +60,6 @@ Script:
   - Though maybe consumed ("entropy") by computation to avoid perpetual motion
 - No entity references across chunks? Preserve world locality.
   - Notification when reference is broken? Clear reference?
-<<<<<<< HEAD
-
-=======
 - Allocation + collections:
   - No built-in collections; only represented by chunks and entities.
   - Entities can contain entities, but only by owning chunks.
@@ -95,7 +75,6 @@ Actions
 - Hit
 - Take
 - Drop
->>>>>>> work
 
 
 // Weapon

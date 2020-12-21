@@ -44,7 +44,7 @@ class Eden {
 
     evaluate(chunk0, [['portal'], { type: EntityType.StairDown, from: chunk0, fx: 1, fy: 5, to: chunk1, tx: 0, ty: 5 }]);
     evaluate(chunk1, [['portal'], { type: EntityType.StairUp, from: chunk1, fx: 1, fy: 5, to: chunk0, tx: 2, ty: 5 }]);
-    evaluate(chunk1, ['def', 'foo', ['action', [], [['new'], chunk1, EntityType.ObjectCrate]]]);
+    evaluate(chunk1, ['set', ['self'], 'foo', ['action', [], [['new'], chunk1, EntityType.ObjectCrate]]]);
     return chunk0;
   }
 

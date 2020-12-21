@@ -1,21 +1,21 @@
-import { chuck, EDef, EVal, Scope } from "./script";
-import { Chunk } from "../chunk";
-import { Entity, EntityType, Var } from "../entity";
+import { chuck, EExpr, EVal, Scope } from "./script";
+import { Chunk, isChunk } from "../chunk";
+import { Entity, EntityType, isEntity } from "../entity";
 
-export const builtins: EDef[] = [
-  ['def', '+', ['native', 'func', ['x', 'y'],
+export const builtins: EExpr[] = [
+  ['set', ['self'], '+', ['native', 'func', ['x', 'y'],
     function (scope: Scope): EVal {
       return locNum(scope, 'x') + locNum(scope, 'y');
     }
   ]],
 
-  ['def', 'newChunk', ['native', 'func', [],
+  ['set', ['self'], 'newChunk', ['native', 'func', [],
     function (scope: Scope): EVal {
       return scope.world.newChunk();
     }
   ]],
 
-  ['def', 'new', ['native', 'func', ['chunk', 'type'],
+  ['set', ['self'], 'new', ['native', 'func', ['chunk', 'type'],
     function (scope: Scope): EVal {
       let chunk = locChunk(scope, 'chunk');
       let ent = new Entity(scope.world, locStr(scope, 'type') as EntityType);
@@ -24,7 +24,7 @@ export const builtins: EDef[] = [
     }
   ]],
 
-  ['def', 'move', ['native', 'func', ['ent', 'x', 'y'],
+  ['set', ['self'], 'move', ['native', 'func', ['ent', 'x', 'y'],
     function (scope: Scope): EVal {
       let x = locNum(scope, 'x');
       let y = locNum(scope, 'y');
@@ -34,7 +34,7 @@ export const builtins: EDef[] = [
     }
   ]],
 
-  ['def', 'jump', ['native', 'func', ['ent', 'chunk'],
+  ['set', ['self'], 'jump', ['native', 'func', ['ent', 'chunk'],
     function (scope: Scope): EVal {
       let ent = locEnt(scope, 'ent');
       let to = locChunk(scope, 'chunk');
@@ -43,7 +43,7 @@ export const builtins: EDef[] = [
     }
   ]],
 
-  ['def', 'topWith', ['native', 'func', ['chunk', 'x', 'y', 'var'],
+  ['set', ['self'], 'topWith', ['native', 'func', ['chunk', 'x', 'y', 'var'],
     function (scope: Scope): EVal {
       let chunk = locChunk(scope, 'chunk');
       let x = locNum(scope, 'x');
@@ -57,16 +57,6 @@ export const builtins: EDef[] = [
       }
       return undefined;
     }
-  ]],
-
-  ['def', 'portal', ['action', ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
-    ['let', { ent: [['new'], ['from'], ['type']] },
-      [['move'], ['ent'], ['fx'], ['fy']],
-      ['set', ['ent'], Var.PortalChunk, ['to']],
-      ['set', ['ent'], Var.PortalX, ['tx']],
-      ['set', ['ent'], Var.PortalY, ['ty']],
-      ['ent']
-    ]
   ]],
 ];
 
@@ -87,16 +77,16 @@ function locStr(scope: Scope, name: string): string {
 }
 
 function locChunk(scope: Scope, name: string): Chunk {
-  let chunk = scope.ref(name);
-  if (!(chunk instanceof Chunk)) {
+  let chunk = isChunk(scope.ref(name));
+  if (chunk === undefined) {
     chuck(scope, `${name} is not a chunk`);
   }
   return chunk as Chunk;
 }
 
 function locEnt(scope: Scope, name: string): Entity {
-  let ent = scope.ref(name);
-  if (!(ent instanceof Entity)) {
+  let ent = isEntity(scope.ref(name));
+  if (ent === undefined) {
     chuck(scope, `${name} is not an entity`);
   }
   return ent as Entity;

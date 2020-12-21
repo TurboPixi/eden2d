@@ -1,7 +1,7 @@
 import { Sprite } from "pixi.js";
 import { Chunk } from "./chunk";
 import { ImageKey, Resources } from "./res";
-import { EVal, Scope } from "./script/script";
+import { EExpr, EVal, Scope, ScopeType } from "./script/script";
 import { World } from "./world";
 
 export enum Var {
@@ -17,10 +17,6 @@ export enum Var {
   PortalY = "portaly",          // ...
 }
 
-// This is kind of gross. An entity id is a number, and we need to bury both chunk id and index in a single value.
-// In a sane world, we'd do this with a 64-bit value, but this is js, so we're stuck playing float/int tricks to get 52 bits.
-// Note that we can't use bit operators for this because they implicitly coerce numeric values to 32 bits, because... js.
-
 export enum EntityType {
   Cursor = "cursor",
   Player = "player",
@@ -32,7 +28,7 @@ export enum EntityType {
   ObjectCrate = "object-crate",
 }
 
-interface Prototype {
+export interface Prototype {
   img: ImageKey;
   vars: { [key: string]: EVal };
 }
@@ -76,7 +72,9 @@ export class Entity implements Scope {
     return this._spr;
   }
 
+  get type(): ScopeType { return ScopeType.ENT }
   get name(): string { return "[ent]" }
+  get self(): EVal { return this }
   get parent(): Scope { return this._chunk }
 
   get names(): string[] {
@@ -123,4 +121,11 @@ export class Entity implements Scope {
     this._spr.position.x = x * 16;
     this._spr.position.y = y * 16;
   }
+}
+
+export function isEntity(expr: EExpr): Entity {
+  if (expr instanceof Entity) {
+    return expr as Entity;
+  }
+  return undefined;
 }
