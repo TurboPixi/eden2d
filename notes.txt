@@ -110,12 +110,9 @@ Actions
   ]
 ]]
 
-
-[def player:follow [action [player]
-  [let {
-    portal: [player:topWith player 'portal']
-  }
-    [let {
+[def follow [action [player]
+  [{ portal: [player:topWith player 'portal'] }
+    [{
       x: [get portal 'portal-x']
       y: [get portal 'portal-y']
     }
@@ -125,17 +122,7 @@ Actions
   ]
 ]]
 
-
-[def player:follow [action [player]
-  [let [
-    [portal [player:topWith player 'portal']]
-  ]
-    [let [
-      [x [get portal 'portal-x']]
-      [y [get portal 'portal-y']]
-    ]
-      [jump player [get portal 'portal-chunk']]
-      [move player x y]
-    ]
-  ]
-]]
+[if [some-bool-func] 
+  ({foo: 42}, [log 'foo'])
+  ([log 'bar'])
+]

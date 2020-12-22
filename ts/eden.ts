@@ -4,8 +4,8 @@ import { Entity, EntityType, Var } from "./entity";
 import { Key } from "./key";
 import { newPlayer } from "./player";
 import { Resources } from "./res";
-import { builtins, _new } from "./script/builtins";
-import { evaluate, _, _func, _get, _self, _set } from "./script/script";
+import { _add, _new } from "./script/builtins";
+import { evaluate, $, _func, _get, _self, _set, _ } from "./script/script";
 import { World } from "./world";
 
 class Eden {
@@ -27,10 +27,16 @@ class Eden {
   private ready() {
     this._world = new World();
 
-    // Put built-ins in the world scope.
-    for (let def of builtins) {
-      evaluate(this._world, def);
-    }
+    let test = evaluate(this._world, [
+      $('if'), true, _({},
+        [$('log'), "foo"],
+        42
+      ), _({},
+        [$('log'), "bar"],
+        54
+      ),
+    ]);
+    console.log(test);
 
     let chunk = this.createChunk();
     this._player = newPlayer(this._world, chunk);
@@ -48,8 +54,8 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    evaluate(chunk0, [_('portal'), EntityType.StairDown, chunk0, 1, 5, chunk1, 0, 5]);
-    evaluate(chunk1, [_('portal'), EntityType.StairUp, chunk1, 1, 5, chunk0, 2, 5]);
+    evaluate(chunk0, [$('portal'), EntityType.StairDown, chunk0, 1, 5, chunk1, 0, 5]);
+    evaluate(chunk1, [$('portal'), EntityType.StairUp, chunk1, 1, 5, chunk0, 2, 5]);
     evaluate(chunk1, [_set, _self, 'foo', [_func, [], [_new, chunk1, EntityType.ObjectCrate]]]);
     return chunk0;
   }
@@ -71,14 +77,14 @@ class Eden {
       case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
       // Go.
-      case Key.G: evaluate(this._player, [_('player:follow'), this._player]); break;
+      case Key.G: evaluate(this._player, [$('player:follow'), this._player]); break;
 
       // Create.
-      case Key.C: evaluate(this._player, [_('player:create'), this._player, EntityType.ObjectKey]); break;
+      case Key.C: evaluate(this._player, [$('player:create'), this._player, EntityType.ObjectKey]); break;
 
       // Take, put.
-      case Key.T: evaluate(this._player, [_('player:take'), this._player]); break;
-      case Key.P: evaluate(this._player, [_('player:put'), this._player]); break;
+      case Key.T: evaluate(this._player, [$('player:take'), this._player]); break;
+      case Key.P: evaluate(this._player, [$('player:put'), this._player]); break;
 
       // Selection.
       case Key._1: case Key._2: case Key._3: case Key._4:
@@ -90,17 +96,17 @@ class Eden {
         break;
 
       case Key.Q:
-        evaluate(this._player, [_('foo'), {}]);
+        evaluate(this._player, [$('foo'), {}]);
         break;
     }
   }
 
   private move(dx: number, dy: number) {
-    evaluate(this._player, [_('player:move'), { player: this._player, dx: dx, dy: dy }]);
+    evaluate(this._player, [$('player:move'), { player: this._player, dx: dx, dy: dy }]);
   }
 
   private select(slot: number) {
-    evaluate(this._player, [_('player:select'), this._player, slot]);
+    evaluate(this._player, [$('player:select'), this._player, slot]);
   }
 
   private tick() {
