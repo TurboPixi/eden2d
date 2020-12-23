@@ -1,6 +1,6 @@
 import { Container } from "pixi.js";
 import { Entity } from "./entity";
-import { EExpr, EVal, Scope, ScopeType } from "./script/script";
+import { EDict, EExpr, Scope, ScopeType } from "./script/script";
 import { World } from "./world";
 
 export type ChunkId = number;
@@ -10,7 +10,7 @@ export class Chunk implements Scope {
   private _entities: { [id: number]: Entity } = {};
   private _nextId = 1;
   private _container: Container;
-  private _defs: { [name: string]: EVal };
+  private _defs: EDict;
 
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
@@ -21,12 +21,12 @@ export class Chunk implements Scope {
 
   get type(): ScopeType { return ScopeType.CHUNK }
   get name(): string { return "[chunk]" }
-  get self(): EVal { return this }
+  get self(): EExpr { return this }
   get parent() { return this._world }
   get world(): World { return this._world }
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
-  ref(name: string): EVal { return this._defs && this._defs[name] }
-  def(name: string, value: EVal): void { (this._defs || (this._defs = {}))[name] = value; }
+  ref(name: string): EExpr { return this._defs && this._defs[name] }
+  def(name: string, value: EExpr): void { (this._defs || (this._defs = {}))[name] = value; }
 
   entitiesAt(x: number, y: number): Entity[] {
     // TODO: Do some indexing to not make this obscenely slow.

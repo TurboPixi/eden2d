@@ -1,12 +1,12 @@
 import { Application } from "pixi.js";
-import { Chunk, ChunkId } from "./chunk";
+import { Chunk } from "./chunk";
 import { Entity, EntityType, Var } from "./entity";
 import { Key } from "./key";
 import { newPlayer } from "./player";
 import { Resources } from "./res";
-import { _add, _new } from "./script/builtins";
-import { evaluate, $, _func, _get, _self, _set, _ } from "./script/script";
-import { World } from "./world";
+import { _add, _get, _if, _log, _root, _self, _set } from "./script/builtins";
+import { evaluate, $, _, invoke } from "./script/script";
+import { World, _new } from "./world";
 
 class Eden {
   private _app: Application;
@@ -27,17 +27,6 @@ class Eden {
   private ready() {
     this._world = new World();
 
-    let test = evaluate(this._world, [
-      $('if'), true, _({},
-        [$('log'), "foo"],
-        42
-      ), _({},
-        [$('log'), "bar"],
-        54
-      ),
-    ]);
-    console.log(test);
-
     let chunk = this.createChunk();
     this._player = newPlayer(this._world, chunk);
     this.showChunk(chunk);
@@ -56,7 +45,7 @@ class Eden {
 
     evaluate(chunk0, [$('portal'), EntityType.StairDown, chunk0, 1, 5, chunk1, 0, 5]);
     evaluate(chunk1, [$('portal'), EntityType.StairUp, chunk1, 1, 5, chunk0, 2, 5]);
-    evaluate(chunk1, [_set, _self, 'foo', [_func, [], [_new, chunk1, EntityType.ObjectCrate]]]);
+    evaluate(chunk1, [_set, _self, 'foo', _([_new, chunk1, EntityType.ObjectCrate])]);
     return chunk0;
   }
 
@@ -102,7 +91,7 @@ class Eden {
   }
 
   private move(dx: number, dy: number) {
-    evaluate(this._player, [$('player:move'), { player: this._player, dx: dx, dy: dy }]);
+    evaluate(this._player, [$('player:move'), this._player, dx, dy]);
   }
 
   private select(slot: number) {

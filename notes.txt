@@ -44,6 +44,25 @@ Ideas:
   - Power to rewrite NPC conversationa nnd behavior
 - Gather qi from external sources -- sun, minerals, ...?
   - Certain functions + entities needed to access different sources.
+- Scenario: Natural world (trees, plants) is ill because of local energy siphoning magic.
+  - Should be easy to express, as a script running in chunk scope that siphons qi from plants.
+  - Plant metabolism driven by qi, derived from sunlight.
+
+
+Actions
+- Timer tick?
+- Move, Jump? Often triggered by other procs.
+- Use
+- Hit
+- Take
+- Drop
+
+
+World structure
+- Stacks: Multiple things at a single location.
+  - Order matters; affects rendering
+  - Built-in affordance for changing order
+  - Objects at each layer get veto power over things going on top of them
 
 
 Script:
@@ -67,62 +86,118 @@ Script:
   - Provide basic functional set operations?
   - Chunks as containers -- each gets a weird "spatial bag".
     - Qi as driver of chunk + entity creation, computation, creates natural limits on allocation.
+- Idea: Use default values as type-ish templates?
 
-Actions
-- Timer tick?
-- Move, Jump? Often triggered by other procs.
-- Use
-- Hit
-- Take
-- Drop
+Principles:
+- Simplest possible syntax: made of lists & dicts.
+  - All combinations of list + dict should be syntactically valid programs.
+  - No keywords (but builtins like true & false)
+- No distinction between code + data
+  - Lisp-style quote/eval to treat them as equivalent.
+- Identifiers are values, just like strings, numbers, etc.
+- Eval all the things: If it's possible to eval it, do. Maximize dynamic insanity.
+- Error early: Don't silently coerce things. Broken programs should fail quickly.
+- Functions are nothing special: Just lists that follow the right structure.
+- TODO: Something about scopes, dicts, params...
 
+Examples:
 
-// Weapon
-[def attack [fn [attacker target]
-  [damage {target: target, amt: 5, kind: blunt}]
+-- simple var
+[set meaning-of-life 42]
+
+> meaning-of-life
+< 42
+
+-- simple no-arg function
+[set meaning-of-life [42]]
+
+> meaning-of-life
+< [42]
+> [meaning-of-life]
+< 42
+
+-- one-arg function
+[set plus-one [{arg}
+  [+ arg 1]
 ]]
 
-// Actor
-[def damage [fn [target amt kind]
-  [set target health [- [get target health] amt]]
+> plus-one
+< [{arg} [+ arg 1]]
+
+> [plus-one 42]
+< 43
+
+-- one-arg function with default value
+[set plus-one [{arg: 42}
+  [+ arg 1]
 ]]
 
-[def repair [fn [target amt]
-  [set target health [+ [get target health] amt]]
-]]
+> [plus-one]
+< 43
 
-// Shield
-[def damage [fn [target amt kind]
-  [repair {target: target, amt: amt}]
-]]
-
-// Door
-[def use [fn [user target]
-  [if [eq [target type] door]
-    [set door open [not [get door open]]]
-  ]
-]]
-
-[def 'use' [fn ['user' 'obj' 'target']
-  [if [and [eq [get obj 'type'] 'key']
-           [eq [get target 'type'] 'door']]
-    [target 'locked' false]
-  ]
-]]
-
-[def follow [action [player]
-  [{ portal: [player:topWith player 'portal'] }
-    [{
-      x: [get portal 'portal-x']
-      y: [get portal 'portal-y']
-    }
-      [jump player [get portal 'portal-chunk']]
-      [move player x y]
-    ]
-  ]
-]]
-
-[if [some-bool-func] 
-  ({foo: 42}, [log 'foo'])
-  ([log 'bar'])
+-- using named args
+[set weird-add [{x:42 y:54}
+  [+ x y]
 ]
+
+> [weird-add 1]
+< 55
+> [weird-add {y:1}]
+< 43
+
+
+-- define some-fn in current scope to take parameters some-num and some-int
+[set some-fn ({some-num some-int optional: 42}
+  -- apply do-something-=with to both parameters, returning the result
+  [do-something-with some-num some-int]
+)]
+
+[some-fn 42, "foo"]                      -- apply function some-fn to parameters (42, "foo")
+[some-fn {some-num: 42 some-int: "foo"}] -- apply some-fn to named parameters (params are eagerly eval'd into fn application scope)
+
+-- define other-fn in current scope to take a single dict parameter
+[set other-fn ({params}
+  [do-something-with [get params some-num] [get params some-int]]
+)]
+
+[some-fn ({some-num: 42 some-int: "foo"})] -- apply some-fn to named parameters (uses parens to leave dict uneval'd)
+
+-- use if with quoted params to execute only one path
+[if [eq nasty false]
+  (do-something-nasty)
+  (do-something-else)
+]
+
+-- pass a list to a function.
+[do-with-all (1 2 3 "foo" bar)] -- "foo" is a string; bar is an identifier that will be resolved if/when this list is evaluated.
+
+[set do-with-all ({things"}
+  -- define a local 'total', initialized to 0.
+  {total: 0}
+
+  -- do calls a fn for all the things in a list
+  [do things (["thing"]         -- func takes one "thing" parameter
+    [set total [+ total thing]]
+  )]
+)]
+
+-- dict with a bunch of fields & functions.
+{
+  thing: 42
+  other: 54
+
+  do-something: ({arg}
+    [+ arg thing]      -- dict is lexical scope for funcs (TODO: somehow?)
+  )
+
+  do-other: ({arg}
+    [set thing 54]                      -- these two are equivalent
+    [set self thing 54]                 --
+
+    [log thing]                         -- as are all of these
+    [log [get thing]]                   --
+    [log [get self thing]]              --
+
+    [+ [get self arg] [get self other]] -- self refers to current lexical scope
+  )
+}

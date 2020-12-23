@@ -1,13 +1,19 @@
-import { EExpr, EVal, evaluate, Scope, ScopeType, $, _func, _self, _set, chuck } from "./script/script";
+import { EExpr, evaluate, Scope, ScopeType, $, chuck, EDict, nil, _, invoke } from "./script/script";
 import { Chunk, ChunkId, isChunk } from "./chunk";
 import { Entity, EntityType, isEntity, Var } from "./entity";
-import { locNum, locStr, _move, _new, _root } from "./script/builtins";
+import { locNum, locStr, _root, _self, _set } from "./script/builtins";
+
+export const _newChunk = $('newChunk');
+export const _new = $('new');
+export const _move = $('move');
+export const _jump = $('jump');
+export const _topWith = $('topWith');
 
 // TODO: Reliable garbage-collection on chunks.
 export class World implements Scope {
   private _chunks: { [id: number]: Chunk } = {};
   private _nextId: ChunkId = 1;
-  private _defs: { [name: string]: EVal } = {};
+  private _defs: EDict = {};
 
   constructor() {
     this.funcs();
@@ -15,12 +21,12 @@ export class World implements Scope {
 
   get type(): ScopeType { return ScopeType.WORLD }
   get name(): string { return "[world]" }
-  get self(): EVal { return this }
+  get self(): EExpr { return this }
   get parent(): Scope { return _root }
   get world(): World { return this }
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
-  ref(name: string): EVal { return this._defs[name] }
-  def(name: string, value: EVal): void { this._defs[name] = value }
+  ref(name: string): EExpr { return this._defs[name] }
+  def(name: string, value: EExpr): void { this._defs[name] = value }
 
   newChunk(): Chunk {
     let id = this._nextId++;
@@ -49,55 +55,52 @@ export class World implements Scope {
   }
 
   private funcs() {
-    evaluate(this, [
-      {},
-
-      [_set, _self, 'newChunk', [_func, [],
-        function (scope: Scope): EVal {
+    invoke(this, [
+      [_set, _self, 'newChunk', _(
+        function (scope: Scope): EExpr {
           return worldFrom(scope).newChunk();
         }
-      ]],
+      )],
 
-      [_set, _self, 'new', [_func, ['chunk', 'type'],
-        function (scope: Scope): EVal {
+      [_set, _self, 'new', _({ chunk: nil, type: nil },
+        function (scope: Scope): EExpr {
           let chunk = locChunk(scope, 'chunk');
           let ent = new Entity(locStr(scope, 'type') as EntityType);
           chunk.addEntity(ent);
           return ent;
         }
-      ]],
+      )],
 
-      [_set, _self, 'move', [_func, ['ent', 'x', 'y'],
-        function (scope: Scope): EVal {
+      [_set, _self, 'move', _({ ent: nil, x: 0, y: 0 },
+        function (scope: Scope): EExpr {
           let x = locNum(scope, 'x');
           let y = locNum(scope, 'y');
           let ent = locEnt(scope, 'ent');
           ent.move(x, y);
           return undefined;
         }
-      ]],
+      )],
 
-      [_set, _self, 'jump', [_func, ['ent', 'chunk'],
-        function (scope: Scope): EVal {
+      [_set, _self, 'jump', _({ ent: nil, chunk: nil },
+        function (scope: Scope): EExpr {
           let ent = locEnt(scope, 'ent');
           let to = locChunk(scope, 'chunk');
           to.addEntity(ent);
           return ent;
         }
-      ]],
+      )],
 
-      [_set, _self, 'portal', [_func, ['type', 'from', 'fx', 'fy', 'to', 'tx', 'ty'],
-        [{ ent: [_new, $('from'), $('type')] },
-          [_move, $('ent'), $('fx'), $('fy')],
-          [_set, $('ent'), Var.PortalChunk, $('to')],
-          [_set, $('ent'), Var.PortalX, $('tx')],
-          [_set, $('ent'), Var.PortalY, $('ty')],
-          $('ent')
-        ]
-      ]],
+      [_set, _self, 'portal', _({ type: nil, from: nil, fx: 0, fy: 0, to: nil, tx: 0, ty: 0 },
+        { ent: [_new, $('from'), $('type')] },
+        [_move, $('ent'), $('fx'), $('fy')],
+        [_set, $('ent'), Var.PortalChunk, $('to')],
+        [_set, $('ent'), Var.PortalX, $('tx')],
+        [_set, $('ent'), Var.PortalY, $('ty')],
+        $('ent')
+      )],
 
-      [_set, _self, 'topWith', [_func, ['chunk', 'x', 'y', 'var'],
-        function (scope: Scope): EVal {
+      [_set, _self, 'topWith', _({ chunk: nil, x: 0, y: 0, var: nil },
+        function (scope: Scope): EExpr {
           let chunk = locChunk(scope, 'chunk');
           let x = locNum(scope, 'x');
           let y = locNum(scope, 'y');
@@ -110,7 +113,7 @@ export class World implements Scope {
           }
           return undefined;
         }
-      ]],
+      )],
     ]);
   }
 }

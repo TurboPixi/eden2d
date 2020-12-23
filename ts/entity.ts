@@ -1,7 +1,7 @@
 import { Sprite } from "pixi.js";
 import { Chunk } from "./chunk";
 import { ImageKey, Resources } from "./res";
-import { EExpr, EVal, Scope, ScopeType } from "./script/script";
+import { EDict, EExpr, Scope, ScopeType } from "./script/script";
 import { World } from "./world";
 
 export enum Var {
@@ -30,7 +30,7 @@ export enum EntityType {
 
 export interface Prototype {
   img: ImageKey;
-  vars: { [key: string]: EVal };
+  vars: EDict;
 }
 
 const _protos: { [key: string]: Prototype } = {
@@ -50,7 +50,7 @@ export class Entity implements Scope {
   private _id: number;
   private _x = 0;
   private _y = 0;
-  private _defs: { [name: string]: EVal };
+  private _defs: { [name: string]: EExpr };
   private _spr: Sprite;
 
   constructor(type: EntityType) {
@@ -74,7 +74,7 @@ export class Entity implements Scope {
 
   get type(): ScopeType { return ScopeType.ENT }
   get name(): string { return "[ent]" }
-  get self(): EVal { return this }
+  get self(): EExpr { return this }
   get parent(): Scope { return this._chunk }
 
   get names(): string[] {
@@ -82,7 +82,7 @@ export class Entity implements Scope {
     return [...keys, Var.X, Var.Y, Var.Chunk];
   }
 
-  def(name: string, value: EVal): void {
+  def(name: string, value: EExpr): void {
     switch (name) {
       case Var.X:
       case Var.Y:
@@ -97,7 +97,7 @@ export class Entity implements Scope {
     this._defs[name] = value;
   }
 
-  ref(name: string): EVal {
+  ref(name: string): EExpr {
     switch (name) {
       case Var.X: return this._x;
       case Var.Y: return this._y;
