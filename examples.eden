@@ -1,0 +1,144 @@
+-- Example from player.
+{ invChunk:[newChunk] }
+{
+  player:[new chunk 'player']
+  cursor:[new invChunk 'cursor']
+}
+
+[set player 'slot' 0]
+[set player 'contents' invChunk]
+[set player 'inv-cursor' cursor]
+
+[set player 'player:topWith' ({ player var }
+  [topWith
+    [get player 'chunk']
+    [get player 'x']
+    [get player 'y']
+    var]
+)]
+
+[set player 'player:move' ({ player dx:0 dy:0 }
+  [move player
+    [add [get player 'x'] dx]
+    [add [get player 'y'] dy]]
+)]
+
+-- TODO: validate that there's actually something to follow.
+[set player 'player:follow' ({ player }
+  { portal:[player:topWith player 'portal'] }
+  {
+    x:[get portal 'portal-x']
+    y:[get portal 'portal-y']
+  }
+  [jump player [get portal 'portal-chunk']]
+  [move player x y]
+)]
+
+-- TODO: Validate ent exists.
+[set player 'player:take' ({ player }
+  { target:[player:topWith player 'portable'] }
+  [move
+    [jump target [get player 'contents']]
+    [get player 'slot'] 0]
+)]
+
+-- TODO: Validate ent exists.
+[set player 'player:put' ({ player }
+  {
+    chunk:[get player 'chunk']
+    inv:[get player 'contents']
+    slot:[get player 'slot']
+  }
+  { target:[topWith inv slot 0 'portable'] }
+  [move
+    [jump target [get player 'chunk']]
+    [get player 'x']
+    [get player 'y']]
+)]
+
+[set player 'player:create' ({ player type }
+  [move
+    [new [get player 'contents'] type]
+    [get player 'slot'] 0]
+)]
+
+-- TODO: Validate slot range.
+[set player 'player:select' ({ player slot:0 }
+  { cursor:[get player 'inv-cursor'] }
+  [set player 'slot' slot]
+  [move cursor slot 0]
+)]
+
+
+
+-- Example from player.
+{ invChunk: [newChunk] }
+{
+  cursor: [new invChunk 'cursor']
+  player: [new chunk 'player', {
+    slot: 0
+    contents: invChunk
+    inv-cursor: cursor
+
+    topWith: ({var}
+      -- TODO: Need a way to access identifiers in parent scope?
+      [::topWith
+        [get self 'chunk']
+        [get self 'x']
+        [get self 'y']
+        var]
+    )
+
+    move: ({dx:0 dy:0}
+      [move self
+        [add [get self 'x'] dx]
+        [add [get self 'y'] dy]]
+    )
+
+    -- TODO: validate that there's actually something to follow.
+    follow: (
+      {portal: [player-topWith 'portal']}
+      {
+        x: [get portal 'portal-x']
+        y: [get portal 'portal-y']
+      }
+      [jump self [get portal 'portal-chunk']]
+      [move self x y]
+    )
+
+    -- TODO: Validate ent exists.
+    take: (
+      {target: [player-topWith 'portable']}
+      [move
+        [jump target [get self 'contents']]
+        [get self 'slot'] 0]
+    )]
+
+    -- TODO: Validate ent exists.
+    put: (
+      {
+        chunk: [get self 'chunk']
+        inv: [get self 'contents']
+        slot: [get self 'slot']
+      }
+      {target: [topWith inv slot 0 'portable']}
+      [move
+        [jump target [get self 'chunk']]
+        [get self 'x']
+        [get self 'y']]
+    )
+
+    create: ({type}
+      [move
+        [new [get self 'contents'] type]
+        [get self 'slot'] 0]
+    )
+
+    -- TODO: Validate slot range.
+    select: ({slot:0}
+      {cursor: [get self 'inv-cursor']}
+      [set self 'slot' slot]
+      [move cursor slot 0]
+    )
+  }
+]

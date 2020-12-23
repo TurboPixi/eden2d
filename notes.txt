@@ -191,12 +191,12 @@ Examples:
   )
 
   do-other: ({arg}
-    [set thing 54]                      -- these two are equivalent
-    [set self thing 54]                 --
+    [set 'thing' 54]                    -- these two are equivalent
+    [set self 'thing' 54]               --
 
     [log thing]                         -- as are all of these
-    [log [get thing]]                   --
-    [log [get self thing]]              --
+    [log [get 'thing']]                 --
+    [log [get self 'thing']]            --
 
     [+ [get self arg] [get self other]] -- self refers to current lexical scope
   )
