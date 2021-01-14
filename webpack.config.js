@@ -11,7 +11,7 @@ module.exports = {
   devtool: 'inline-source-map',
 
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    extensions: ['.js', '.ts', '.kurt'],
   },
 
   output: {
@@ -21,11 +21,8 @@ module.exports = {
 
   module: {
     rules: [
-      {
-        include: [tsDir],
-        test: /\.tsx?$/,
-        use: 'ts-loader',
-      }
+      { test: /\.ts$/, use: 'ts-loader' },
+      { test: /\.kurt$/, use: 'raw-loader' },
     ]
   },
 

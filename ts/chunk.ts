@@ -1,12 +1,13 @@
 import { Container } from "pixi.js";
 import { Entity } from "./entity";
-import { EDict, EExpr, Scope, ScopeType } from "./script/script";
+import { IScope, isScope, scopeParent } from "./script/scope";
+import { EDict, EExpr, ESym, symName, _parent } from "./script/script";
 import { World } from "./world";
 
 export type ChunkId = number;
 
 // TODO: Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
-export class Chunk implements Scope {
+export class Chunk implements IScope {
   private _entities: { [id: number]: Entity } = {};
   private _nextId = 1;
   private _container: Container;
@@ -14,19 +15,15 @@ export class Chunk implements Scope {
 
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
+    this.def(_parent, _world);
   }
 
   get id(): number { return this._id }
   get container(): Container { return this._container }
 
-  get type(): ScopeType { return ScopeType.CHUNK }
-  get name(): string { return "[chunk]" }
-  get self(): EExpr { return this }
-  get parent() { return this._world }
-  get world(): World { return this._world }
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
-  ref(name: string): EExpr { return this._defs && this._defs[name] }
-  def(name: string, value: EExpr): void { (this._defs || (this._defs = {}))[name] = value; }
+  ref(name: ESym): EExpr { return this._defs && this._defs[symName(name)] }
+  def(name: ESym, value: EExpr): void { (this._defs || (this._defs = {}))[symName(name)] = value }
 
   entitiesAt(x: number, y: number): Entity[] {
     // TODO: Do some indexing to not make this obscenely slow.
@@ -64,14 +61,18 @@ export class Chunk implements Scope {
     this._container.removeChild(entity.sprite);
   }
 
-  tick(x: number, y: number, z: number, w: number, h : number) {
+  tick(x: number, y: number, z: number, w: number, h: number) {
     this._container.setTransform(-x * z, -y * z, z, z);
   }
 }
 
 export function isChunk(expr: EExpr): Chunk {
-  if (expr instanceof Chunk) {
-    return expr as Chunk;
+  let scope = isScope(expr);
+  while (scope) {
+    if (scope instanceof Chunk) {
+      return expr as Chunk;
+    }
+    scope = scopeParent(scope);
   }
   return undefined;
 }

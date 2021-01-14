@@ -1,120 +1,94 @@
-import { chuck, Scope, $, _eval, isList, ScopeType, EDict, isString, isDict, EExpr, nil, invoke } from "./script";
+import { _apply, _eval } from "./eval";
+import { _print } from "./print";
+import { locNum, Scope, scopeRef, _root } from "./scope";
+import { chuck, $, isList, EExpr, _blk, _, isFunc, _def, _do, nil, eq } from "./script";
 
-export const _self = $('self');
-export const _get = $('get');
-export const _set = $('set');
 export const _if = $('if');
+export const _forEach = $('for-each');
 export const _log = $('log');
 export const _add = $('+');
+export const _gt = $('>');
+export const _eq = $('=');
+export const __eval = $('eval');
 
-class RootScope implements Scope {
-  private _defs: EDict = {};
+export function evalBuiltins() {
+  _eval(_root, [_do,
+    [_def, _(__eval),
+      [$('expr'), _blk, function (scope: Scope): EExpr {
+        return _eval(scope, scopeRef(scope, $('expr')));
+      }]
+    ],
 
-  get type() { return ScopeType.ROOT }
-  get name() { return "[root]" }
-  get self() { return this }
-  get parent(): Scope { return null }
-  get names(): string[] { return Object.keys(this._defs); }
-  ref(name: string): EExpr { return this._defs[name]; }
-  def(name: string, value: EExpr): void { this._defs[name] = value; }
-}
+    [_def, _(_if),
+      [$('expr'), $('then'), $('else'), _blk, function (scope: Scope): EExpr {
+        // if:
+        let b = scopeRef(scope, $('expr'));
+        if (typeof b != 'boolean') {
+          chuck(scope, `${b} must be boolean`);
+        }
 
-export const _root = new RootScope();
+        // TODO: This apply/eval switch is really gross. Maybe just require funcs for then/else params?
+        if (b) {
+          // then:
+          let then = scopeRef(scope, $('then'));
+          let func = isFunc(then);
+          if (func) {
+            return _apply(scope, [{}, func]);
+          }
+          return _eval(scope, then);
+        } else {
+          // else:
+          let els = scopeRef(scope, $('else'));
+          if (els !== nil) {
+            let func = isFunc(els);
+            if (func) {
+              return _apply(scope, [{}, func]);
+            }
+            return _eval(scope, els);
+          }
+        }
 
-_root.def("get", [{obj:nil, name:nil}, function (scope: Scope): EExpr {
-  let obj = scope.ref('obj') as any;
-  let name = isString(scope.ref('name'));
-  if (!name) {
-    chuck(scope, `cannot get ${obj}.${name}`);
-  }
+        return nil;
+      }]
+    ],
 
-  // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
-  if (typeof obj['ref'] == 'function') {
-    return (obj as Scope).ref(name);
-  }
+    [_def, _(_forEach),
+      [$('list'), $('expr'), _blk, function (scope: Scope): EExpr {
+        let list = isList(scopeRef(scope, $('list')));
+        let expr = scopeRef(scope, $('expr'))
+        for (let item of list) {
+          _apply(scope, [expr, item]);
+        }
+        return nil;
+      }]
+    ],
 
-  let dict = isDict(obj);
-  if (dict) {
-    return dict[name];
-  }
+    [_def, _(_log),
+      [$('msg'), _blk, function (scope: Scope): EExpr {
+        let msg = scopeRef(scope, $('msg'));
+        console.log(_print(msg));
+        return undefined;
+      }]
+    ],
 
-  chuck(scope, `cannot get ${obj}.${name}`);
-}]);
+    [_def, _(_add),
+      [$('x'), $('y'), _blk, function (scope: Scope): EExpr {
+        return locNum(scope, $('x')) + locNum(scope, $('y'));
+      }]
+    ],
 
-_root.def('set', [{obj:nil, name:nil, value:nil}, function (scope: Scope): EExpr {
-  let obj = scope.ref('obj') as any;
-  let name = isString(scope.ref('name'));
-  let value = scope.ref('value');
-  if (!name) {
-    chuck(scope, `cannot set ${obj}.${name}`);
-  }
+    [_def, _(_gt),
+      [$('x'), $('y'), _blk, function (scope: Scope): EExpr {
+        return locNum(scope, $('x')) > locNum(scope, $('y'));
+      }]
+    ],
 
-  // This is a bit gross, but without js instanceof for interfaces, we don't have a lot of options.
-  if (typeof obj['def'] == 'function') {
-    (obj as Scope).def(name, value);
-    return value;
-  }
-
-  let dict = isDict(obj);
-  if (dict) {
-    dict[name] = value;
-    return value;
-  }
-
-  chuck(scope, `cannot set ${obj}.${name}`);
-}]);
-
-_root.def('if', [{expr:nil, then:nil, else:nil}, function (scope: Scope): EExpr {
-  // if:
-  let b = scope.ref('expr');
-  if (typeof b != "boolean") {
-    chuck(scope, `${b} must be boolean`);
-  }
-
-  if (b) {
-    // then:
-    let thenList = scope.ref('then');
-    let then = isList(thenList);
-    if (!then) {
-      chuck(scope, `${thenList} must be a list`);
-    }
-    return invoke(scope.parent, then);
-  }
-
-  // else:
-  let elseList = scope.ref('else');
-  if (elseList !== undefined) {
-    let els = isList(elseList);
-    if (!els) {
-      chuck(scope, `${elseList} must be a list`);
-    }
-    return invoke(scope.parent, els);
-  }
-  return undefined;
-}]);
-
-_root.def('log', [{msg:nil}, function (scope: Scope): EExpr {
-  let msg = locStr(scope, 'msg');
-  console.log(msg);
-  return undefined;
-}]);
-
-_root.def('+', [{x:nil, y:nil}, function(scope: Scope): EExpr {
-  return locNum(scope, 'x') + locNum(scope, 'y');
-}]);
-
-export function locNum(scope: Scope, name: string): number {
-  let value = scope.ref(name) as number;
-  if (typeof value != "number") {
-    chuck(scope, `${name}: ${value} is not a number`);
-  }
-  return value;
-}
-
-export function locStr(scope: Scope, name: string): string {
-  let value = scope.ref(name) as string;
-  if (typeof value != "string") {
-    chuck(scope, `${name}: ${value} is not a string`);
-  }
-  return value;
+    [_def, _(_eq),
+      [$('a'), $('b'), _blk, function (scope: Scope): EExpr {
+        let a = scopeRef(scope, $('a'));
+        let b = scopeRef(scope, $('b'));
+        return eq(a, b);
+      }]
+    ]
+  ]);
 }

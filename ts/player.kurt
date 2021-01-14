@@ -1,0 +1,71 @@
+[def :Player {
+  make: [chunk | do
+    [def :invChunk [newChunk]]
+    [def :ent [new chunk "player"]]
+
+    [def :player {
+      slot: 0
+      contents: invChunk
+      cursor-ent: [new invChunk "cursor"]
+    }]
+
+    -- TODO: It's weird we have to do this here but doing it earlier
+    --   interferes with the object's lcoal scope during evaluation.
+    [def player:parent ent]
+    [set [ent:comps]:player player]
+    ent
+  ]
+
+  contents: [ent|do
+    [def :player [[ent:comps]:player]]
+    [if [? :player] [|player:contents]]
+  ]
+
+  topWith: [ent var|
+    topWith [ent:chunk] [ent:x] [ent:y] var
+  ]
+
+  move: [ent dx dy|do
+    [move ent [+ [ent:x] dx] [+ [ent:y] dy]]
+  ]
+
+  -- TODO: validate that there's actually something to follow.
+  follow: [ent|do
+    [def :portal [[Player:topWith] ent :portal]]
+    [def :x [portal:portalx]]
+    [def :y [portal:portaly]]
+    [jump ent [portal:portalchunk]]
+    [move ent x y]
+  ]
+
+  -- TODO: Validate ent exists.
+  take: [ent|do
+    [def :player [[ent:comps]:player]]
+    [def :target [[Player:topWith] ent :portable]]
+    [move
+      [jump target [player:contents]]
+      [player:slot] 0
+    ]
+  ]
+
+  -- TODO: Validate ent exists.
+  put: [ent|do
+    [def :player [[ent:comps]:player]]
+    [def :target [topWith [player:contents] [player:slot] 0 :portable]]
+    [move [jump target [ent:chunk]] [ent:x] [ent:y]]
+  ]
+
+  create: [ent type|do
+    [def :player [[ent:comps]:player]]
+    [move
+      [new [player:contents] type]
+      [player:slot] 0]
+  ]
+
+  -- TODO: Validate slot range
+  select: [ent slot| do
+    [def :player [[ent:comps]:player]]
+    [set player:slot slot]
+    [move [player:cursor-ent] slot 0]
+  ]
+}]

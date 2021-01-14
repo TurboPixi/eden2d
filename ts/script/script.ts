@@ -1,265 +1,186 @@
-// Expressions.
-export type EExpr = ENil | EPrim | EId | EList | EDict | Scope | NativeFunc;
-export type EPrim = number | boolean | string;
+import { evalBuiltins } from "./builtins";
+import { printStack, _print } from "./print";
+import { Scope } from "./scope";
+
+export type EExpr = ENil | EPrim | ESym | EQuote | EList | Scope | NativeFunc;
+export type EPrim = number | boolean | string | ENil;
+export type ENil = undefined;
 export type EList = EExpr[];
 export type EDict = { [arg: string]: EExpr };
-export type EId = { _expr_id: EExpr };
-export type ENil = undefined;
+export type ESym = { _expr_sym: string };
+export type EQuote = { _expr_quote: EExpr };
+export type EFunc = { _expr_func: [EList, EExpr], _expr_scope: Scope, _expr_name?: string, _expr_self?: EDict };
 export type NativeFunc = (scope: Scope) => EExpr;
 
-// Symbol resolution scope.
-// TODO: Separate call stack from symbol resolution scope. We have a weird hybrid scope model now, largely by accident.
-export enum ScopeType {
-  ROOT = 0,
-  WORLD = 1,
-  CHUNK = 2,
-  ENT = 3,
-  FUNC = 4,
-  LET = 5,
-}
+const QuoteMarker = '_expr_quote';
+const SymMarker = '_expr_sym';
+const FuncMarker = '_expr_func';
 
-const LitMarker = '_expr_lit';
-const IdMarker = '_expr_id';
+// Special forms.
+export const _blk = $('|');
+export const _do = $('do');
+export const _def = $('def');
+export const _set = $('set');
+export const _exists = $('?');
 
-export const ScriptError = 'script error';
+// Special symbols.
+export const _self = $('@');
+export const _caller = $('caller');
+export const _scope = $('scope');
+export const _parent = $('parent');
 export const nil: ENil = undefined;
 
-// Makes an identifier.
-export function $(e: string): EId {
-  return { _expr_id: e };
-}
-
-// Makes a quoted list (unevaluated).
-export function _(...list: EExpr[]): EList {
-  (list as any)[LitMarker] = true;
-  return list as EList;
-}
-
 // Makes a quoted expression (unevaluated).
-export function __(expr: EExpr): EExpr {
-  (expr as any)[LitMarker] = true; // This does nothing for unboxed primitives, but that's ok because they always eval to themselves.
+export function _(expr: EExpr): EExpr {
+  // Quoted primitives are equal to themselves, so no need to do anything here.
+  if (typeof expr == 'object') {
+    return { _expr_quote: expr };
+  }
   return expr;
+}
+
+// Makes a func.
+export function __(...exprs: EExpr[]): EList {
+  // TODO: Check all cases to make sure this always makes sense.
+  let params = isList(exprs[0]);
+  if (params && (exprs.length > 1)) {
+    return [_blk, params, exprs[1]];
+  }
+  return [_blk, [], exprs[0]];
+}
+
+// Makes an identifier.
+export function $(e: string): ESym {
+  return { _expr_sym: e };
+}
+
+// Makes a quoted identifier.
+export function $$(e: string): EExpr {
+  return _($(e));
+}
+
+export function eq(a: EExpr, b: EExpr): boolean {
+  switch (typeof a) {
+    case "number":
+    case "string":
+    case "boolean":
+    case "undefined":
+      return a === b;
+
+    case "object":
+      let aList = isList(a), bList = isList(b);
+      if (aList && bList && (aList.length == bList.length)) {
+        for (var i = 0; i < aList.length; i++) {
+          if (!eq(aList[i], bList[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      let aDict = isDict(a), bDict = isDict(b);
+      if (aDict && bDict) {
+        let aKeys = Object.keys(aDict);
+        let bKeys = Object.keys(bDict);
+        if (aKeys.length == bKeys.length) {
+          for (let key of aKeys) {
+            if (!eq(aDict[key], bDict[key])) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
+
+      // TODO: Intern funcs so we don't have to engage in this mess?
+      let aFunc = isFunc(a), bFunc = isFunc(b);
+      if (aFunc && bFunc) {
+        return eq(funcExpr(aFunc), funcExpr(bFunc)) &&
+          eq(funcParams(aFunc), funcParams(bFunc)) &&
+            funcScope(aFunc) === funcScope(bFunc); // We can't do deep equality on the scope; it will cycle.
+      }
+
+      let aSym = isSym(a), bSym = isSym(b);
+      if (aSym && bSym) {
+        return eq(symName(aSym), symName(bSym));
+      }
+
+      // TODO: Other cases?
+      return a === b;
+  }
 }
 
 // Chuck an exception (used internally, and by native builtins).
 export function chuck(scope: Scope, msg: string) {
+  debugger;
   throw {
     msg: msg,
     stack: printStack(scope),
   };
 }
 
-export interface Scope {
-  readonly type: ScopeType;
-  readonly name: string;
-  readonly self: EExpr;
-  readonly parent: Scope;
-  readonly names: string[];
-  ref(name: string): EExpr;
-  def(name: string, value: EExpr): void;
-}
-
-class Frame implements Scope {
-  private _defs: EDict = {};
-  constructor(public type: ScopeType, public self: EExpr, public name: string, public parent: Scope) { }
-
-  get names(): string[] { return Object.keys(this._defs) }
-  def(name: string, value: EExpr): void { this._defs[name] = value }
-  ref(name: string): EExpr { return this._defs[name] as EExpr }
-}
-
-
-// Evaluate an expression in a given scope.
-export function evaluate(scope: Scope, expr: EExpr): EExpr {
-  try {
-    return _eval(scope, expr);
-  } catch (e) {
-    if ('msg' in e && 'stack' in e) {
-      console.log(e.msg);
-      console.log(e.stack);
-      throw ScriptError;
-    }
-    throw e;
+export function isQuote(val: EExpr): EQuote {
+  if (val && typeof val == 'object' && (QuoteMarker in val)) {
+    return val as EQuote;
   }
-}
-
-// Internal evaluate implementation, that doesn't catch or log exceptions.
-export function _eval(scope: Scope, expr: EExpr): EExpr {
-  switch (typeof expr) {
-    case 'number':
-    case 'boolean':
-    case 'string':
-      // Primitve value.
-      return expr;
-
-    case 'object':
-      // foo ({_expr_id: 'foo'} at runtime) is an identifier.
-      if (IdMarker in expr) {
-        return evalId(scope, expr as EId);
-      }
-
-      // (thing) is a literal expression, not evaluated.
-      if (LitMarker in expr) {
-        // Remove the literal marker, so it will get fully evaluated next time.
-        delete (expr as any)[LitMarker];
-        return expr;
-      }
-
-      // [a b c ...] is a list.
-      // Treat it as function application.
-      let list = isList(expr);
-      if (list) {
-        return apply(scope, list);
-      }
-
-      // {foo:a bar:b ...} is a dict.
-      // Treat it as an addition to the current scope.
-      let dict = isDict(expr);
-      if (dict) {
-        evalLet(scope, dict);
-        return nil;
-      }
-
-    // No idea what this is. Fall through.
-  }
-
-  // Some other value object (World, Chunk, Entity, Scope). Leave alone.
-  // TODO: Validate is scope or something otherwise legal, so we don't pollute the heap?
-  return expr;
-}
-
-export function apply(scope: Scope, list: EList): EExpr {
-  let val = _eval(scope, list[0]);
-  let func = isList(val);
-  if (func === undefined) {
-    chuck(scope, `can't apply ${list[0]}`);
-  }
-
-  // Build stack frame.
-  let args = list.slice(1)
-  let frame = new Frame(ScopeType.FUNC, undefined, '[apply]', scope);
-  let idx = 0;
-  let params = isDict(func[idx]);
-  if (params) {
-    // TODO: Something with default scope. Handle optional params, stacked scopes, missing args, etc.
-    let names = Object.getOwnPropertyNames(params); // Gross: must use gOPN() because it preserves insertion order.
-    for (let i = 0; i < names.length; i++) {
-      frame.def(names[i], _eval(scope, params[names[i]])); // Does it make sense to use this dynamic scope for default arg resolution? Could be wacky but fun.
-      if (i == args.length) {
-        break;
-      }
-      frame.def(names[i], _eval(scope, args[i]));
-    }
-    idx++;
-  }
-
-  return invoke(frame, func.slice(idx));
-}
-
-export function invoke(frame: Scope, body: EList): EExpr {
-  if (typeof body[0] == "function") {
-    // Call native impl.
-    let fn = body[0] as NativeFunc;
-    return fn(frame);
-  }
-
-  // Evaluate function body.
-  let last: EExpr;
-  for (let expr of body) {
-    last = _eval(frame, expr);
-  }
-  return last;
-}
-
-// TODO: At present, a "let" dict is evaluated to add/mutate symbols in the current scope, not create a new one.
-// There is no block construct to introduce new scopes, only funcs. Maybe that's enough?
-function evalLet(scope: Scope, dict: EDict): void {
-  for (let name in dict) {
-    scope.def(name, _eval(scope, dict[name]));
-  }
-}
-
-function evalId(scope: Scope, id: EId): EExpr {
-  let name = isString(_eval(scope, id[IdMarker]));
-
-  // Special case: self.
-  if (name == 'self') {
-    return evalSelf(scope);
-  }
-
-  let parent = scope;
-  while (parent) {
-    let result = parent.ref(name);
-    if (result !== undefined) {
-      return result;
-    }
-    parent = parent.parent;
-  }
-
-  chuck(scope, 'unbound identifier ' + name);
-}
-
-function evalSelf(scope: Scope): EExpr {
-  let parent = scope;
-  while (parent) {
-    switch (parent.type) {
-      case ScopeType.ROOT:
-      case ScopeType.WORLD:
-      case ScopeType.CHUNK:
-      case ScopeType.ENT:
-        return parent.self;
-    }
-    parent = parent.parent;
-  }
-  chuck(scope, 'missing self');
+  return nil;
 }
 
 export function isString(val: any): string {
-  if (typeof val == "string") {
+  if (typeof val == 'string') {
     return val;
   }
-  return undefined;
+  return nil;
 }
 
 export function isList(val: EExpr): EList {
-  if (typeof val == 'object' && val.constructor == Array) {
+  if (val && typeof val == 'object' && val.constructor == Array) {
     return val;
   }
-  return undefined;
+  return nil;
 }
 
 export function isDict(val: EExpr): EDict {
-  if (typeof val == 'object' && val.constructor == Object && !isId(val)) {
+  if (val && typeof val == 'object' && val.constructor == Object && !isSym(val) && !isFunc(val)) {
     return val as EDict;
   }
-  return undefined;
+  return nil;
 }
 
-export function isId(val: EExpr): EExpr {
-  if (IdMarker in (val as any)) {
-    return (val as EId)._expr_id;
+export function isSym(val: EExpr): ESym {
+  if (val && (typeof val == "object") && SymMarker in (val as any)) {
+    return val as ESym;
   }
-  return undefined;
+  return nil;
 }
 
-function printStack(scope: Scope): string {
-  let msg = '';
-  while (scope) {
-    msg += `[${scope.name}] - `
-    for (let key of scope.names) {
-      msg += `${key}: ${printVal(scope.ref(key))} `
-    }
-    msg += '\n';
-    scope = scope.parent;
-  }
-  return msg;
+export function symName(sym: ESym): string {
+  return sym._expr_sym;
 }
 
-function printVal(val: EExpr): string {
-  switch (typeof val) {
-    case 'object':
-      return `[${val.constructor.name}]`;
-    default:
-      return '' + val;
+export function isFunc(val: EExpr): EFunc {
+  if (val && (typeof val == "object") && FuncMarker in (val as any)) {
+    return val as EFunc;
   }
+  return nil;
+}
+
+export function funcParams(func: EFunc): EList {
+  return isList(func._expr_func[0]);
+}
+
+export function funcExpr(func: EFunc): EExpr {
+  return func._expr_func[1];
+}
+
+export function funcScope(func: EFunc): Scope {
+  return func._expr_scope;
+}
+
+export function funcName(func: EFunc): string {
+  return func._expr_name || "";
+}
+
+export function funcSelf(func: EFunc): EDict {
+  return func._expr_self;
 }

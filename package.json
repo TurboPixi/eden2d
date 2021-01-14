@@ -15,9 +15,9 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/joelgwebber/2den3d/issues"
+    "url": "https://github.com/joelgwebber/eden2d/issues"
   },
-  "homepage": "https://github.com/joelgwebber/2den3d",
+  "homepage": "https://github.com/joelgwebber/eden2d",
   "dependencies": {
     "filament": "^1.8.1",
     "fs": "0.0.1-security",
@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "copy-webpack-plugin": "^6.0.3",
+    "raw-loader": "^4.0.2",
     "ts-loader": "^8.0.2",
     "typescript": "^3.9.7",
     "webpack-cli": "^3.3.12"

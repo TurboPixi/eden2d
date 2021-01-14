@@ -1,21 +1,19 @@
 import { Sprite } from "pixi.js";
 import { Chunk } from "./chunk";
 import { ImageKey, Resources } from "./res";
-import { EDict, EExpr, Scope, ScopeType } from "./script/script";
-import { World } from "./world";
+import { IScope, isScope, scopeDef, scopeParent } from "./script/scope";
+import { $, EDict, EExpr, ESym, symName } from "./script/script";
 
-export enum Var {
-  X = "x",
-  Y = "y",
-  Chunk = "chunk",
-  UI = "ui",                    // Bool marking entity as UI element.
-  Contents = "contents",        // Chunk representing a container entity's contents.
-  Portable = "portable",        // Bool marking an entity as moveable.
-  Portal = "portal",            // Bool marking an entity as a portal.
-  PortalChunk = "portalchunk",  // A portal's target chunk.
-  PortalX = "portalx",          // ... target coordinates.
-  PortalY = "portaly",          // ...
-}
+export const VarX = "x";
+export const VarY = "y";
+export const VarChunk = "chunk";
+export const VarUI = "ui";                    // Bool marking entity as UI element.
+export const VarPortable = "portable";        // Bool marking an entity as moveable.
+export const VarContents = "contents";        // Chunk representing a container entity's contents.
+export const VarPortal = "portal";            // Bool marking an entity as a portal.
+export const VarPortalChunk = "portalchunk";  // A portal's target chunk.
+export const VarPortalX = "portalx";          // ... target coordinates.
+export const VarPortalY = "portaly";          // ...
 
 export enum EntityType {
   Cursor = "cursor",
@@ -44,7 +42,7 @@ const _protos: { [key: string]: Prototype } = {
   "object-crate": { img: ImageKey.ObjectCrate, vars: { portable: true } },
 };
 
-export class Entity implements Scope {
+export class Entity implements IScope {
   private _proto: Prototype;
   private _chunk: Chunk;
   private _id: number;
@@ -58,6 +56,7 @@ export class Entity implements Scope {
       throw "invalid entity type";
     }
     this._proto = _protos[type];
+    this.def($('comps'), {});
   }
 
   get id(): number { return this._id }
@@ -72,38 +71,34 @@ export class Entity implements Scope {
     return this._spr;
   }
 
-  get type(): ScopeType { return ScopeType.ENT }
-  get name(): string { return "[ent]" }
-  get self(): EExpr { return this }
-  get parent(): Scope { return this._chunk }
-
   get names(): string[] {
     let keys = this._defs ? Object.keys(this._defs) : [];
-    return [...keys, Var.X, Var.Y, Var.Chunk];
+    return [...keys, VarX, VarY, VarChunk];
   }
 
-  def(name: string, value: EExpr): void {
-    switch (name) {
-      case Var.X:
-      case Var.Y:
-      case Var.Chunk:
+  def(sym: ESym, value: EExpr): void {
+    switch (symName(sym)) {
+      case VarX:
+      case VarY:
+      case VarChunk:
         // Read-only.
-        throw `read-only ${name}`;
+        throw `read-only ${symName(sym)}`;
     }
 
     if (!this._defs) {
       this._defs = {};
     }
-    this._defs[name] = value;
+    scopeDef(this._defs, sym, value);
   }
 
-  ref(name: string): EExpr {
-    switch (name) {
-      case Var.X: return this._x;
-      case Var.Y: return this._y;
-      case Var.Chunk: return this._chunk;
+  ref(sym: ESym): EExpr {
+    switch (symName(sym)) {
+      case VarX: return this._x;
+      case VarY: return this._y;
+      case VarChunk: return this._chunk;
     }
 
+    let name = symName(sym);
     if (this._defs && name in this._defs) {
       return this._defs[name];
     }
@@ -124,8 +119,12 @@ export class Entity implements Scope {
 }
 
 export function isEntity(expr: EExpr): Entity {
-  if (expr instanceof Entity) {
-    return expr as Entity;
+  let scope = isScope(expr);
+  while (scope) {
+    if (scope instanceof Entity) {
+      return expr as Entity;
+    }
+    scope = scopeParent(scope);
   }
   return undefined;
 }

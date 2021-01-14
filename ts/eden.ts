@@ -1,12 +1,16 @@
 import { Application } from "pixi.js";
-import { Chunk } from "./chunk";
-import { Entity, EntityType, Var } from "./entity";
+import { Chunk, isChunk } from "./chunk";
+import { Entity, EntityType, isEntity, VarChunk, VarPortal, VarX, VarY } from "./entity";
 import { Key } from "./key";
-import { newPlayer } from "./player";
 import { Resources } from "./res";
-import { _add, _get, _if, _log, _root, _self, _set } from "./script/builtins";
-import { evaluate, $, _, invoke } from "./script/script";
+import { evalBuiltins } from "./script/builtins";
+import { evaluate, _eval } from "./script/eval";
+import { _print } from "./script/print";
+import { locNum, _root } from "./script/scope";
+import { $, $$, _, _blk, _def, __ } from "./script/script";
 import { World, _new } from "./world";
+import { parse } from "./script/kurt";
+import player_kurt from "./player.kurt";
 
 class Eden {
   private _app: Application;
@@ -27,11 +31,14 @@ class Eden {
   private ready() {
     this._world = new World();
 
+    evalBuiltins();
+    evaluate(this._world, parse(player_kurt));
+
     let chunk = this.createChunk();
-    this._player = newPlayer(this._world, chunk);
+    this._player = isEntity(evaluate(this._world, [[$('Player'), $$('make')], chunk]));
     this.showChunk(chunk);
 
-    let invChunk = evaluate(this._chunk, [_get, this._player, Var.Contents]) as Chunk;
+    let invChunk = evaluate(this._chunk, [[$('Player'), $$('contents')], this._player]) as Chunk;
     this._app.stage.addChild(invChunk.container);
 
     this._app.stage.interactive = true;
@@ -43,9 +50,9 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    evaluate(chunk0, [$('portal'), EntityType.StairDown, chunk0, 1, 5, chunk1, 0, 5]);
-    evaluate(chunk1, [$('portal'), EntityType.StairUp, chunk1, 1, 5, chunk0, 2, 5]);
-    evaluate(chunk1, [_set, _self, 'foo', _([_new, chunk1, EntityType.ObjectCrate])]);
+    evaluate(this._world, [$(VarPortal), EntityType.StairDown, chunk0, 1, 5, chunk1, 0, 5]);
+    evaluate(this._world, [$(VarPortal), EntityType.StairUp, chunk1, 1, 5, chunk0, 2, 5]);
+    evaluate(this._world, [_def, $$('foo'), [_blk, _new, chunk1, EntityType.ObjectCrate]]);
     return chunk0;
   }
 
@@ -66,14 +73,14 @@ class Eden {
       case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
       // Go.
-      case Key.G: evaluate(this._player, [$('player:follow'), this._player]); break;
+      case Key.G: evaluate(this._world, [[$('Player'), $$('follow')], this._player]); break;
 
       // Create.
-      case Key.C: evaluate(this._player, [$('player:create'), this._player, EntityType.ObjectKey]); break;
+      case Key.C: evaluate(this._world, [[$('Player'), $$('create')], this._player, EntityType.ObjectKey]); break;
 
       // Take, put.
-      case Key.T: evaluate(this._player, [$('player:take'), this._player]); break;
-      case Key.P: evaluate(this._player, [$('player:put'), this._player]); break;
+      case Key.T: evaluate(this._world, [[$('Player'), $$('take')], this._player]); break;
+      case Key.P: evaluate(this._world, [[$('Player'), $$('put')], this._player]); break;
 
       // Selection.
       case Key._1: case Key._2: case Key._3: case Key._4:
@@ -91,29 +98,33 @@ class Eden {
   }
 
   private move(dx: number, dy: number) {
-    evaluate(this._player, [$('player:move'), this._player, dx, dy]);
+    evaluate(this._world, [[$('Player'), $$('move')], this._player, dx, dy]);
   }
 
   private select(slot: number) {
-    evaluate(this._player, [$('player:select'), this._player, slot]);
+    evaluate(this._world, [[$('Player'), $$('select')], this._player, slot]);
   }
 
   private tick() {
     // Follow the player across chunks.
-    if (this._player.chunk != this._chunk) {
-      this.showChunk(this._player.chunk);
+    let chunk = isChunk(_eval(this._player, $(VarChunk)));
+    if (chunk != this._chunk) {
+      this.showChunk(chunk);
     }
 
     let w = this._app.view.width;
     let h = this._app.view.height;
 
-    let inv = this._player.ref(Var.Contents) as Chunk;
+    let inv = evaluate(this._chunk, [[$('Player'), $$('contents')], this._player]) as Chunk;
     inv.container.setTransform(0, h - 64, 4, 4);
 
-    let x = (this._player.x - 4) * 16;
-    let y = (this._player.y - 4) * 16;
+    let px = locNum(this._player, $(VarX));
+    let py = locNum(this._player, $(VarY));
+    let x = (px - 4) * 16;
+    let y = (py - 4) * 16;
     this._chunk.tick(x, y, 4, w, h);
   }
 }
 
 new Eden();
+// runTests();

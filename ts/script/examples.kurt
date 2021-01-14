@@ -1,0 +1,110 @@
+-- Synthesizing prototypical class-like constructs using dicts, scope, and self.
+[:Template {
+  make: ({bar}
+    [[Template:init] {} bar]
+  )
+
+  init: ({self bar}
+    [set self {
+      scope: Template
+      foo: 42
+      bar: bar
+    }]
+  )
+
+  tmpl-func: ( ... )
+}]
+
+[:Thing {
+  make: ({bar}
+    [call [Template:init] {
+      scope: Thing
+      baz: 54
+    } bar]
+  )
+
+  thing-func: ( ... )
+}]
+
+[Thing:scope Template] -- Thing derives from Template
+
+[:tmpl [[Template:make] 123]]   -- make a Template
+[tmpl:foo]                          -- 42
+[tmpl:bar]                          -- 123
+[[tmpl:tmpl-func]]                  -- apply tmpl:scope => Template => tmpl-func
+
+[:thing [Thing:make] 456]       -- make a Thing
+[thing:foo]                         -- 42
+[thing:bar]                         -- 456
+[thing:baz]                         -- 54
+[[thing:thing-func]]                -- apply thing:scope => Thing => thing-func
+[[thing:tmpl-func]]                 -- apply thing:scope => Thing:scope => Template => tmpl-func
+
+
+-- Using scope to create closures over function application context.
+[:for-each ({list fn}
+  [:x [[list:len]]]
+  [while (>= x 0) (  -- this is a no-arg anonymous function
+    do
+    [fn [list x]]    -- its scope is automatically set to the enclosing one
+    [:x [- x 1]]]
+  )
+)]
+
+-- Equivalent to this:
+[:for-each [{list fn}             -- outer fn; scope is set to its frame
+  [:x [list:len]]
+
+  [:anon ({scope}                 -- make the anonymous function explicit, naming its scope as a parameter
+    [[scope:fn] [[scope:list] x]] -- use scope explicitly to close over the enclosing context
+    [scope:x [- [scope:x] 1]]
+  )]
+
+  [while (>= x 0) (anon scope)]   -- call anon explicitly with the enclosing function's scope
+]]
+
+
+-- Converted from player.ts
+[world:Player {
+  make: (
+    [:inv-chunk [Chunk make]]
+    [chunk:new-ent {                       -- new-ent sets self:scope so it has Entity methods
+      slot: 0
+      contents: [[world:newChunk]]
+      cursor: [[inv-chunk:new-ent] 'cursor']
+    }]
+  )
+
+  move: ({dx:0 dy:0}
+    [[self:move] [+ x dx] [+ y dy]]
+  )
+
+  take: (
+    [:target [[self:topWith] 'portable']]
+    [if [exists target]
+      [[[[target:jump] [self:contents]]:move] [self:slot] 0]]
+  )
+
+  put: (
+    [:target [[[self:contents]:topWith] [self:slot] 0 'portable']]
+    [if [exists target]
+      [[[[target:jump] chunk]:move x y]]
+  )
+
+  create: ({type}
+    [[[[[self:contents]:new-ent] type]:move] [self:slot] 0]
+  )
+
+  select: ({slot:0}
+    [if [and [>= slot 0] [< slot 10]] (
+      [self:slot slot]
+      [[[self:cursor]:move] slot 0]
+    )]
+  )
+
+  topWith: ({var}
+    [[chunk:topWith] x y var]
+  )
+}]
+
+[[Player:make]]

@@ -2,10 +2,14 @@
   "compilerOptions": {
     "allowJs": true,
     "jsx": "react",
-    "module": "CommonJS",
+    "module": "commonjs",
     "noImplicitAny": true,
     "outDir": "./dist/",
     "sourceMap": true,
     "target": "es5",
-  }
+    "rootDir": "ts",
+  },
+  "include": [
+    "./ts/**/*", 
+  ]
 }

@@ -47,6 +47,8 @@ Ideas:
 - Scenario: Natural world (trees, plants) is ill because of local energy siphoning magic.
   - Should be easy to express, as a script running in chunk scope that siphons qi from plants.
   - Plant metabolism driven by qi, derived from sunlight.
+- Find a way to preserve the feeling of objects being rare and special.
+  E.g., a book containing code that can't be easily or cheaply copied because... reasons?
 
 
 Actions
@@ -100,24 +102,139 @@ Principles:
 - Functions are nothing special: Just lists that follow the right structure.
 - TODO: Something about scopes, dicts, params...
 
-Examples:
+Symbol resolution:
+- Local scope, followed by parent scopes.
+- Scopes defined by 'parent' pointers (better name? scope?)
+- Function stack frames get a parent scope when peeled from a dict (or list?).
+  Not entirely sure of semantics here; how does the correct parent scope find its way to func application?
+- Parent pointer can be set manually on dicts to create scope chains.
+- How to reliably access, e.g., parent object/dict scope from within func?
+  Maybe have 'self' refer to "peeled off" scope during application?
+- Can we reproduce continuations with just dicts and scope pointers?
+  
 
--- simple var
-[set meaning-of-life 42]
+Constructs:
 
+  -- primitives
+  42              -- number
+  "deep thought"  -- string
+  true            -- boolean
+  nil             -- nil
+
+  -- symbols
+  :foo           -- quoted symbol
+  foo            -- symbol reference
+  [:foo 42]      -- set symbol to value (current scope)
+  [self :foo 42] -- set symbol to value (scoped)
+  [self:foo 42]  -- equivalent to above (: separates token and associates right)
+
+  -- lists
+  [42 "deep thought" true]   -- list (evaluated)
+  (42 "deep thought" true)   -- list (unevaluated)
+  :[42 "deep thought" true]  -- list (unevaluated, same as (...))
+
+  -- dicts
+  {foo bar:42 baz:("list" "of" "things")}  -- dict (foo is nil)
+
+  -- funcs
+  [:fn ([* 6 9]])       -- set symbol to list (used as function)
+  [foo] => 54           -- function application
+  [:fn ({x} [* 6 x])]   -- function that takes a parameter
+  [fn 7] => 42          -- function application with an argument
+  [:fn ({x:7} [* 6 x])] -- function that takes a default parameter
+  [fn] => 42            -- called without the optional argument
+
+  -- symbols
+  :foo => foo        -- quoted symbol, evaluates to the symbol itself
+  [:foo]             -- apply quoted symbol with no args, evaluates to the symbol's value
+  [:foo 42]          -- apply quoted symbol with one arg, assigns value to the symbol
+  foo => 42          -- reference to symbol, evaluates to symbol value in the default scope (shorthand symbol reference)
+  [{foo:42} :foo]    -- apply dict with symbol argument, evaluates to the dict's value at that symbol
+  [{foo:42} :foo 54] -- apply dict with symbol and value args, assigns to the dict's value at that symbol
+  [some-dict:foo]    -- : is a token separator, so scopes can be jammed together like this with quoted symbols
+
+  -- evaluation and quoting
+  42    => 42    -- primitive
+  (42)  => (42)  -- list
+  [42]  => 42    -- evaluated list
+  :[42] => (42)  -- list (alternate quoting, same as (42))
+  :42   => 42    -- quoted primitive evaluates to itself
+  :foo  => foo   -- quoted identifier
+
+  -- funcs in dicts
+  [:thing {                          -- func in a dict, assigned to :thing
+    foo: ({x} [+ x 1])
+  }]
+  [thing:foo]      => ((x) [+ x 1])  -- the function itself
+  [[thing:foo] 42] => 43             -- get the function and apply it
+
+  -- self
+  [:thing {                          -- dict with a func that references 'self'
+    x: 9
+    fn: ({y} [* [self:x] y])
+  }]
+  [thing:fn] =>                      -- applying [thing :fn] evaluates to the func with 'self' bound explicitly
+    [bind thing fn]
+
+  -- scope
+  
+
+
+
+-- default scope
+> [:val 42]             -- set val in the default scope
+> val                   -- a simple identifier references it
+  {foo:42}
+> [:val]                -- as does the default scope
+  {foo:42}
+> [scope:val]           -- as does the explicit current scope
+  {foo:42}
+
+
+-- functions
+> [:func (42)]          -- the simplest possible function
+> func                  -- the function itself
+  (42)
+> [func]                -- apply it
+  42
+> [:plus-one ({arg}     -- a func with a parameter
+>   [+ arg 1]
+> )]
+> [plus-one 42]         -- applied with an argument
+  43
+
+
+-- locals
+> [:func ({arg}         -- a func with one parameter
+>   {local: [+ arg 1]}  -- then assigns a local (in the same scope)
+>   [* local 9]         -- and uses it in an expression
+> )]
+> [func 5]
+  54
+
+
+-- scopes
+
+
+-- dicts with funcs
+> [:obj {func: (42)}]   -- a dict with a single value that contains a function
+> [obj:func]            -- applying the dict to the ident returns the function itself
+  (42)
+> [[obj:func]]          -- applying the result (no args) evaluates the function body
+  42
+> 
+
+
+-- simple no-arg function (i.e., just a list)
+> [:meaning-of-life (42)]
 > meaning-of-life
-< 42
+  (42)
+> [meaning-of-life]  -- 
+  42
 
--- simple no-arg function
-[set meaning-of-life [42]]
 
-> meaning-of-life
-< [42]
-> [meaning-of-life]
-< 42
-
--- one-arg function
-[set plus-one [{arg}
+-- one-arg function (i.e., a list with a parameter dict as its first element)
+[:plus-one [{arg}
   [+ arg 1]
 ]]
 
@@ -127,16 +244,18 @@ Examples:
 > [plus-one 42]
 < 43
 
+
 -- one-arg function with default value
-[set plus-one [{arg: 42}
+[:plus-one [{arg:42}
   [+ arg 1]
 ]]
 
 > [plus-one]
 < 43
 
+
 -- using named args
-[set weird-add [{x:42 y:54}
+[:weird-add [{x:42 y:54}
   [+ x y]
 ]
 
@@ -144,6 +263,15 @@ Examples:
 < 55
 > [weird-add {y:1}]
 < 43
+
+
+-- clean single-line comments
+
+---
+multi-line comments
+with nice, simple delimiters,
+but no nesting
+---
 
 
 -- define some-fn in current scope to take parameters some-num and some-int
@@ -157,7 +285,7 @@ Examples:
 
 -- define other-fn in current scope to take a single dict parameter
 [set other-fn ({params}
-  [do-something-with [get params some-num] [get params some-int]]
+  [do-something-with [params:some-num] [params:some-int]]
 )]
 
 [some-fn ({some-num: 42 some-int: "foo"})] -- apply some-fn to named parameters (uses parens to leave dict uneval'd)
@@ -182,7 +310,7 @@ Examples:
 )]
 
 -- dict with a bunch of fields & functions.
-{
+[:some-dict {
   thing: 42
   other: 54
 
@@ -191,13 +319,13 @@ Examples:
   )
 
   do-other: ({arg}
-    [set 'thing' 54]                    -- these two are equivalent
-    [set self 'thing' 54]               --
+    [:thing 54]                    -- these two are equivalent
+    [self:thing' 54]               --
 
-    [log thing]                         -- as are all of these
-    [log [get 'thing']]                 --
-    [log [get self 'thing']]            --
+    [log thing]                    -- as are all of these
+    [log [:thing]]                 --
+    [log [self:thing]]             --
 
-    [+ [get self arg] [get self other]] -- self refers to current lexical scope
+    [+ [self:arg] [self:other]]    -- self refers to current context (associated when applying [some-dict:do-other])
   )
-}
+}]

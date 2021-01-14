@@ -1,0 +1,81 @@
+-[ Primitive values ]-
+  "a str"                 -- "a str"
+  42                      -- 42
+  6.02e23                 -- 6.02e23
+  true                    -- true
+
+-[ Symbols & quoting ]-
+  :sym                    -- symbol
+
+-[ Lists & dicts ]-
+  :[expr ...]             -- literal list
+  :{sym:expr ...}         -- literal dict (TODO: Allow 'sym' to be eval'd?)
+  [expr ...]              -- eval'd list
+  {sym:expr ...}          -- eval'd dict
+
+-[ Evaluation ]-
+  sym                     -- default scope value at sym
+  [:sym]                  -- (same -- shorthand for [scope :sym])
+  [{scope} expr]          -- expr -- evaluate expr in scope (also gives [scope:expr] as accessor)
+  [{scope} block]         -- expr -- evaluate block in scope
+  [{env: ...} block]      -- expr -- evaluate block in scope, with explicit environment
+  [block expr*]           -- rewrite to [{p0:expr0 p1:expr1 ...} expr] -- bind expr* to params, in order
+
+-[ Definition ]-
+  [def [scope] sym expr]  -- define :sym in scope
+  [set [scope] sym expr]  -- set :sym in scope (if defined)
+  [? [scope] sym]         -- true if :sym is defined in scope
+
+-[ Blocks ]-
+  [x y | + x y]           -- block with two params
+  [x | + x 1]             -- block with one param
+  [| + 1 2]               -- block with no params
+  -- TODO: Explicit scope in block def.
+  [{scope} x y | + x y]   -- block with two params, with an explicit environment
+
+-[ TODO:
+-- Bracket short circuiting; e.g., [@:foo bar] => [[@ :foo] bar]
+   Or [foo :bar] => [foo :bar]
+      foo:bar    => [foo :bar]
+      [foo:bar]  => [[foo:bar]]
+-- Mixed env + positional args
+-- Inline { parent:... } eval'd definitions
+-- Explore macros, quasi-quoting
+]-
+
+-[ Block definition ]-
+[def :add [a b| [{x:a y:b} +]]]
+[def :+ [x y| native)]
+
+-[ Scoped expressions ]-
+[{a:6} [+ a 7]]
+-- 13
+
+-[ Block evaluation ]-
+[{a:6 b:7} add]
+-[
+  [{a:6 b:7} [a b| [{x:a y:b} +]]]  -- named args as prefix scope
+  [{a:6 b:7}       [{x:a y:b} +]]   --   merged with formal parameters
+  [                 {x:6 y:7} +]    --   and evaluated with the body
+                    13
+]-
+
+-[ With positional args ]-
+[add 6 7]
+-[
+  [[a b|           [{x:a y:b} +]] 6 7]  -- transform positional args
+  [{a:6 b:7} [a b| [{x:a y:b} +]]    ]  --   into named args
+  [{a:6 b:7}       [{x:a y:b} +]]       --   and continue as usual
+                   [{x:6 y:7} +]
+                   13
+]-
+
+-[ Closure ]-
+[def :greatest ([list]
+  [do
+    [def :max 0]
+    [for-each list ([val]
+      [if [> max val] (set :max val)]
+    )]
+  ]
+)]

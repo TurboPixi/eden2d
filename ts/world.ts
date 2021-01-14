@@ -1,7 +1,9 @@
-import { EExpr, evaluate, Scope, ScopeType, $, chuck, EDict, nil, _, invoke } from "./script/script";
+import { EExpr, $, $$, chuck, EDict, nil, __, symName, ESym, _do, _def, _blk, _set, _parent } from "./script/script";
 import { Chunk, ChunkId, isChunk } from "./chunk";
-import { Entity, EntityType, isEntity, Var } from "./entity";
-import { locNum, locStr, _root, _self, _set } from "./script/builtins";
+import { Entity, EntityType, isEntity } from "./entity";
+import { evaluate } from "./script/eval";
+import { IScope, locNum, locStr, Scope, scopeDef, scopeEval, scopeParent, scopeRef, _root } from "./script/scope";
+import { parse } from "./script/kurt";
 
 export const _newChunk = $('newChunk');
 export const _new = $('new');
@@ -10,23 +12,19 @@ export const _jump = $('jump');
 export const _topWith = $('topWith');
 
 // TODO: Reliable garbage-collection on chunks.
-export class World implements Scope {
+export class World implements IScope {
   private _chunks: { [id: number]: Chunk } = {};
   private _nextId: ChunkId = 1;
   private _defs: EDict = {};
 
   constructor() {
     this.funcs();
+    scopeDef(this, $('parent'), _root);
   }
 
-  get type(): ScopeType { return ScopeType.WORLD }
-  get name(): string { return "[world]" }
-  get self(): EExpr { return this }
-  get parent(): Scope { return _root }
-  get world(): World { return this }
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
-  ref(name: string): EExpr { return this._defs[name] }
-  def(name: string, value: EExpr): void { this._defs[name] = value }
+  ref(sym: ESym): EExpr { return this._defs[symName(sym)] }
+  def(sym: ESym, value: EExpr): void { this._defs[symName(sym)] = value }
 
   newChunk(): Chunk {
     let id = this._nextId++;
@@ -55,66 +53,68 @@ export class World implements Scope {
   }
 
   private funcs() {
-    invoke(this, [
-      [_set, _self, 'newChunk', _(
-        function (scope: Scope): EExpr {
-          return worldFrom(scope).newChunk();
-        }
-      )],
+    evaluate(this, [_def, $$('newChunk'), [_blk,
+      function (scope: Scope): EExpr {
+        return worldFrom(scope).newChunk();
+      }
+    ]]);
 
-      [_set, _self, 'new', _({ chunk: nil, type: nil },
-        function (scope: Scope): EExpr {
-          let chunk = locChunk(scope, 'chunk');
-          let ent = new Entity(locStr(scope, 'type') as EntityType);
-          chunk.addEntity(ent);
-          return ent;
-        }
-      )],
+    evaluate(this, [_def, $$('new'), [$('chunk'), $('type'), _blk,
+      function (scope: Scope): EExpr {
+        let chunk = locChunk(scope, $('chunk'));
+        let ent = new Entity(locStr(scope, $('type')) as EntityType);
+        chunk.addEntity(ent);
+        return ent;
+      }
+    ]]);
 
-      [_set, _self, 'move', _({ ent: nil, x: 0, y: 0 },
-        function (scope: Scope): EExpr {
-          let x = locNum(scope, 'x');
-          let y = locNum(scope, 'y');
-          let ent = locEnt(scope, 'ent');
-          ent.move(x, y);
-          return undefined;
-        }
-      )],
+    evaluate(this, [_def, $$('move'), [$('ent'), $('x'), $('y'), _blk,
+      function (scope: Scope): EExpr {
+        let x = locNum(scope, $('x'));
+        let y = locNum(scope, $('y'));
+        let ent = locEnt(scope, $('ent'));
+        ent.move(x, y);
+        return undefined;
+      }
+    ]]);
 
-      [_set, _self, 'jump', _({ ent: nil, chunk: nil },
-        function (scope: Scope): EExpr {
-          let ent = locEnt(scope, 'ent');
-          let to = locChunk(scope, 'chunk');
-          to.addEntity(ent);
-          return ent;
-        }
-      )],
+    evaluate(this, [_def, $$('jump'), [$('ent'), $('chunk'), _blk,
+      function (scope: Scope): EExpr {
+        let ent = locEnt(scope, $('ent'));
+        let to = locChunk(scope, $('chunk'));
+        to.addEntity(ent);
+        return ent;
+      }
+    ]]);
 
-      [_set, _self, 'portal', _({ type: nil, from: nil, fx: 0, fy: 0, to: nil, tx: 0, ty: 0 },
-        { ent: [_new, $('from'), $('type')] },
-        [_move, $('ent'), $('fx'), $('fy')],
-        [_set, $('ent'), Var.PortalChunk, $('to')],
-        [_set, $('ent'), Var.PortalX, $('tx')],
-        [_set, $('ent'), Var.PortalY, $('ty')],
-        $('ent')
-      )],
-
-      [_set, _self, 'topWith', _({ chunk: nil, x: 0, y: 0, var: nil },
-        function (scope: Scope): EExpr {
-          let chunk = locChunk(scope, 'chunk');
-          let x = locNum(scope, 'x');
-          let y = locNum(scope, 'y');
-          let v = locStr(scope, 'var');
-          let ents = chunk.entitiesAt(x, y);
-          for (var ent of ents) {
-            if (ent.ref(v) !== undefined) {
-              return ent;
-            }
+    evaluate(this, [_def, $$('topWith'), [$('chunk'), $('x'), $('y'), $('var'), _blk,
+      function (scope: Scope): EExpr {
+        let chunk = locChunk(scope, $('chunk'));
+        let x = locNum(scope, $('x'));
+        let y = locNum(scope, $('y'));
+        let v = scopeRef(scope, $('var')) as ESym;
+        let ents = chunk.entitiesAt(x, y);
+        for (var ent of ents) {
+          if (ent.ref(v) !== undefined) {
+            return ent;
           }
-          return undefined;
         }
-      )],
-    ]);
+        return undefined;
+      }
+    ]]);
+
+    evaluate(this, parse(`
+      [def :portal [type from fx fy to tx ty|
+        do
+          [def :ent [new from type]]
+          [move ent fx fy]
+          [set ent:portalchunk to]
+          [set ent:portalx tx]
+          [set ent:portaly ty]
+          ent
+        ]
+      ]`
+    ));
   }
 }
 
@@ -131,23 +131,23 @@ function worldFrom(scope: Scope): World {
     if (cur instanceof World) {
       return cur;
     }
-    cur = cur.parent;
+    cur = scopeParent(cur);
   }
   chuck(scope, "missing world scope");
 }
 
-function locChunk(scope: Scope, name: string): Chunk {
-  let chunk = isChunk(scope.ref(name));
+function locChunk(scope: Scope, sym: ESym): Chunk {
+  let chunk = isChunk(scopeEval(scope, sym));
   if (chunk === undefined) {
-    chuck(scope, `${name}: ${scope.ref(name)} is not a chunk`);
+    chuck(scope, `${name}: ${scopeRef(scope, sym)} is not a chunk`);
   }
   return chunk as Chunk;
 }
 
-function locEnt(scope: Scope, name: string): Entity {
-  let ent = isEntity(scope.ref(name));
+function locEnt(scope: Scope, sym: ESym): Entity {
+  let ent = isEntity(scopeEval(scope, sym));
   if (ent === undefined) {
-    chuck(scope, `${name}: ${scope.ref(name)} is not an entity`);
+    chuck(scope, `${name}: ${scopeRef(scope, sym)} is not an entity`);
   }
   return ent as Entity;
 }
