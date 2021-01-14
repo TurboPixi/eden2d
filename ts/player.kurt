@@ -26,7 +26,7 @@
   ]
 
   move: [ent dx dy|do
-    [move ent [+ [ent:x] dx] [+ [ent:y] dy]]
+    [[ent:move] [+ [ent:x] dx] [+ [ent:y] dy]]
   ]
 
   -- TODO: validate that there's actually something to follow.
@@ -35,37 +35,32 @@
     [def :x [portal:portalx]]
     [def :y [portal:portaly]]
     [jump ent [portal:portalchunk]]
-    [move ent x y]
+    [[ent:move] x y]
   ]
 
   -- TODO: Validate ent exists.
   take: [ent|do
     [def :player [[ent:comps]:player]]
     [def :target [[Player:topWith] ent :portable]]
-    [move
-      [jump target [player:contents]]
-      [player:slot] 0
-    ]
+    [[[jump target [player:contents]]:move] [player:slot] 0]
   ]
 
   -- TODO: Validate ent exists.
   put: [ent|do
     [def :player [[ent:comps]:player]]
     [def :target [topWith [player:contents] [player:slot] 0 :portable]]
-    [move [jump target [ent:chunk]] [ent:x] [ent:y]]
+    [[[jump target [ent:chunk]]:move] [ent:x] [ent:y]]
   ]
 
   create: [ent type|do
     [def :player [[ent:comps]:player]]
-    [move
-      [new [player:contents] type]
-      [player:slot] 0]
+    [[[new [player:contents] type]:move] [player:slot] 0]
   ]
 
   -- TODO: Validate slot range
   select: [ent slot| do
     [def :player [[ent:comps]:player]]
     [set player:slot slot]
-    [move [player:cursor-ent] slot 0]
+    [[[player:cursor-ent]:move] slot 0]
   ]
 }]

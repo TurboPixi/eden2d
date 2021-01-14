@@ -1,13 +1,13 @@
 import { Application } from "pixi.js";
 import { Chunk, isChunk } from "./chunk";
-import { Entity, EntityType, isEntity, VarChunk, VarPortal, VarX, VarY } from "./entity";
+import { Entity, EntityClass, EntityType, isEntity, VarChunk, VarPortal, VarX, VarY } from "./entity";
 import { Key } from "./key";
 import { Resources } from "./res";
 import { evalBuiltins } from "./script/builtins";
 import { evaluate, _eval } from "./script/eval";
 import { _print } from "./script/print";
 import { locNum, _root } from "./script/scope";
-import { $, $$, _, _blk, _def, __ } from "./script/script";
+import { $, $$, _, _blk, _def, _parent, _set, __ } from "./script/script";
 import { World, _new } from "./world";
 import { parse } from "./script/kurt";
 import player_kurt from "./player.kurt";
@@ -32,6 +32,8 @@ class Eden {
     this._world = new World();
 
     evalBuiltins();
+    evaluate(this._world, EntityClass);
+    evaluate(this._world, [_set, $('Entity'), _(_parent), this._world]); // TODO: Shouldn't have to explicitly link Entity:parent to its scope.
     evaluate(this._world, parse(player_kurt));
 
     let chunk = this.createChunk();

@@ -112,7 +112,7 @@ export function lookupSym(scope: Scope, sym: ESym): EExpr {
 export function locNum(scope: Scope, sym: ESym): number {
   let value = lookupSym(scope, sym) as number;
   if (typeof value != 'number') {
-    chuck(scope, `${name}: ${value} is not a number`);
+    chuck(scope, `${symName(sym)}: ${value} is not a number`);
   }
   return value;
 }
@@ -120,7 +120,7 @@ export function locNum(scope: Scope, sym: ESym): number {
 export function locStr(scope: Scope, sym: ESym): string {
   let value = lookupSym(scope, sym) as string;
   if (typeof value != 'string') {
-    chuck(scope, `${name}: ${value} is not a string`);
+    chuck(scope, `${symName(sym)}: ${value} is not a string`);
   }
   return value;
 }
@@ -128,8 +128,18 @@ export function locStr(scope: Scope, sym: ESym): string {
 export function locSym(scope: Scope, sym: ESym): ESym {
   let value = lookupSym(scope, sym);
   let vsym = isSym(value);
-  if (typeof sym != 'object') {
-    chuck(scope, `${name}: ${value} is not anumber`);
+  if (!vsym) {
+    chuck(scope, `${symName(sym)}: ${value} is not a symbol`);
   }
   return vsym;
 }
+
+export function locScope(scope: Scope, sym: ESym): Scope {
+  let value = lookupSym(scope, sym);
+  let vscope = isScope(value);
+  if (!vscope) {
+    chuck(scope, `${symName(sym)}: ${value} is not a dictionary`);
+  }
+  return vscope;
+}
+

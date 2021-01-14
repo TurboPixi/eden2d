@@ -1,8 +1,10 @@
 import { Sprite } from "pixi.js";
 import { Chunk } from "./chunk";
 import { ImageKey, Resources } from "./res";
-import { IScope, isScope, scopeDef, scopeParent } from "./script/scope";
-import { $, EDict, EExpr, ESym, symName } from "./script/script";
+import { evaluate } from "./script/eval";
+import { IScope, isScope, locScope, locNum, Scope, scopeDef, scopeParent, scopeRef, _root } from "./script/scope";
+import { $, $$, EDict, EExpr, ESym, isDict, nil, symName, _, _blk, _def, _parent, _set } from "./script/script";
+import { World } from "./world";
 
 export const VarX = "x";
 export const VarY = "y";
@@ -42,6 +44,16 @@ const _protos: { [key: string]: Prototype } = {
   "object-crate": { img: ImageKey.ObjectCrate, vars: { portable: true } },
 };
 
+export let EntityClass = [_def, $$('Entity'), {
+  move: [$('x'), $('y'), _blk, (scope: Scope) => {
+    let self = locScope(scope, $('@'));
+    let x = locNum(scope, $('x'));
+    let y = locNum(scope, $('y'));
+    isEntity(self).move(x, y);
+    return self;
+  }],
+}];
+
 export class Entity implements IScope {
   private _proto: Prototype;
   private _chunk: Chunk;
@@ -51,12 +63,13 @@ export class Entity implements IScope {
   private _defs: { [name: string]: EExpr };
   private _spr: Sprite;
 
-  constructor(type: EntityType) {
+  constructor(scope: Scope, type: EntityType) {
     if (!(type in _protos)) {
       throw "invalid entity type";
     }
     this._proto = _protos[type];
     this.def($('comps'), {});
+    evaluate(scope, [_set, this, _(_parent), $('Entity')]);
   }
 
   get id(): number { return this._id }

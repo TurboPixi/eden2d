@@ -7,7 +7,6 @@ import { parse } from "./script/kurt";
 
 export const _newChunk = $('newChunk');
 export const _new = $('new');
-export const _move = $('move');
 export const _jump = $('jump');
 export const _topWith = $('topWith');
 
@@ -41,12 +40,12 @@ export class World implements IScope {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        evaluate(this, [_move, [_new, chunk, EntityType.TileBlue], x, y]);
+        evaluate(this, [[[_new, chunk, EntityType.TileBlue], $$('move')], x, y]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      evaluate(this, [_move, [_new, chunk, EntityType.WallBlue], x, 0]);
+      evaluate(this, [[[_new, chunk, EntityType.WallBlue], $$('move')], x, 0]);
     }
 
     return chunk;
@@ -62,19 +61,9 @@ export class World implements IScope {
     evaluate(this, [_def, $$('new'), [$('chunk'), $('type'), _blk,
       function (scope: Scope): EExpr {
         let chunk = locChunk(scope, $('chunk'));
-        let ent = new Entity(locStr(scope, $('type')) as EntityType);
+        let ent = new Entity(scope, locStr(scope, $('type')) as EntityType);
         chunk.addEntity(ent);
         return ent;
-      }
-    ]]);
-
-    evaluate(this, [_def, $$('move'), [$('ent'), $('x'), $('y'), _blk,
-      function (scope: Scope): EExpr {
-        let x = locNum(scope, $('x'));
-        let y = locNum(scope, $('y'));
-        let ent = locEnt(scope, $('ent'));
-        ent.move(x, y);
-        return undefined;
       }
     ]]);
 
@@ -107,7 +96,7 @@ export class World implements IScope {
       [def :portal [type from fx fy to tx ty|
         do
           [def :ent [new from type]]
-          [move ent fx fy]
+          [[ent:move] fx fy]
           [set ent:portalchunk to]
           [set ent:portalx tx]
           [set ent:portaly ty]

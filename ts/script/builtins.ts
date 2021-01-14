@@ -3,6 +3,7 @@ import { _print } from "./print";
 import { locNum, Scope, scopeRef, _root } from "./scope";
 import { chuck, $, isList, EExpr, _blk, _, isFunc, _def, _do, nil, eq } from "./script";
 
+export const _debug = $('debug');
 export const _if = $('if');
 export const _forEach = $('for-each');
 export const _log = $('log');
@@ -13,6 +14,13 @@ export const __eval = $('eval');
 
 export function evalBuiltins() {
   _eval(_root, [_do,
+    [_def, _(_debug),
+      [_blk, (scope: Scope) => {
+        debugger;
+        return nil;
+      }]
+    ],
+
     [_def, _(__eval),
       [$('expr'), _blk, function (scope: Scope): EExpr {
         return _eval(scope, scopeRef(scope, $('expr')));
