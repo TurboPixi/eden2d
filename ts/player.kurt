@@ -16,47 +16,47 @@
     ent
   ]
 
-  contents: [ent|do
+  contents: [ent | do
     [def :player [[ent:comps]:player]]
     [if [? :player] [|player:contents]]
   ]
 
-  move: [ent dx dy|do
-    [[ent:move] [+ [ent:x] dx] [+ [ent:y] dy]]
+  move: [ent dx dy | do
+    [[ent:move-to] [+ [ent:x] dx] [+ [ent:y] dy]]
   ]
 
   -- TODO: validate that there's actually something to follow.
-  follow: [ent|do
+  follow: [ent | do
     [def :portal [[ent:top-with] :portal]]
     [def :x [portal:portalx]]
     [def :y [portal:portaly]]
     [[ent:jump] [portal:portalchunk]]
-    [[ent:move] x y]
+    [[ent:move-to] x y]
   ]
 
   -- TODO: Validate ent exists.
-  take: [ent|do
+  take: [ent | do
     [def :player [[ent:comps]:player]]
     [def :target [[ent:top-with] :portable]]
-    [[[[target:jump] [player:contents]]:move] [player:slot] 0]
+    [[[[target:jump] [player:contents]]:move-to] [player:slot] 0]
   ]
 
   -- TODO: Validate ent exists.
-  put: [ent|do
+  put: [ent | do
     [def :player [[ent:comps]:player]]
     [def :target [[[player:contents]:top-with] [player:slot] 0 :portable]]
-    [[[[target:jump] [ent:chunk]]:move] [ent:x] [ent:y]]
+    [[[[target:jump] [ent:chunk]]:move-to] [ent:x] [ent:y]]
   ]
 
-  create: [ent type|do
+  create: [ent type | do
     [def :player [[ent:comps]:player]]
-    [[[[[player:contents]:make-ent] type]:move] [player:slot] 0]
+    [[[[[player:contents]:make-ent] type]:move-to] [player:slot] 0]
   ]
 
   -- TODO: Validate slot range
-  select: [ent slot| do
+  select: [ent slot | do
     [def :player [[ent:comps]:player]]
     [set player:slot slot]
-    [[[player:cursor-ent]:move] slot 0]
+    [[[player:cursor-ent]:move-to] slot 0]
   ]
 }]

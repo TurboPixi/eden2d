@@ -2,9 +2,9 @@ import { Container } from "pixi.js";
 import { Entity, EntityType } from "./entity";
 import { evaluate } from "./script/eval";
 import { parse } from "./script/kurt";
-import { IScope, isScope, locNum, locStr, locSym, Scope, scopeParent, scopeRef } from "./script/scope";
-import { $, $$, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _self, _set } from "./script/script";
-import { locChunk, World } from "./world";
+import { IScope, isScope, locNum, locStr, locSym, Scope, scopeEval, scopeParent, scopeRef } from "./script/scope";
+import { $, $$, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _self, _set } from "./script/script";
+import { World } from "./world";
 
 export type ChunkId = number;
 
@@ -30,9 +30,9 @@ export let ChunkClass = [_def, $$('Chunk'), {
     return undefined;
   }],
 
-  portal: parse(`[type fx fy to tx ty| do
+  portal: parse(`[type fx fy to tx ty | do
     [def :ent [[@:make-ent] type]]
-    [[ent:move] fx fy]
+    [[ent:move-to] fx fy]
     [set ent:portalchunk to]
     [set ent:portalx tx]
     [set ent:portaly ty]
@@ -109,4 +109,12 @@ export function isChunk(expr: EExpr): Chunk {
     scope = scopeParent(scope);
   }
   return undefined;
+}
+
+export function locChunk(scope: Scope, sym: ESym): Chunk {
+  let chunk = isChunk(scopeEval(scope, sym));
+  if (chunk === undefined) {
+    chuck(scope, `${name}: ${scopeRef(scope, sym)} is not a chunk`);
+  }
+  return chunk as Chunk;
 }

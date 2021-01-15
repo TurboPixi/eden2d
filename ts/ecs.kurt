@@ -4,12 +4,12 @@
   ent-id: 0
   sys-id: 0
 
-  add-entity: [ent| do
+  add-entity: [ent | do
     [def :id [set [@:ent-id] [+ [@:ent-id] 1]]]
     [set [@:entities] id ent]
   ]
 
-  add-system: [id sys|
+  add-system: [id sys |
     set :systems id sys
   ])
 
@@ -18,12 +18,12 @@
   ]
 
   tick: [|
-    for-each [@:entities] [ent|
-      for-each [symbols systems] [id| do
+    for-each [@:entities] [ent |
+      for-each [symbols systems] [id | do
         [def :sys [[@:systems] id]]
-        [if [filter [sys:symbols] [symbols ent]] [| do
+        [if [filter [sys:symbols] [symbols ent]] [ | do
           [def :args {env:sys}]
-          [for-each [sys:symbols] [sym|
+          [for-each [sys:symbols] [sym |
             --
           ]]
           [args sys:update]
@@ -37,7 +37,7 @@
 [def :Render {
   components: [:render]
 
-  update: [id sprite location|
+  update: [id sprite location |
     native-render spr loc -- presumed magic
   ]
 }]
@@ -45,10 +45,10 @@
 [def :Collision {
   components: :[location solid]
 
-  enter: [id location solid| -[ track ent ]- )
-  leave: [id location solid| -[ untrack ent ]- )
+  enter: [id location solid | -[ track ent ]- )
+  leave: [id location solid | -[ untrack ent ]- )
 
-  update: [id location solid|
+  update: [id location solid |
     -- update positions based on collisions
   )
 }]
@@ -56,7 +56,7 @@
 [def :Movement {
   components: :[movement location]
 
-  update: [id movement location| do
+  update: [id movement location | do
     [set location:x [+ location:x movement:dx]]
     [set location:y [+ location:y movement:dy]]
     [set movement:dx 0]
@@ -68,7 +68,7 @@
   components: :[player movement]
   dir: :none
 
-  update: [id player movement| do
+  update: [id player movement | do
     [case dir [
       [:north [set movement:dy -1]]
       [:south [set movement:dy  1]]
@@ -80,14 +80,14 @@
 }]
 
 
-[def :floor [x y|
+[def :floor [x y |
   {
     sprite: { img: "floor.png" }
     location: { x:x y:y }
   }
 ]]
 
-[def :wall [x y|
+[def :wall [x y |
   {
     sprite: { img: "wall.png" l}
     location: { x:x y:y }

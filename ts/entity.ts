@@ -1,11 +1,10 @@
 import { Sprite } from "pixi.js";
-import { Chunk } from "./chunk";
+import { Chunk, locChunk } from "./chunk";
 import { ImageKey, Resources } from "./res";
 import { evaluate } from "./script/eval";
 import { parse } from "./script/kurt";
-import { IScope, isScope, locScope, locNum, Scope, scopeDef, scopeParent, scopeRef, _root } from "./script/scope";
-import { $, $$, EDict, EExpr, ESym, isDict, nil, symName, _, _blk, _def, _parent, _set } from "./script/script";
-import { locChunk, locEnt, World } from "./world";
+import { IScope, isScope, locScope, locNum, Scope, scopeDef, scopeParent, scopeRef, _root, scopeEval } from "./script/scope";
+import { $, $$, chuck, EDict, EExpr, ESym, isDict, nil, symName, _, _blk, _def, _parent, _set } from "./script/script";
 
 export const VarX = "x";
 export const VarY = "y";
@@ -46,7 +45,7 @@ const _protos: { [key: string]: Prototype } = {
 };
 
 export let EntityClass = [_def, $$('Entity'), {
-  move: [$('x'), $('y'), _blk, (scope: Scope) => {
+  'move-to': [$('x'), $('y'), _blk, (scope: Scope) => {
     let self = locScope(scope, $('@'));
     let x = locNum(scope, $('x'));
     let y = locNum(scope, $('y'));
@@ -63,7 +62,7 @@ export let EntityClass = [_def, $$('Entity'), {
     }
   ],
 
-  'top-with': parse(`[var|
+  'top-with': parse(`[var |
     [[@:chunk]:top-with] [@:x] [@:y] var
   ]`),
 }];
@@ -154,4 +153,12 @@ export function isEntity(expr: EExpr): Entity {
     scope = scopeParent(scope);
   }
   return undefined;
+}
+
+export function locEnt(scope: Scope, sym: ESym): Entity {
+  let ent = isEntity(scopeEval(scope, sym));
+  if (ent === undefined) {
+    chuck(scope, `${name}: ${scopeRef(scope, sym)} is not an entity`);
+  }
+  return ent as Entity;
 }

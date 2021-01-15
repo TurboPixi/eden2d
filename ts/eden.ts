@@ -6,7 +6,7 @@ import { Resources } from "./res";
 import { evaluate, _eval } from "./script/eval";
 import { _print } from "./script/print";
 import { locNum, _root } from "./script/scope";
-import { $, $$, _, _blk, _def, _parent, _set, __ } from "./script/script";
+import { $, $$, _blk, _def } from "./script/script";
 import { World } from "./world";
 import { parse } from "./script/kurt";
 import { builtins } from "./script/builtins";

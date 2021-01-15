@@ -1,3 +1,27 @@
+-[
+Principles:
+- Simplest possible syntax: made of lists & dicts.
+  - All combinations of list + dict should be syntactically valid programs.
+  - No keywords (but builtins like true & false)
+- No distinction between code + data
+  - Lisp-style quote/eval to treat them as equivalent.
+- Symbols are values, just like strings, numbers, etc.
+- Eval all the things: If it's possible to eval it, do. Maximize dynamic insanity.
+- Error early: Don't silently coerce things. Broken programs should fail quickly.
+- Blocks are nothing special: Just lists that follow the right structure.
+- TODO: Something about scopes, dicts, params...
+]-
+
+-[ TODO:
+- Bracket short circuiting; e.g., [@:foo bar] => [[@ :foo] bar]
+  Or [foo :bar] => [foo :bar]
+     foo:bar    => [foo :bar]
+     [foo:bar]  => [[foo:bar]]
+- Mixed env + positional args
+- Inline { parent:... } eval'd definitions
+- Explore macros, quasi-quoting
+]-
+
 -[ Primitive values ]-
   "a str"                 -- "a str"
   42                      -- 42
@@ -32,16 +56,6 @@
   [| + 1 2]               -- block with no params
   -- TODO: Explicit scope in block def.
   [{scope} x y | + x y]   -- block with two params, with an explicit environment
-
--[ TODO:
--- Bracket short circuiting; e.g., [@:foo bar] => [[@ :foo] bar]
-   Or [foo :bar] => [foo :bar]
-      foo:bar    => [foo :bar]
-      [foo:bar]  => [[foo:bar]]
--- Mixed env + positional args
--- Inline { parent:... } eval'd definitions
--- Explore macros, quasi-quoting
-]-
 
 -[ Block definition ]-
 [def :add [a b| [{x:a y:b} +]]]
