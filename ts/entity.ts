@@ -2,9 +2,10 @@ import { Sprite } from "pixi.js";
 import { Chunk } from "./chunk";
 import { ImageKey, Resources } from "./res";
 import { evaluate } from "./script/eval";
+import { parse } from "./script/kurt";
 import { IScope, isScope, locScope, locNum, Scope, scopeDef, scopeParent, scopeRef, _root } from "./script/scope";
 import { $, $$, EDict, EExpr, ESym, isDict, nil, symName, _, _blk, _def, _parent, _set } from "./script/script";
-import { World } from "./world";
+import { locChunk, locEnt, World } from "./world";
 
 export const VarX = "x";
 export const VarY = "y";
@@ -52,6 +53,19 @@ export let EntityClass = [_def, $$('Entity'), {
     isEntity(self).move(x, y);
     return self;
   }],
+
+  jump: [$('chunk'), _blk,
+    function (scope: Scope): EExpr {
+      let self = locEnt(scope, $('@'));
+      let to = locChunk(scope, $('chunk'));
+      to.addEntity(self);
+      return self;
+    }
+  ],
+
+  'top-with': parse(`[var|
+    [[@:chunk]:top-with] [@:x] [@:y] var
+  ]`),
 }];
 
 export class Entity implements IScope {

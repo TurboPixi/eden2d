@@ -1,15 +1,15 @@
 import { Application } from "pixi.js";
-import { Chunk, isChunk } from "./chunk";
+import { Chunk, ChunkClass, isChunk } from "./chunk";
 import { Entity, EntityClass, EntityType, isEntity, VarChunk, VarPortal, VarX, VarY } from "./entity";
 import { Key } from "./key";
 import { Resources } from "./res";
-import { evalBuiltins } from "./script/builtins";
 import { evaluate, _eval } from "./script/eval";
 import { _print } from "./script/print";
 import { locNum, _root } from "./script/scope";
 import { $, $$, _, _blk, _def, _parent, _set, __ } from "./script/script";
-import { World, _new } from "./world";
+import { World } from "./world";
 import { parse } from "./script/kurt";
+import { builtins } from "./script/builtins";
 import player_kurt from "./player.kurt";
 
 class Eden {
@@ -28,19 +28,22 @@ class Eden {
     Resources.load(() => this.ready());
   }
 
+  private initScript() {
+    evaluate(_root, builtins);
+    evaluate(this._world, ChunkClass);
+    evaluate(this._world, EntityClass);
+    evaluate(this._world, parse(player_kurt));
+  }
+
   private ready() {
     this._world = new World();
-
-    evalBuiltins();
-    evaluate(this._world, EntityClass);
-    evaluate(this._world, [_set, $('Entity'), _(_parent), this._world]); // TODO: Shouldn't have to explicitly link Entity:parent to its scope.
-    evaluate(this._world, parse(player_kurt));
+    this.initScript();
 
     let chunk = this.createChunk();
     this._player = isEntity(evaluate(this._world, [[$('Player'), $$('make')], chunk]));
     this.showChunk(chunk);
 
-    let invChunk = evaluate(this._chunk, [[$('Player'), $$('contents')], this._player]) as Chunk;
+    let invChunk = evaluate(this._world, [[$('Player'), $$('contents')], this._player]) as Chunk;
     this._app.stage.addChild(invChunk.container);
 
     this._app.stage.interactive = true;
@@ -52,9 +55,9 @@ class Eden {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
 
-    evaluate(this._world, [$(VarPortal), EntityType.StairDown, chunk0, 1, 5, chunk1, 0, 5]);
-    evaluate(this._world, [$(VarPortal), EntityType.StairUp, chunk1, 1, 5, chunk0, 2, 5]);
-    evaluate(this._world, [_def, $$('foo'), [_blk, _new, chunk1, EntityType.ObjectCrate]]);
+    evaluate(this._world, [[chunk0, $$('portal')], EntityType.StairDown, 1, 5, chunk1, 0, 5]);
+    evaluate(this._world, [[chunk1, $$('portal')], EntityType.StairUp, 1, 5, chunk0, 2, 5]);
+    evaluate(this._world, [_def, $$('foo'), [_blk, [chunk1, $$('make-ent')], EntityType.ObjectCrate]]);
     return chunk0;
   }
 
@@ -94,7 +97,7 @@ class Eden {
         break;
 
       case Key.Q:
-        evaluate(this._player, [$('foo'), {}]);
+        evaluate(this._world, [$('foo')]);
         break;
     }
   }
@@ -117,7 +120,7 @@ class Eden {
     let w = this._app.view.width;
     let h = this._app.view.height;
 
-    let inv = evaluate(this._chunk, [[$('Player'), $$('contents')], this._player]) as Chunk;
+    let inv = evaluate(this._world, [[$('Player'), $$('contents')], this._player]) as Chunk;
     inv.container.setTransform(0, h - 64, 4, 4);
 
     let px = locNum(this._player, $(VarX));

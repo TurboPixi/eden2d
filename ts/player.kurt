@@ -1,12 +1,12 @@
 [def :Player {
   make: [chunk | do
-    [def :invChunk [newChunk]]
-    [def :ent [new chunk "player"]]
+    [def :inv-chunk [make-chunk]]
+    [def :ent [[chunk:make-ent] "player"]]
 
     [def :player {
       slot: 0
-      contents: invChunk
-      cursor-ent: [new invChunk "cursor"]
+      contents: inv-chunk
+      cursor-ent: [[inv-chunk:make-ent] "cursor"]
     }]
 
     -- TODO: It's weird we have to do this here but doing it earlier
@@ -21,40 +21,36 @@
     [if [? :player] [|player:contents]]
   ]
 
-  topWith: [ent var|
-    topWith [ent:chunk] [ent:x] [ent:y] var
-  ]
-
   move: [ent dx dy|do
     [[ent:move] [+ [ent:x] dx] [+ [ent:y] dy]]
   ]
 
   -- TODO: validate that there's actually something to follow.
   follow: [ent|do
-    [def :portal [[Player:topWith] ent :portal]]
+    [def :portal [[ent:top-with] :portal]]
     [def :x [portal:portalx]]
     [def :y [portal:portaly]]
-    [jump ent [portal:portalchunk]]
+    [[ent:jump] [portal:portalchunk]]
     [[ent:move] x y]
   ]
 
   -- TODO: Validate ent exists.
   take: [ent|do
     [def :player [[ent:comps]:player]]
-    [def :target [[Player:topWith] ent :portable]]
-    [[[jump target [player:contents]]:move] [player:slot] 0]
+    [def :target [[ent:top-with] :portable]]
+    [[[[target:jump] [player:contents]]:move] [player:slot] 0]
   ]
 
   -- TODO: Validate ent exists.
   put: [ent|do
     [def :player [[ent:comps]:player]]
-    [def :target [topWith [player:contents] [player:slot] 0 :portable]]
-    [[[jump target [ent:chunk]]:move] [ent:x] [ent:y]]
+    [def :target [[[player:contents]:top-with] [player:slot] 0 :portable]]
+    [[[[target:jump] [ent:chunk]]:move] [ent:x] [ent:y]]
   ]
 
   create: [ent type|do
     [def :player [[ent:comps]:player]]
-    [[[new [player:contents] type]:move] [player:slot] 0]
+    [[[[[player:contents]:make-ent] type]:move] [player:slot] 0]
   ]
 
   -- TODO: Validate slot range

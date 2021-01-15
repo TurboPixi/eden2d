@@ -70,7 +70,7 @@
     [:inv-chunk [Chunk make]]
     [chunk:new-ent {                       -- new-ent sets self:scope so it has Entity methods
       slot: 0
-      contents: [[world:newChunk]]
+      contents: [[world:make-chunk]]
       cursor: [[inv-chunk:new-ent] 'cursor']
     }]
   )

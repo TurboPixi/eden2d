@@ -1,4 +1,3 @@
-import { evalBuiltins } from "./builtins";
 import { printStack, _print } from "./print";
 import { Scope } from "./scope";
 
