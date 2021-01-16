@@ -1,5 +1,5 @@
 import { _add, _eq, _forEach, _gt, _if, _log } from "./script/builtins";
-import { evaluate, _eval } from "./script/eval";
+import { _eval } from "./script/eval";
 import { parse } from "./script/kurt";
 import { _print } from "./script/print";
 import { scopeDef, scopeNew, _root } from "./script/scope";
@@ -51,7 +51,7 @@ function run(name: string, ...exprs: EExpr[]) {
 
   let last: EExpr;
   for (let expr of exprs) {
-    last = evaluate(scope, expr);
+    last = _eval(scope, expr);
   }
 
   totalFailures += _eval(scope, $('failures')) as number;

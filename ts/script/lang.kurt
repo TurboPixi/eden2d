@@ -13,13 +13,15 @@ Principles:
 ]-
 
 -[ TODO:
-- Bracket short circuiting; e.g., [@:foo bar] => [[@ :foo] bar]
-  Or [foo :bar] => [foo :bar]
-     foo:bar    => [foo :bar]
-     [foo:bar]  => [[foo:bar]]
+- [def/set: {foo:... bar:...}]
+- Resolve def/set ambiguity.
+- Something about accessor functions? [ent :value] vs [[ent :value]]
 - Mixed env + positional args
 - Inline { parent:... } eval'd definitions
 - Explore macros, quasi-quoting
+  Making this work will require dynamic dict keys
+- Explore instance/class function patterns (they're weirdly conflated in existing code)
+- Backquote strings?
 ]-
 
 -[ Primitive values ]-
@@ -46,16 +48,15 @@ Principles:
   [block expr*]           -- rewrite to [{p0:expr0 p1:expr1 ...} expr] -- bind expr* to params, in order
 
 -[ Definition ]-
-  [def [scope] sym expr]  -- define :sym in scope
-  [set [scope] sym expr]  -- set :sym in scope (if defined)
-  [? [scope] sym]         -- true if :sym is defined in scope
+  [def (scope):sym expr]  -- define :sym in scope
+  [set (scope):sym expr]  -- set :sym in scope (if defined)
+  [? (scope):sym]         -- true if :sym is defined in scope
 
 -[ Blocks ]-
   [x y | + x y]           -- block with two params
   [x | + x 1]             -- block with one param
   [| + 1 2]               -- block with no params
-  -- TODO: Explicit scope in block def.
-  [{scope} x y | + x y]   -- block with two params, with an explicit environment
+  [x y | {scope} | + x y] -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-
 [def :add [a b| [{x:a y:b} +]]]

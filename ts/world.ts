@@ -1,8 +1,15 @@
-import { EExpr, $, $$, chuck, EDict, nil, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } from "./script/script";
-import { Chunk, ChunkId, isChunk } from "./chunk";
-import { Entity, EntityType, isEntity } from "./entity";
-import { evaluate } from "./script/eval";
-import { IScope, locNum, locStr, Scope, scopeDef, scopeEval, scopeParent, scopeRef, _root } from "./script/scope";
+import { EExpr, $, $$, chuck, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } from "./script/script";
+import { Chunk, ChunkClass, ChunkId } from "./chunk";
+import { _eval } from "./script/eval";
+import { IScope, Scope, scopeDef, scopeParent, _root } from "./script/scope";
+import { Entity, EntityClass } from "./entity";
+import { parse } from "./script/kurt";
+import { Loc } from "./loc";
+import { Render } from "./render";
+
+import player_kurt from "./player.kurt";
+import tiles_kurt from "./tiles.kurt";
+import items_kurt from "./items.kurt";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World implements IScope {
@@ -11,13 +18,28 @@ export class World implements IScope {
   private _defs: EDict = {};
 
   constructor() {
-    scopeDef(this, $('parent'), _root);
+    _eval(this, ChunkClass);
+    _eval(this, EntityClass);
+    _eval(this, [_def, $$('Loc'), Loc.Dict]);
+    _eval(this, [_def, $$('Render'), Render.Dict]);
+    _eval(this, parse(player_kurt));
+    _eval(this, parse(tiles_kurt));
+    _eval(this, parse(items_kurt));
 
-    evaluate(this, [_def, $$('make-chunk'), [_blk,
-      function (scope: Scope): EExpr {
-        return worldFrom(scope).makeChunk();
-      }
-    ]]);
+    scopeDef(this, $('parent'), _root);
+    _eval(this, [_do,
+      [_def, $$('make-chunk'), [_blk,
+        function (scope: Scope): EExpr {
+          return worldFrom(scope).makeChunk();
+        }
+      ]],
+
+      [_def, $$('make-ent'), [_blk,
+        function (scope: Scope): EExpr {
+          return new Entity(scope);
+        }
+      ]],
+    ]);
   }
 
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
@@ -39,12 +61,12 @@ export class World implements IScope {
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
-        evaluate(this, [[[[chunk, $$('make-ent')], EntityType.TileBlue], $$('move-to')], x, y]);
+        _eval(this, [$('make-at'), [$('Floor'), $$('make')], chunk, x, y]);
       }
     }
 
     for (let x = 1; x < 9; x++) {
-      evaluate(this, [[[[chunk, $$('make-ent')], EntityType.WallBlue], $$('move-to')], x, 0]);
+      _eval(this, [$('make-at'), [$('Wall'), $$('make')], chunk, x, 0]);
     }
 
     return chunk;

@@ -1,22 +1,22 @@
 import { _print } from "./print";
 import { lookupSym, isScope, Scope, scopeDef, scopeFind, scopeNames, scopeNew, scopeParent, scopeRef, _root } from "./scope";
-import { chuck, EExpr, EList, ESym, isDict, isList, isQuote, isSym, NativeFunc, nil, $, _, symName, EFunc, __, isFunc, funcExpr, funcParams, funcScope, EDict, funcSelf, _self, $$ } from "./script";
+import { chuck, EExpr, EList, ESym, isDict, isList, isQuote, isSym, NativeFunc, nil, $, _, symName, EFunc, __, isFunc, funcExpr, funcParams, funcScope, EDict, funcSelf, _self, $$, isOpaque } from "./script";
 
 const ScriptError = 'script error';
 
 // Evaluate an expression in a given scope.
-export function evaluate(scope: Scope, expr: EExpr): EExpr {
-  try {
-    return _eval(scope, expr);
-  } catch (e) {
-    if ('msg' in e && 'stack' in e) {
-      console.log(e.msg);
-      console.log(e.stack);
-      throw ScriptError;
-    }
-    throw e;
-  }
-}
+// export function _eval(scope: Scope, expr: EExpr): EExpr {
+//   try {
+//     return _eval(scope, expr);
+//   } catch (e) {
+//     if ('msg' in e && 'stack' in e) {
+//       console.log(e.msg);
+//       console.log(e.stack);
+//       throw ScriptError;
+//     }
+//     throw e;
+//   }
+// }
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.
 export function _eval(scope: Scope, expr: EExpr): EExpr {
@@ -38,6 +38,12 @@ export function _eval(scope: Scope, expr: EExpr): EExpr {
     case 'object':
       if (expr === null) {
         return nil;
+      }
+
+      // Opaque expressions evaluate to themselves.
+      let opaque = isOpaque(expr);
+      if (opaque) {
+        return expr;
       }
 
       // :thing is a literal expression, not evaluated.
@@ -131,11 +137,12 @@ export function _apply(scope: Scope, list: EList): EExpr {
   let elem0 = _eval(scope, list[0]);
   let argScope = isScope(elem0);
   if (argScope && list.length > 1) {
-    // If the arg scope has no parent, link it to the current scope.
-    if (!scopeParent(argScope)) {
-      // TODO: Should we really be modifying this directly?
-      scopeDef(argScope, $('parent'), scope);
-    }
+    // TODO: Is this really necessary? Mutating scopes interacts poorly with natives.
+    // // If the arg scope has no parent, link it to the current scope.
+    // if (!scopeParent(argScope)) {
+    //   // TODO: Should we really be modifying this directly?
+    //   scopeDef(argScope, $('parent'), scope);
+    // }
 
     let expr = _eval(argScope, list[1]);
     let exprSym = isSym(expr);

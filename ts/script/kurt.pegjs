@@ -1,21 +1,26 @@
+{
+  function _sym(name) { return { _expr_sym: name }}
+  function _quote(expr) { return { _expr_quote: expr }}
+}
+
 start = _ expr:expr _ { return expr }
 
 expr
   = prim
   / pipe
+  / access
   / sym
   / quote
   / list
   / dict
 
 _ = (ws comment)* ws / ws
-
 ws = [ \t\r\n]*
 comment = single / multi
 multi =  "-[" (!"]-" .)* "]-" { return null }
 single = '--' ([^\n]*)[\n] { return null }
 
-pipe = "|" { return {_expr_sym: '|'} }
+pipe = "|" { return _sym('|') }
 
 prim
   = integer
@@ -37,10 +42,21 @@ boolean
 nil = "nil" { return undefined }
 
 sym
-  = chars:[^ \t\r\n\[\]{}:|]+ { return {_expr_sym: chars.join("")} }
+  = chars:[^ \t\r\n\[\]{}:|]+ { return _sym(chars.join("")) }
 
 quote
-  = ":" expr:expr { return {_expr_quote: expr} }
+  = ":" expr:expr { return _quote(expr) }
+
+access
+  = s:(sym ":")+ q:sym {
+  	let result = [s[0][0]];
+  	for (let i = 1; i < s.length; i++) {
+    	result.push(_quote(s[i][0]));
+    	result = [result];
+    }
+    result.push(_quote(q));
+    return result;
+  }
 
 list
   = "[" items:list_item* _ "]" { return items }
@@ -58,3 +74,4 @@ dict
 
 dict_entry
   = _ key:sym _ ":" _ val:expr { return [key, val] }
+
