@@ -1,43 +1,33 @@
 import { Container } from "pixi.js";
-import { Entity, EntityType } from "./entity";
+import { Entity, locEnt } from "./entity";
 import { evaluate } from "./script/eval";
-import { parse } from "./script/kurt";
 import { IScope, isScope, locNum, locStr, locSym, Scope, scopeEval, scopeParent, scopeRef } from "./script/scope";
-import { $, $$, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _self, _set } from "./script/script";
+import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _self, _set } from "./script/script";
 import { World } from "./world";
 
 export type ChunkId = number;
 
 export let ChunkClass = [_def, $$('Chunk'), {
-  'make-ent': [$('type'), _blk, (scope: Scope) => {
+  'add': [$('ent'), _blk, (scope: Scope) => {
     let chunk = locChunk(scope, _self);
-    let ent = new Entity(scope, locStr(scope, $('type')) as EntityType);
+    let ent = locEnt(scope, $('ent'));
     chunk.addEntity(ent);
     return ent;
   }],
 
-  'top-with': [$('x'), $('y'), $('var'), _blk, (scope: Scope) => {
+  'top-with': [$('x'), $('y'), $('comp'), _blk, (scope: Scope) => {
     let chunk = locChunk(scope, _self);
     let x = locNum(scope, $('x'));
     let y = locNum(scope, $('y'));
-    let v = locSym(scope, $('var'));
+    let comp = locSym(scope, $('comp'));
     let ents = chunk.entitiesAt(x, y);
     for (var ent of ents) {
-      if (ent.ref(v) !== undefined) {
+      if (ent.hasComp(comp)) {
         return ent;
       }
     }
-    return undefined;
+    return nil;
   }],
-
-  portal: parse(`[type fx fy to tx ty | do
-    [def :ent [[@:make-ent] type]]
-    [[ent:move-to] fx fy]
-    [set ent:portalchunk to]
-    [set ent:portalx tx]
-    [set ent:portaly ty]
-    ent
-  ]`),
 }];
 
 // TODO: Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
@@ -64,8 +54,11 @@ export class Chunk implements IScope {
     let ents: Entity[] = [];
     for (let id in this._entities) {
       let ent = this._entities[id];
-      if (ent.x == x && ent.y == y) {
-        ents.push(ent);
+      let loc = ent.loc();
+      if (loc) {
+        if (loc.x == x && loc.y == y) {
+          ents.push(ent);
+        }
       }
     }
     return ents;
@@ -82,7 +75,9 @@ export class Chunk implements IScope {
     let idx = this._nextId++;
     entity.setChunkAndId(this, idx);
     this._entities[idx] = entity;
-    this._container.addChild(entity.sprite);
+    if (entity.render()) {
+      this._container.addChild(entity.render().sprite);
+    }
   }
 
   removeEntity(entity: Entity) {
@@ -92,11 +87,25 @@ export class Chunk implements IScope {
 
     delete this._entities[entity.id];
     entity.setChunkAndId(null, 0);
-    this._container.removeChild(entity.sprite);
+    if (entity.render()) {
+      this._container.removeChild(entity.render().sprite);
+    }
   }
 
-  tick(x: number, y: number, z: number, w: number, h: number) {
+  render(x: number, y: number, z: number) {
     this._container.setTransform(-x * z, -y * z, z, z);
+
+    // TODO: Create a nicer way to build systems with component queries.
+    // TODO: Add some kind of component dirty tracking to avoid running through them all?
+    for (let id in this._entities) {
+      let ent = this._entities[id];
+      let loc = ent.loc();
+      let render = ent.render();
+      if (loc && render) {
+        render.sprite.position.x = loc.x * 16;
+        render.sprite.position.y = loc.y * 16;
+      }
+    }
   }
 }
 

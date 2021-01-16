@@ -5,8 +5,8 @@ export type Scope = IScope | EDict;
 
 export interface IScope {
   readonly names: string[];
-  ref(name: ESym): EExpr;
-  def(name: ESym, value: EExpr): void;
+  ref(sym: ESym): EExpr;
+  def(sym: ESym, value: EExpr): void;
 }
 
 class RootScope implements IScope {
@@ -18,6 +18,7 @@ class RootScope implements IScope {
 
 export const _root = new RootScope();
 
+// Scope utilities, that understand both Dict and IScope.
 export function isIScope(val: EExpr): IScope {
   return (typeof val == 'object') && ('def' in val) && ('ref' in val) &&
     ('names' in val) ? (val as IScope) : nil;
@@ -33,7 +34,6 @@ export function scopeFind(scope: Scope, sym: ESym): Scope {
   return nil;
 }
 
-// Scope utilities, that understand both Dict and IScope.
 export function isScope(val: EExpr): Scope {
   let dict = isDict(val);
   if (dict) {

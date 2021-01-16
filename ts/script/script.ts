@@ -2,15 +2,17 @@ import { printStack, _print } from "./print";
 import { Scope } from "./scope";
 
 export type EExpr = ENil | EPrim | ESym | EQuote | EList | Scope | NativeFunc;
-export type EPrim = number | boolean | string | ENil;
+export type EPrim = number | boolean | string | ENil | EOpaque;
 export type ENil = undefined;
-export type EList = EExpr[];
-export type EDict = { [arg: string]: EExpr };
+export type EOpaque = { _expr_opaque: any };
 export type ESym = { _expr_sym: string };
 export type EQuote = { _expr_quote: EExpr };
 export type EFunc = { _expr_func: [EList, EExpr], _expr_scope: Scope, _expr_name?: string, _expr_self?: EDict };
 export type NativeFunc = (scope: Scope) => EExpr;
+export type EList = EExpr[];
+export type EDict = { [arg: string]: EExpr };
 
+const OpaqueMarker = "_expr_opaque";
 const QuoteMarker = '_expr_quote';
 const SymMarker = '_expr_sym';
 const FuncMarker = '_expr_func';
@@ -155,6 +157,21 @@ export function isSym(val: EExpr): ESym {
 
 export function symName(sym: ESym): string {
   return sym._expr_sym;
+}
+
+export function opaque(val: any): EOpaque {
+  return { _expr_opaque: val };
+}
+
+export function isOpaque(val: EExpr): EOpaque {
+  if (val && (typeof val == "object") && OpaqueMarker in (val as any)) {
+    return val as EOpaque;
+  }
+  return nil;
+}
+
+export function opaqueVal(val: EOpaque): any {
+  return val._expr_opaque;
 }
 
 export function isFunc(val: EExpr): EFunc {

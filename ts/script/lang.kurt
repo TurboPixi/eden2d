@@ -17,9 +17,14 @@ Principles:
   Or [foo :bar] => [foo :bar]
      foo:bar    => [foo :bar]
      [foo:bar]  => [[foo:bar]]
+- [def/set: {foo:... bar:...}]
+- Resolve def/set ambiguity.
 - Mixed env + positional args
 - Inline { parent:... } eval'd definitions
 - Explore macros, quasi-quoting
+  Making this work will require dynamic dict keys
+- Explore instance/class function patterns (they're weirdly conflated in existing code)
+- Backquote strings?
 ]-
 
 -[ Primitive values ]-

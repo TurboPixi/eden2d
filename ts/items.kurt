@@ -1,0 +1,29 @@
+[do
+
+[def :Key {
+  make: [| do
+    [def :ent [make-ent]]
+    [[Loc:make] ent]
+    [[Render:make] ent "object-key"]
+    [[Portable:make] ent]
+    ent
+  ]
+}]
+
+[def :Crate {
+  make: [| do
+    [def :ent [make-ent]]
+    [[Loc:make] ent]
+    [[Render:make] ent "object-crate"]
+    [[Portable:make] ent]
+    ent
+  ]
+}]
+
+[def :Portable {
+  make: [ent | do
+    [def [ent:comps]:portable {}]
+  ]
+}]
+
+]

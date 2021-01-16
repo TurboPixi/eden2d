@@ -83,6 +83,9 @@ export class Resources {
 
   static tex(key: ImageKey): Texture {
     if (!(key in Resources._texCache)) {
+      if (!(key in _imageMap)) {
+        throw `no image found for key ${key}`
+      }
       let img = _imageMap[key];
       let btex = Resources.base(img.tex);
       let tex = new Texture(btex, new Rectangle(
@@ -96,6 +99,7 @@ export class Resources {
   }
 
   static sprite(key: ImageKey): Sprite {
-    return new Sprite(Resources.tex(key));
+    let tex = Resources.tex(key)
+    return new Sprite(tex);
   }
 }

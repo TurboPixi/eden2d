@@ -1,146 +1,96 @@
-import { Sprite } from "pixi.js";
 import { Chunk, locChunk } from "./chunk";
-import { ImageKey, Resources } from "./res";
-import { evaluate } from "./script/eval";
+import { Loc } from "./loc";
+import { Render } from "./render";
 import { parse } from "./script/kurt";
-import { IScope, isScope, locScope, locNum, Scope, scopeDef, scopeParent, scopeRef, _root, scopeEval } from "./script/scope";
-import { $, $$, chuck, EDict, EExpr, ESym, isDict, nil, symName, _, _blk, _def, _parent, _set } from "./script/script";
-
-export const VarX = "x";
-export const VarY = "y";
-export const VarChunk = "chunk";
-export const VarUI = "ui";                    // Bool marking entity as UI element.
-export const VarPortable = "portable";        // Bool marking an entity as moveable.
-export const VarContents = "contents";        // Chunk representing a container entity's contents.
-export const VarPortal = "portal";            // Bool marking an entity as a portal.
-export const VarPortalChunk = "portalchunk";  // A portal's target chunk.
-export const VarPortalX = "portalx";          // ... target coordinates.
-export const VarPortalY = "portaly";          // ...
-
-export enum EntityType {
-  Cursor = "cursor",
-  Player = "player",
-  TileBlue = "tile-blue",
-  WallBlue = "wall-blue",
-  StairDown = "stair-down",
-  StairUp = "stair-up",
-  ObjectKey = "object-key",
-  ObjectCrate = "object-crate",
-}
-
-export interface Prototype {
-  img: ImageKey;
-  vars: EDict;
-}
-
-const _protos: { [key: string]: Prototype } = {
-  "cursor": { img: ImageKey.TileBlueTile, vars: { ui: true } },
-  "player": { img: ImageKey.Player0, vars: {} },
-  "tile-blue": { img: ImageKey.TileBlueTile, vars: {} },
-  "wall-blue": { img: ImageKey.TileBlueWall, vars: {} },
-  "stair-down": { img: ImageKey.TileStairDown, vars: { portal: true } },
-  "stair-up": { img: ImageKey.TileStairUp, vars: { portal: true } },
-  "object-key": { img: ImageKey.ObjectKey, vars: { portable: true } },
-  "object-crate": { img: ImageKey.ObjectCrate, vars: { portable: true } },
-};
+import { IScope, isScope, locNum, Scope, scopeParent, scopeRef, _root, scopeEval, lookupSym } from "./script/scope";
+import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _set } from "./script/script";
 
 export let EntityClass = [_def, $$('Entity'), {
-  'move-to': [$('x'), $('y'), _blk, (scope: Scope) => {
-    let self = locScope(scope, $('@'));
-    let x = locNum(scope, $('x'));
-    let y = locNum(scope, $('y'));
-    isEntity(self).move(x, y);
+  'jump': [$('chunk'), _blk, (scope: Scope) => {
+    let self = locEnt(scope, $('@'));
+    let to = locChunk(scope, $('chunk'));
+    to.addEntity(self);
     return self;
   }],
 
-  jump: [$('chunk'), _blk,
-    function (scope: Scope): EExpr {
-      let self = locEnt(scope, $('@'));
-      let to = locChunk(scope, $('chunk'));
-      to.addEntity(self);
-      return self;
-    }
-  ],
+  'move-to': parse(`[x y | do
+    [def :loc [[@:comps]:loc]]
+    [set loc:x x]
+    [set loc:y y]
+  ]`),
 
-  'top-with': parse(`[var |
-    [[@:chunk]:top-with] [@:x] [@:y] var
+  'top-with': parse(`[comp | do
+    [def :loc [[@:comps]:loc]]
+    [[[@:chunk]:top-with] [loc:x] [loc:y] comp]
   ]`),
 }];
 
 export class Entity implements IScope {
-  private _proto: Prototype;
   private _chunk: Chunk;
   private _id: number;
-  private _x = 0;
-  private _y = 0;
-  private _defs: { [name: string]: EExpr };
-  private _spr: Sprite;
+  private _comps: EDict = {};
+  private _parent: EExpr;
 
-  constructor(scope: Scope, type: EntityType) {
-    if (!(type in _protos)) {
-      throw "invalid entity type";
-    }
-    this._proto = _protos[type];
-    this.def($('comps'), {});
-    evaluate(scope, [_set, this, _(_parent), $('Entity')]);
+  constructor(scope: Scope) {
+    this._parent = lookupSym(scope, $('Entity'));
   }
 
   get id(): number { return this._id }
   get chunk(): Chunk { return this._chunk }
-  get x(): number { return this._x }
-  get y(): number { return this._y }
-
-  get sprite(): Sprite {
-    if (!this._spr) {
-      this._spr = Resources.sprite(this._proto.img)
-    }
-    return this._spr;
-  }
-
-  get names(): string[] {
-    let keys = this._defs ? Object.keys(this._defs) : [];
-    return [...keys, VarX, VarY, VarChunk];
-  }
+  get names(): string[] { return ['comps', 'parent']; }
 
   def(sym: ESym, value: EExpr): void {
-    switch (symName(sym)) {
-      case VarX:
-      case VarY:
-      case VarChunk:
-        // Read-only.
-        throw `read-only ${symName(sym)}`;
-    }
-
-    if (!this._defs) {
-      this._defs = {};
-    }
-    scopeDef(this._defs, sym, value);
+    // TODO: Pass scope to def/ref?
+    chuck(_root, `can't set ${symName(sym)} on Entity`);
   }
 
   ref(sym: ESym): EExpr {
     switch (symName(sym)) {
-      case VarX: return this._x;
-      case VarY: return this._y;
-      case VarChunk: return this._chunk;
+      case 'chunk': return this._chunk;
+      case 'id': return this._id;
+      case 'comps': return this._comps;
+      case 'parent': return this._parent;
     }
-
-    let name = symName(sym);
-    if (this._defs && name in this._defs) {
-      return this._defs[name];
-    }
-    return this._proto.vars[name];
+    return nil;
   }
+
+  setComp(key: ESym, comp: EExpr) { this._comps[symName(key)] = comp; }
+  hasComp(key: ESym): boolean { return symName(key) in this._comps; }
+  comp(key: string): EExpr { return this._comps[key]; }
+
+  // Accessors for common component types.
+  loc(): Loc { return this.comp('loc') as Loc }
+  render(): Render { return this.comp('render') as Render }
 
   setChunkAndId(chunk: Chunk, id: number) {
     this._chunk = chunk;
     this._id = id;
   }
+}
 
-  move(x: number, y: number) {
-    this._x = x;
-    this._y = y;
-    this._spr.position.x = x * 16;
-    this._spr.position.y = y * 16;
+// Convenience scope implementation for simple components.
+// TODO: add type checking and read-only semantics?
+export class NativeComp implements IScope {
+
+  get names(): string[] {
+    return Object.getOwnPropertyNames(this);
+  }
+
+  ref(sym: ESym): EExpr {
+    let name = symName(sym);
+    if (this.hasOwnProperty(name)) {
+      return (this as any)[name];
+    }
+    return nil;
+  }
+
+  def(sym: ESym, value: EExpr): void {
+    let name = symName(sym);
+    if (this.hasOwnProperty(name)) {
+      (this as any)[name] = value;
+      return;
+    }
+    chuck(_root, `unknown property ${name}`);
   }
 }
 

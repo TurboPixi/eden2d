@@ -1,20 +1,20 @@
 import { Application } from "pixi.js";
-import { Chunk, ChunkClass, isChunk } from "./chunk";
-import { Entity, EntityClass, EntityType, isEntity, VarChunk, VarPortal, VarX, VarY } from "./entity";
+import { Chunk } from "./chunk";
+import { Entity, isEntity } from "./entity";
 import { Key } from "./key";
 import { Resources } from "./res";
 import { evaluate, _eval } from "./script/eval";
 import { _print } from "./script/print";
-import { locNum, _root } from "./script/scope";
-import { $, $$, _blk, _def } from "./script/script";
+import { _root } from "./script/scope";
+import { $, $$, _blk, _def, _do } from "./script/script";
 import { World } from "./world";
-import { parse } from "./script/kurt";
 import { builtins } from "./script/builtins";
-import player_kurt from "./player.kurt";
+import { UI } from "./ui";
 
 class Eden {
   private _app: Application;
   private _world: World;
+  private _ui: UI;
   private _chunk: Chunk;
   private _player: Entity;
 
@@ -28,19 +28,13 @@ class Eden {
     Resources.load(() => this.ready());
   }
 
-  private initScript() {
-    evaluate(_root, builtins);
-    evaluate(this._world, ChunkClass);
-    evaluate(this._world, EntityClass);
-    evaluate(this._world, parse(player_kurt));
-  }
-
   private ready() {
+    evaluate(_root, builtins);
     this._world = new World();
-    this.initScript();
+    this._ui = new UI(this._world);
 
     let chunk = this.createChunk();
-    this._player = isEntity(evaluate(this._world, [[$('Player'), $$('make')], chunk]));
+    this._player = isEntity(evaluate(this._world, [$('player-make'), chunk]));
     this.showChunk(chunk);
 
     let invChunk = evaluate(this._world, [[$('Player'), $$('contents')], this._player]) as Chunk;
@@ -54,10 +48,8 @@ class Eden {
   private createChunk(): Chunk {
     let chunk0 = this._world.toyChunk();
     let chunk1 = this._world.toyChunk();
-
-    evaluate(this._world, [[chunk0, $$('portal')], EntityType.StairDown, 1, 5, chunk1, 0, 5]);
-    evaluate(this._world, [[chunk1, $$('portal')], EntityType.StairUp, 1, 5, chunk0, 2, 5]);
-    evaluate(this._world, [_def, $$('foo'), [_blk, [chunk1, $$('make-ent')], EntityType.ObjectCrate]]);
+    evaluate(this._world, [[$('Stairs'), $$('make')], chunk0, 1, 5, chunk1, 0, 5, false]);
+    evaluate(this._world, [[$('Stairs'), $$('make')], chunk1, 1, 5, chunk0, 2, 5, true]);
     return chunk0;
   }
 
@@ -81,7 +73,12 @@ class Eden {
       case Key.G: evaluate(this._world, [[$('Player'), $$('follow')], this._player]); break;
 
       // Create.
-      case Key.C: evaluate(this._world, [[$('Player'), $$('create')], this._player, EntityType.ObjectKey]); break;
+      case Key.C:
+        evaluate(this._world, [[[$('Player'), $$('add-inv')], this._player, [[$('Key'), $$('make')]]]]);
+        break;
+      case Key.V:
+        evaluate(this._world, [[[$('Player'), $$('add-inv')], this._player, [[$('Crate'), $$('make')]]]]);
+        break;
 
       // Take, put.
       case Key.T: evaluate(this._world, [[$('Player'), $$('take')], this._player]); break;
@@ -94,10 +91,6 @@ class Eden {
         break;
       case Key._0:
         this.select(9);
-        break;
-
-      case Key.Q:
-        evaluate(this._world, [$('foo')]);
         break;
     }
   }
@@ -112,7 +105,7 @@ class Eden {
 
   private tick() {
     // Follow the player across chunks.
-    let chunk = isChunk(_eval(this._player, $(VarChunk)));
+    let chunk = this._player.chunk;
     if (chunk != this._chunk) {
       this.showChunk(chunk);
     }
@@ -121,15 +114,14 @@ class Eden {
     let h = this._app.view.height;
 
     let inv = evaluate(this._world, [[$('Player'), $$('contents')], this._player]) as Chunk;
-    inv.container.setTransform(0, h - 64, 4, 4);
+    inv.render(0, 0, 4);
 
-    let px = locNum(this._player, $(VarX));
-    let py = locNum(this._player, $(VarY));
+    let px = this._player.loc().x;
+    let py = this._player.loc().y;
     let x = (px - 4) * 16;
     let y = (py - 4) * 16;
-    this._chunk.tick(x, y, 4, w, h);
+    this._chunk.render(x, y, 4);
   }
 }
 
 new Eden();
-// runTests();

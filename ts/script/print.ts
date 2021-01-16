@@ -1,5 +1,5 @@
 import { Scope, scopeCaller, scopeNames, scopeRef } from "./scope";
-import { $, isList, EExpr, isSym, isDict, isQuote, isFunc, funcParams, funcExpr, nil, funcName } from "./script";
+import { $, isList, EExpr, isSym, isDict, isQuote, isFunc, funcParams, funcExpr, nil, funcName, isOpaque } from "./script";
 
 (window as any)['_print'] = _print;
 
@@ -37,8 +37,11 @@ export function _print(expr: EExpr): string {
     case "object":
       let quote = isQuote(expr);
       let func = isFunc(expr);
+      let opaque = isOpaque(expr);
       if (quote) {
         return ":" + _print(quote._expr_quote);
+      } else if (opaque) {
+        return "<opaque>";
       } else if (func) {
         let params = funcParams(func);
         let name = funcName(func);
