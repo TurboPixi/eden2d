@@ -14,13 +14,13 @@ export let EntityClass = [_def, $$('Entity'), {
   }],
 
   'move-to': parse(`[x y | do
-    [def :loc [[@:comps]:loc]]
+    [def :loc [@:loc]]
     [set loc:x x]
     [set loc:y y]
   ]`),
 
   'top-with': parse(`[comp | do
-    [def :loc [[@:comps]:loc]]
+    [def :loc [@:loc]]
     [[[@:chunk]:top-with] [loc:x] [loc:y] comp]
   ]`),
 }];
@@ -37,30 +37,35 @@ export class Entity implements IScope {
 
   get id(): number { return this._id }
   get chunk(): Chunk { return this._chunk }
-  get names(): string[] { return ['comps', 'parent']; }
+  get names(): string[] { return ['id', 'chunk', 'parent']; }
 
   def(sym: ESym, value: EExpr): void {
-    // TODO: Pass scope to def/ref?
-    chuck(_root, `can't set ${symName(sym)} on Entity`);
+    let name = symName(sym);
+    switch (name) {
+      case 'chunk':
+      case 'id':
+      case 'parent':
+        // TODO: Pass scope to def/ref?
+        chuck(_root, `can't set ${symName(sym)} on Entity`);
+    }
+    this._comps[name] = value;
   }
 
   ref(sym: ESym): EExpr {
-    switch (symName(sym)) {
+    let name = symName(sym);
+    switch (name) {
       case 'chunk': return this._chunk;
       case 'id': return this._id;
-      case 'comps': return this._comps;
       case 'parent': return this._parent;
     }
-    return nil;
+    return this._comps[name];
   }
 
-  setComp(key: ESym, comp: EExpr) { this._comps[symName(key)] = comp; }
   hasComp(key: ESym): boolean { return symName(key) in this._comps; }
-  comp(key: string): EExpr { return this._comps[key]; }
 
   // Accessors for common component types.
-  loc(): Loc { return this.comp('loc') as Loc }
-  render(): Render { return this.comp('render') as Render }
+  loc(): Loc { return this.ref($('loc')) as Loc }
+  render(): Render { return this.ref($('render')) as Render }
 
   setChunkAndId(chunk: Chunk, id: number) {
     this._chunk = chunk;

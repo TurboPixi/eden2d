@@ -17,24 +17,24 @@
       contents: inv-chunk
       cursor-ent: [[[UI:Cursor]:make] inv-chunk]
     }]
-    [set [ent:comps]:player player]
+    [set ent:player player]
     ent
   ]
 
   contents: [ent | do
-    [def :player [[ent:comps]:player]]
+    [def :player [ent:player]]
     [if [? :player] [|player:contents]]
   ]
 
   move: [ent dx dy | do
-    [def :loc [[ent:comps]:loc]]
+    [def :loc [ent:loc]]
     [[ent:move-to] [+ [loc:x] dx] [+ [loc:y] dy]]
   ]
 
   follow: [ent | do
     [def :portal-ent [[ent:top-with] :portal]]
     [if [?:portal-ent] [| do
-      [def :portal [[portal-ent:comps]:portal]]
+      [def :portal [portal-ent:portal]]
       [[ent:jump] [portal:target-chunk]]
       [[ent:move-to] [portal:target-x] [portal:target-y]]
     ]]
@@ -43,29 +43,29 @@
   take: [ent | do
     [def :target [[ent:top-with] :portable]]
     [if [?:target] [| do
-      [def :player [[ent:comps]:player]]
+      [def :player [ent:player]]
       [[[[target:jump] [player:contents]]:move-to] [player:slot] 0]
     ]]
   ]
 
   put: [ent | do
-    [def :player [[ent:comps]:player]]
+    [def :player [ent:player]]
     [def :target [[[player:contents]:top-with] [player:slot] 0 :portable]]
     [if [?:target] [| do
-      [def :loc [[ent:comps]:loc]]
+      [def :loc [ent:loc]]
       [[[[target:jump] [ent:chunk]]:move-to] [loc:x] [loc:y]]
     ]]
   ]
 
   add-inv: [player-ent item | do
-    [def :player [[player-ent:comps]:player]]
+    [def :player [player-ent:player]]
     [[[player:contents]:add] item]
     [[item:move-to] [player:slot] 0]
   ]
 
   -- TODO: Validate slot range
   select: [ent slot | do
-    [def :player [[ent:comps]:player]]
+    [def :player [ent:player]]
     [set player:slot slot]
     [[[player:cursor-ent]:move-to] slot 0]
   ]

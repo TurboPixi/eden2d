@@ -22,7 +22,7 @@ export let ChunkClass = [_def, $$('Chunk'), {
     let comp = locSym(scope, $('comp'));
     let ents = chunk.entitiesAt(x, y);
     for (var ent of ents) {
-      if (ent.hasComp(comp)) {
+      if (ent.ref(comp) !== nil) {
         return ent;
       }
     }

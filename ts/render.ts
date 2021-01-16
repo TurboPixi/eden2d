@@ -22,6 +22,6 @@ export class Render extends NativeComp {
 
     this['image-key'] = imageKey as ImageKey;
     this.sprite = Resources.sprite(this['image-key']);
-    ent.setComp($('render'), this);
+    ent.def($('render'), this);
   }
 }

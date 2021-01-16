@@ -14,6 +14,6 @@ export class Loc extends NativeComp {
 
   constructor(ent: Entity) {
     super();
-    ent.setComp($('loc'), this);
+    ent.def($('loc'), this);
   }
 }

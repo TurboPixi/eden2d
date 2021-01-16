@@ -39,6 +39,7 @@
   ]
 }]
 
+-- Entities with the Portal component transport an entity to another location/chunk.
 [def :Portal {
   make: [ent target-chunk target-x target-y | do
     [def :portal {
@@ -46,7 +47,7 @@
       target-x: target-x
       target-y: target-y
     }]
-    [set [ent:comps]:portal portal]
+    [set ent:portal portal]
   ]
 }]
 

@@ -20,9 +20,10 @@
   ]
 }]
 
+-- Entities with the Portable component can be moved.
 [def :Portable {
   make: [ent | do
-    [def [ent:comps]:portable {}]
+    [def ent:portable true]
   ]
 }]
 
