@@ -1,4 +1,4 @@
-import { printStack, _print } from "./print";
+import { _printStack, _print } from "./print";
 import { Scope } from "./scope";
 
 export type EExpr = ENil | EPrim | ESym | EQuote | EList | Scope | NativeFunc;
@@ -27,6 +27,7 @@ export const _exists = $('?');
 // Special symbols.
 export const _self = $('@');
 export const _caller = $('caller');
+export const _func = $('func');
 export const _scope = $('scope');
 export const _parent = $('parent');
 export const nil: ENil = undefined;
@@ -116,7 +117,7 @@ export function chuck(scope: Scope, msg: string) {
   debugger;
   throw {
     msg: msg,
-    stack: printStack(scope),
+    stack: _printStack(scope),
   };
 }
 

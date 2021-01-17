@@ -33,7 +33,7 @@ let test = $('test');
 function run(name: string, ...exprs: EExpr[]) {
   console.log(`\n--[ ${name} ]----------------------`);
 
-  let scope = scopeNew(_root, nil);
+  let scope = scopeNew(_root, nil, nil);
   scopeDef(scope, $('failures'), 0);
   _eval(scope, parse(`
     [def :test [expect expr|

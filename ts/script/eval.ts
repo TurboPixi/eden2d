@@ -118,7 +118,7 @@ function evalDict(scope: Scope, dict: EDict): EDict {
     result[key] = dict[key];
 
     // TODO: Gross. We should clean up all these weird special cases.
-    if (key != 'parent' && key != 'caller') {
+    if (key != 'parent' && key != 'caller' && key != 'func') {
       result[key] = _eval(scope, result[key]);
     }
   }
@@ -172,7 +172,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
 
       // Create a new frame and eval the expression within it.
       // TODO: Do we really need to copy env over to the frame? Caller seems to be the only reason.
-      let frame = scopeNew(env, scope);
+      let frame = scopeNew(env, scope, func);
       for (let name of scopeNames(argScope)) {
         let sym = $(name);
         scopeDef(frame, sym, scopeRef(argScope, sym));
@@ -194,7 +194,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
   let func = isFunc(elem0);
   if (func) {
     let params = funcParams(func);
-    let frame = scopeNew(scope, scope);
+    let frame = scopeNew(scope, scope, func);
     let args = list.slice(1)
     for (let i = 0; i < params.length; i++) {
       // Don't eval args; they'll get evaluated after the scope transform.

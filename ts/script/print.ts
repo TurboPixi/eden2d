@@ -1,28 +1,29 @@
-import { Scope, scopeCaller, scopeNames, scopeRef } from "./scope";
+import { Scope, scopeCaller, scopeFunc, scopeNames, scopeRef, _specials } from "./scope";
 import { $, isList, EExpr, isSym, isDict, isQuote, isFunc, funcParams, funcExpr, nil, funcName, isOpaque } from "./script";
 
 (window as any)['_print'] = _print;
+(window as any)['_printStack'] = _printStack;
 
-const _specials = {
-  "parent": true,
-  "caller": true,
-}
-
-export function printStack(scope: Scope): string {
+export function _printStack(scope: Scope): string {
   let msg = '';
   while (scope) {
-    // TODO: Something with scope names
-    // msg += `[${scope.name}] - `
-    for (let name of scopeNames(scope)) {
-      msg += `${name}: ${_print(scopeRef(scope, $(name)))} `
+    let fn = scopeFunc(scope);
+    if (fn && fn._expr_name) {
+      msg += `:${fn._expr_name} [`;
+    } else {
+      msg += ":(anon) [";
     }
-    msg += '\n';
+
+    for (let name of scopeNames(scope)) {
+      msg += `${name}: ${_print(scopeRef(scope, $(name)), true)} `
+    }
+    msg += '| ... ]\n';
     scope = scopeCaller(scope);
   }
   return msg;
 }
 
-export function _print(expr: EExpr): string {
+export function _print(expr: EExpr, short = false): string {
   switch (typeof expr) {
     case "number":
     case "boolean":
@@ -32,7 +33,7 @@ export function _print(expr: EExpr): string {
     case "undefined":
       return "nil";
     case "function":
-      return `[native ${expr.name}]`; // TODO: Name isn't actually there.
+      return `<native>`; // TODO: Name isn't actually there.
 
     case "object":
       let quote = isQuote(expr);
@@ -45,12 +46,16 @@ export function _print(expr: EExpr): string {
       } else if (func) {
         let params = funcParams(func);
         let name = funcName(func);
-        return `[f${name ? "-[" + name + "]-" : ""}${_print(funcParams(func))} ${_print(funcExpr(func))}]`
+        return `${name ? "-[" + name + "]-" : ""} [${_print(params)} | ${short ? "..." : _print(funcExpr(func))}]`
       } else if (isList(expr)) {
-        return `[${isList(expr).map((val) => _print(val)).join(" ")}]`;
+        return short ? "[...]" : `[${isList(expr).map((val) => _print(val)).join(" ")}]`;
       } else if (isSym(expr)) {
         return `${isSym(expr)._expr_sym}`;
       } else if (isDict(expr)) {
+        if (short) {
+          return "{...}";
+        }
+
         let obj = expr as { [key: string]: EExpr };
         let entries: string[] = [];
         for (let key in obj) {
