@@ -71,7 +71,7 @@ function testAccessors() {
   run(
     "basic accessors",
     parse(`[do
-      [def scope:foo 42]
+      [def scope :foo 42]
       [test 42 [scope :foo]]
       [set :foo 54]
       [test 54 [:foo]]
@@ -83,12 +83,12 @@ function testAccessors() {
     "def, set, exists",
     parse(`[do
       [def :bag {foo:42 bar:"baz"}]
-      [test true [? bag:foo]]
-      [test 42 [bag:foo]]
-      [test 54 [set bag:foo 54]]
-      [test 54 [bag:foo]]
-      [test true [? bag:bar]]
-      [test false [? bag:baz]]
+      [test true [? bag :foo]]
+      [test 42 bag:foo]
+      [test 54 [set bag :foo 54]]
+      [test 54 bag:foo]
+      [test true [? bag :bar]]
+      [test false [? bag :baz]]
     ]`)
   )
 
@@ -162,24 +162,22 @@ function testFuncs() {
     ]`)
   );
 
-  // Explicit scope in function definition, calls, and expr eval.
-  // TODO: Consider making _root parent implicit?
-  //   We have no way to reference the root scope in parsing, but without it we're missing builtins.
-  //
-  // run(
-  //   "explicitly scoped funcs",
-  //   [_def, $$('env'), { parent: _root, x: 22 }],
-  //   [_def, $$('fn'), [_f, $('env'), [$('y')],
-  //     [_add, $('x'), $('y')]
-  //   ]],
-  //   [test, 42, [$('fn'), 20]],
+  run(
+    "explicitly scoped funcs",
+    parse(`[do
+      -- TODO: Explicit func scope in declaration NYI.
+      -- [def :env {x:22}]
+      -- [def :fn [y | env | + x y]]
+      -- [test 42 [fn 20]]
 
-  //   [_def, $$('env2'), { parent: _root, x: 23 }],
-  //   [test, 43, [{ y: 20, env: $('env2') }, $('fn')]],
+      [def :env2 {x:23}]
+      [def :fn2 [y | + x y]]
+      [test 43 [{y:20 env:env2} fn2]]
 
-  //   [_def, $$('env2'), { parent: _root, x: 24 }],
-  //   [test, 44, [{ y: 20, env: $('env2') }, [_f, [], [_add, $('x'), $('y')]]]],
-  // );
+      [def :env2 {x:24}]
+      [test 44 [{y:20 env:env2} [| + x y]]]
+    ]`)
+  );
 }
 
 function testNestedQuoting() {
@@ -236,7 +234,7 @@ function testScopesAndFuncs() {
     "Reference to outer scope",
     parse(`[do
       [def :val 42]
-      [def scope:fn [x|
+      [def scope :fn [x|
         [{x:x y:val} +]
       ]]
       [test 96 [{x:54} fn]]
@@ -264,7 +262,7 @@ function testOptDefParams() {
             [| val]
             [| 1]]
           ]
-          [{x:a y:amt} +]
+          [+ a amt]
         ]
       ]
       [test 43 [bump 42]]
@@ -281,8 +279,10 @@ function testIf() {
     parse(`[do
       [test 42 [if true 42]]
       [test 42 [[| if true 42]]]
-      [test 42 [{foo:"bar"} [if [= foo "bar"] 42]]]
-      [test 43 [{foo:"baz"} [if [= foo "bar"] 42 43]]]
+      [def :foo "bar"]
+      [test 42  [if [= foo "bar"] 42]]
+      [set :foo "baz"]
+      [test 43 [if [= foo "bar"] 42 43]]
     ]`)
   );
 }

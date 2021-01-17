@@ -10,6 +10,7 @@ import { $, $$, _blk, _def, _do } from "./script/script";
 import { World } from "./world";
 import { builtins } from "./script/builtins";
 import { UI } from "./ui";
+import { runTests } from "./test";
 
 class Eden {
   private _app: Application;
@@ -29,7 +30,6 @@ class Eden {
   }
 
   private ready() {
-    _eval(_root, builtins);
     this._world = new World();
     this._ui = new UI(this._world);
 
@@ -124,4 +124,6 @@ class Eden {
   }
 }
 
+_eval(_root, builtins);
 new Eden();
+// runTests();

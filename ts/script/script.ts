@@ -1,5 +1,5 @@
 import { _printStack, _print } from "./print";
-import { Scope } from "./scope";
+import { Scope, _specials } from "./scope";
 
 export type EExpr = ENil | EPrim | ESym | EQuote | EList | Scope | NativeFunc;
 export type EPrim = number | boolean | string | ENil | EOpaque;
@@ -86,8 +86,10 @@ export function eq(a: EExpr, b: EExpr): boolean {
         let bKeys = Object.keys(bDict);
         if (aKeys.length == bKeys.length) {
           for (let key of aKeys) {
-            if (!eq(aDict[key], bDict[key])) {
-              return false;
+            if (!(key in _specials)) {
+              if (!eq(aDict[key], bDict[key])) {
+                return false;
+              }
             }
           }
           return true;
