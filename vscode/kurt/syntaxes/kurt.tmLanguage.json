@@ -1,0 +1,84 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Kurt",
+  "patterns": [
+    { "include": "#comment-line" },
+    { "include": "#comment-block" },
+    { "include": "#list" },
+    { "include": "#strings" },
+    { "include": "#constants" },
+    { "include": "#dict-key" }
+  ],
+  "repository": {
+    "list": {
+      "name": "keyword",
+      "begin": "\\[",
+      "end": "\\]",
+      "patterns": [
+        {
+          "name": "keyword.control",
+          "match": "(if|do|def|set|@|\\^|\\?)"
+        },
+        {
+          "name": "support.type",
+          "match": "[^\\t\\r\\n\\[\\]{}:\\|]*\\|"
+        },
+        {
+          "name": "variable",
+          "match": "[^ \\t\\r\\n\\[\\]{}:\\|]+"
+        },
+        {
+          "name": "storage",
+          "match": ":[^ \\t\\r\\n\\[\\]{}:\\|]+"
+        },
+        {
+          "name": "entity.name.function",
+          "match": ":[^ \\t\\r\\n\\[\\]{}:\\|]+"
+        }
+      ]
+    },
+    "comment-line": {
+      "name": "comment.line.kurt",
+      "begin": "--",
+      "end": "$"
+    },
+    "comment-block": {
+      "name": "comment.block.kurt",
+      "begin": "-\\[",
+      "end": "\\]-"
+    },
+    "dict-key": {
+      "patterns": [
+        {
+          "name": "entity.name.function",
+          "match": "[^ \\t\\r\\n\\[\\]{}:\\|]+:"
+        }
+      ]
+    },
+    "constants": {
+      "name": "constant",
+      "patterns": [
+        {
+          "name": "constant.numeric",
+          "match": "[\\d]+\\.?[\\d]*"
+        },
+        {
+          "name": "constant.language",
+          "match": "(true|false)"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.kurt",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.kurt",
+          "match": "\\\\."
+        }
+      ]
+    }
+  },
+  "scopeName": "source.kurt"
+}
