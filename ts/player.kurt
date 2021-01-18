@@ -50,7 +50,7 @@
 
   put: [ent | do
     [def :player ent:player]
-    [def :target [player:contents:top-with player:slot 0 :portable]]
+    [def :target [Player:inv-target ent :portable]]
     [if ?:target [| do
       [def :loc ent:loc]
       [[[target:jump ent:chunk]:move-to] loc:x loc:y]
@@ -61,6 +61,25 @@
     [def :player player-ent:player]
     [player:contents:add item]
     [item:move-to player:slot 0]
+  ]
+
+  use-item: [ent | do
+    [def :target [Player:inv-target ent :usable]]
+    [if ?:target [|
+      [target:usable ent]
+    ]]
+  ]
+
+  open-item: [ent | do
+    [def :target [Player:inv-target ent :container]]
+    [if ?:target [|
+      target:container:chunk
+    ]]
+  ]
+
+  inv-target: [ent comp | do
+    [def :player ent:player]
+    [player:contents:top-with player:slot 0 comp]
   ]
 
   -- TODO: Validate slot range

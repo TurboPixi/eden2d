@@ -115,6 +115,12 @@ function evalDict(scope: Scope, dict: EDict): EDict {
   return result;
 }
 
+function assertNoExtra(scope: Scope, list: EList, expected: number) {
+  if (list.length > expected) {
+    chuck(scope, `expected ${expected} list items; got ${list.length}\n${_print(list)}`);
+  }
+}
+
 export function _apply(scope: Scope, list: EList): EExpr {
   // Special forms.
   let [result, found] = applySpecial(scope, list);
@@ -127,6 +133,8 @@ export function _apply(scope: Scope, list: EList): EExpr {
   let elem0 = _eval(scope, list[0]);
   let argScope = isScope(elem0);
   if (argScope && list.length > 1) {
+    assertNoExtra(scope, list, 2);
+
     let expr = _eval(argScope, list[1]);
     let exprSym = isSym(expr);
     if (exprSym) {
@@ -179,6 +187,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
     let params = funcParams(func);
     let frame = scopeNew(scope, scope, func);
     let args = list.slice(1)
+    assertNoExtra(scope, list, params.length + 1);
     for (let i = 0; i < params.length; i++) {
       // Don't eval args; they'll get evaluated after the scope transform.
       let sym = isSym(params[i]);
@@ -191,6 +200,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
   }
 
   // [expr]
+  assertNoExtra(scope, list, 1);
   return _eval(scope, elem0);
 }
 

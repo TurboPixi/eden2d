@@ -26,7 +26,8 @@ export enum ImageKey {
 
   Player0 = "player-0",
   ObjectKey = "object-key",
-  ObjectCrate = "object-crate"
+  ObjectCrate = "object-crate",
+  ObjectSword = "object-sword"
 }
 
 const _imageMap: { [key: string]: Image } = {
@@ -42,6 +43,7 @@ const _imageMap: { [key: string]: Image } = {
 
   "player-0": img(TexKey.Player, 16, 0, 16, 24, 0, 1-(12/24)),
   "object-key": img(TexKey.Items, 0, 0),
+  "object-sword": img(TexKey.Items, 0, 2 * 16),
   "object-crate": img(TexKey.Tiles, 7 * 16, 9 * 16),
 };
 
