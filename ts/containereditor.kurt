@@ -8,6 +8,8 @@
     ce
   ]
 
+  close: [| @:chunk:remove @:cursor]
+
   move-cursor: [dx dy| do
     [def :loc @:cursor:loc]
     [@:cursor:move dx dy]

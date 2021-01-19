@@ -39,7 +39,7 @@ export class ContainerPanel implements Panel {
 
   keyDown(evt: KeyboardEvent): void {
     switch (evt.keyCode) {
-      case Key.ESCAPE: this._owner.popPanel(); break;
+      case Key.ESCAPE: this.close(); break;
       case Key.W: this.moveCursor(0, -1); break;
       case Key.S: this.moveCursor(0, 1); break;
       case Key.A: this.moveCursor(-1, 0); break;
@@ -48,6 +48,11 @@ export class ContainerPanel implements Panel {
         _eval(this._owner.world, [[this._editor, $$('toggle')]]);
         break;
     }
+  }
+
+  private close() {
+    this._owner.popPanel();
+    _eval(this._owner.world, [[this._editor, $$('close')]]);
   }
 
   private moveCursor(dx: number, dy: number) {
