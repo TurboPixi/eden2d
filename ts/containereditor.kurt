@@ -1,0 +1,25 @@
+[def :ContainerEditor {
+  make: [chunk | do
+    [def :ce {
+      chunk: chunk
+      cursor: [UI:Cursor:make chunk]
+    }]
+    [def ce :parent ContainerEditor]
+    ce
+  ]
+
+  move-cursor: [dx dy| do
+    [def :loc @:cursor:loc]
+    [@:cursor:move dx dy]
+  ]
+
+  toggle: [| do
+    [def :key [@:cursor:top-with :portable]]
+    [if ?:key
+      [| @:chunk:remove key]
+      [| [[@:chunk:add [Key:make]] :move]
+           @:cursor:loc:x @:cursor:loc:y
+      ]
+    ]
+  ]
+}]

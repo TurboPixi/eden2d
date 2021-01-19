@@ -13,6 +13,11 @@ export let EntityClass = [_def, $$('Entity'), {
     return self;
   }],
 
+  'move': parse(`[dx dy | do
+    [def :loc @:loc]
+    [@:move-to [+ loc:x dx] [+ loc:y dy]]
+  ]`),
+
   'move-to': parse(`[x y | do
     [def :loc @:loc]
     [set loc :x x]

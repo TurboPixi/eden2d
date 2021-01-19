@@ -59,7 +59,6 @@
 [def :Programmed {
   make: [ent | do
     [def :program [make-chunk]]
-    [program:add [Key:make]]
     [def ent :programmed {program: program}]
   ]
 

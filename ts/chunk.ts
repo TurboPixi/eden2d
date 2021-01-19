@@ -15,6 +15,13 @@ export let ChunkClass = [_def, $$('Chunk'), {
     return ent;
   }],
 
+  'remove': [$('ent'), _blk, (scope: Scope) => {
+    let chunk = locChunk(scope, _self);
+    let ent = locEnt(scope, $('ent'));
+    chunk.removeEntity(ent);
+    return ent;
+  }],
+
   'top-with': [$('x'), $('y'), $('comp'), _blk, (scope: Scope) => {
     let chunk = locChunk(scope, _self);
     let x = locNum(scope, $('x'));

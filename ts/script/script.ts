@@ -116,11 +116,9 @@ export function eq(a: EExpr, b: EExpr): boolean {
 
 // Chuck an exception (used internally, and by native builtins).
 export function chuck(scope: Scope, msg: string) {
-  debugger;
-  throw {
-    msg: msg,
-    stack: _printStack(scope),
-  };
+  let stack = _printStack(scope);
+  console.error(msg, stack);
+  throw { msg, stack };
 }
 
 export function isQuote(val: EExpr): EQuote {

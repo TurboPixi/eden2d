@@ -52,7 +52,7 @@ export class WorldPanel implements Panel {
   }
 
   private move(dx: number, dy: number) {
-    _eval(this._owner.world, [[$('Player'), $$('move')], this._player, dx, dy]);
+    _eval(this._owner.world, [[this._player, $$('move')], dx, dy]);
   }
 
   private select(slot: number) {
