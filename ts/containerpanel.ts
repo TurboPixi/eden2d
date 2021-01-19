@@ -19,7 +19,7 @@ export class ContainerPanel implements Panel {
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._editor = isScope(_eval(_owner.world, [[$('ContainerEditor'), $$('make')], _contChunk]));
+    this._editor = isScope(_eval(_owner.world, [[$('ContainerEditor'), $$('make')], _contChunk, 10, 10]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);

@@ -10,9 +10,10 @@ Principles:
 - Error early: Don't silently coerce things. Broken programs should fail quickly.
 - Blocks are nothing special: Just lists that follow the right structure.
 - TODO: Something about scopes, dicts, params...
-]-
 
--[ TODO:
+
+TODO:
+- Rest args (i.e. [foo bar ...baz | do stuff); ellipsis is just a naming convention known to _apply().
 - [def/set: {foo:... bar:...}]
 - Resolve def/set ambiguity.
 - Something about accessor functions? [ent :value] vs [[ent :value]]

@@ -4,11 +4,15 @@ import { locNum, Scope, scopeRef, _root } from "./scope";
 import { chuck, $, isList, EExpr, _blk, _, isFunc, _def, _do, nil, eq } from "./script";
 
 export const _debug = $('debug');
+export const _and = $('and');
 export const _if = $('if');
 export const _forEach = $('for-each');
 export const _log = $('log');
 export const _add = $('+');
 export const _gt = $('>');
+export const _lt = $('<');
+export const _gte = $('>=');
+export const _lte = $('<=');
 export const _eq = $('=');
 export const __eval = $('eval');
 
@@ -23,6 +27,28 @@ export let builtins = [_do,
   [_def, _(__eval),
     [$('expr'), _blk, function (scope: Scope): EExpr {
       return _eval(scope, scopeRef(scope, $('expr')));
+    }]
+  ],
+
+  // TODO: Use rest params once implemented.
+  [_def, _(_and),
+    [$('a'), $('b'), _blk, (scope: Scope) => {
+      let vals = [scopeRef(scope, $('a')), scopeRef(scope, $('b'))];
+
+      for (let val of vals) {
+        let func = isFunc(val);
+        if (func !== nil) {
+          val = _apply(scope, [{}, func]);
+        }
+        if (typeof val != 'boolean') {
+          chuck(scope, `${val} must be boolean; got ${_print(val)}`);
+        }
+        if (!val) {
+          return false;
+        }
+      }
+
+      return true;
     }]
   ],
 
@@ -87,6 +113,24 @@ export let builtins = [_do,
   [_def, _(_gt),
     [$('x'), $('y'), _blk, function (scope: Scope): EExpr {
       return locNum(scope, $('x')) > locNum(scope, $('y'));
+    }]
+  ],
+
+  [_def, _(_lt),
+    [$('x'), $('y'), _blk, function (scope: Scope): EExpr {
+      return locNum(scope, $('x')) < locNum(scope, $('y'));
+    }]
+  ],
+
+  [_def, _(_gte),
+    [$('x'), $('y'), _blk, function (scope: Scope): EExpr {
+      return locNum(scope, $('x')) >= locNum(scope, $('y'));
+    }]
+  ],
+
+  [_def, _(_lte),
+    [$('x'), $('y'), _blk, function (scope: Scope): EExpr {
+      return locNum(scope, $('x')) <= locNum(scope, $('y'));
     }]
   ],
 
