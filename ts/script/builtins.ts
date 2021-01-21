@@ -1,6 +1,6 @@
-import { _apply, _eval } from "./eval";
+import { evalListElems, _apply, _eval } from "./eval";
 import { _print } from "./print";
-import { locNum, Scope, scopeRef, _root } from "./scope";
+import { expectNum, locNum, Scope, scopeRef, _root } from "./scope";
 import { chuck, $, isList, EExpr, _blk, _, isFunc, _def, _do, nil, eq } from "./script";
 
 export const _debug = $('debug');
@@ -15,6 +15,7 @@ export const _gte = $('>=');
 export const _lte = $('<=');
 export const _eq = $('=');
 export const __eval = $('eval');
+export const _list = $('list');
 
 export let builtins = [_do,
   [_def, _(_debug),
@@ -30,11 +31,25 @@ export let builtins = [_do,
     }]
   ],
 
+  [_def, _(_list),
+    [$('...elems'), _blk, function (scope: Scope): EExpr {
+      let elemsExpr = scopeRef(scope, $('elems'));
+      let elems = isList(elemsExpr);
+      if (!elems) {
+        chuck(scope, `expected list; got ${_print(elemsExpr)}`);
+      }
+      return elems;
+    }]
+  ],
+
   // TODO: Use rest params once implemented.
   [_def, _(_and),
-    [$('a'), $('b'), _blk, (scope: Scope) => {
-      let vals = [scopeRef(scope, $('a')), scopeRef(scope, $('b'))];
-
+    [$('...vals'), _blk, (scope: Scope) => {
+      let valsExpr = scopeRef(scope, $('vals'));
+      let vals = isList(valsExpr);
+      if (!vals) {
+        chuck(scope, `expected list; got ${_print(valsExpr)}`);
+      }
       for (let val of vals) {
         let func = isFunc(val);
         if (func !== nil) {
@@ -105,8 +120,17 @@ export let builtins = [_do,
   ],
 
   [_def, _(_add),
-    [$('x'), $('y'), _blk, function (scope: Scope): EExpr {
-      return locNum(scope, $('x')) + locNum(scope, $('y'));
+    [$('...vals'), _blk, function (scope: Scope): EExpr {
+      let valsExpr = scopeRef(scope, $('vals'));
+      let vals = isList(valsExpr);
+      if (!vals) {
+        chuck(scope, `expected list; got ${_print(valsExpr)}`);
+      }
+      let result = 0;
+      for (let val of vals) {
+        result += expectNum(scope, val);
+      }
+      return result;
     }]
   ],
 

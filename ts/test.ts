@@ -21,6 +21,7 @@ export function runTests() {
   testForEach();
   testClass();
   testSelfScope();
+  testRestParams();
 
   if (totalFailures == 0) {
     console.log("--[ all passed ]-------------------");
@@ -112,11 +113,9 @@ function testDef() {
       [test true [? :foo]]
       [test 42 foo]
 
-      [{foo:42} [|
-        do [
-          [def :bar 54]
-          [test true [? :bar]]
-        ]
+      [{foo:42} [| do
+        [def :bar 54]
+        [test true [? :bar]]
       ]]
       [test false [? :bar]]
     ]`)
@@ -126,7 +125,7 @@ function testDef() {
 function testFuncs() {
   run(
     "basic funcs",
-    parse(`[
+    parse(`[do
       [def :fn [| 37]]
       [test [| 37] fn]
       [test 37 [fn]]
@@ -150,7 +149,7 @@ function testFuncs() {
     parse(`[do
       [test "foo" [{x:"foo" y:"bar"} x]]
       [test "foo" [{x:"foo" y:"bar"} [| x]]]
-      [test 42 [{x:20 y:22} +]]
+      [test 42 [{vals::[20 22]} +]]
       [test 42 [+ 20 22]]
     ]`)
   );
@@ -184,9 +183,9 @@ function testNestedQuoting() {
   // TODO: Add quasi-quoting.
   run(
     "nested quoting",
-    parse(`[
+    parse(`[do
       :["foo" :["bar" "baz"]]
-      :[+ 1 2])
+      :[+ 1 2]
       [test 3 [eval :[+ 1 2]]]
       [test 3 [+ 1 2]]
       [test :[1 2 [+ 3 4]] :[1 2 [+ 3 4]]]
@@ -234,8 +233,9 @@ function testScopesAndFuncs() {
     "Reference to outer scope",
     parse(`[do
       [def :val 42]
-      [def scope :fn [x|
-        [{x:x y:val} +]
+      [def scope :fn [x| do
+        [def :vals [list x val]]
+        [{vals:vals} +]
       ]]
       [test 96 [{x:54} fn]]
     ]`)
@@ -245,7 +245,7 @@ function testScopesAndFuncs() {
     "simple function (named params)",
     parse(`[do
       [def :fn [x|
-        [{x:x y:54} +]
+        [{vals:[list x 54]} +]
       ]]
       [test 96 [{x:42} fn]]
     ]`)
@@ -416,4 +416,23 @@ function testSelfScope() {
       [test 42 [[Thing:fn]]]
     ]`)
   );
+}
+
+function testRestParams() {
+  run(
+    "rest params",
+    parse(`[do
+      [def :func [a b ...rest | do
+        [def :x [+ a b]]
+
+        -- TODO: Replace this with a splat... when they're implemented.
+        [for-each rest [val |
+          [set :x [+ x val]]
+        ]]
+        x
+      ]]
+      [test 15 [{a:1 b:2 rest::[3 4 5]} func]]
+      [test 15 [func 1 2 3 4 5]]
+    ]`)
+  )
 }

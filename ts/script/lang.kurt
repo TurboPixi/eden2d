@@ -13,7 +13,8 @@ Principles:
 
 
 TODO:
-- Rest args (i.e. [foo bar ...baz | do stuff); ellipsis is just a naming convention known to _apply().
+- Change maps from : to =
+- Splats...
 - [def/set: {foo:... bar:...}]
 - Resolve def/set ambiguity.
 - Something about accessor functions? [ent :value] vs [[ent :value]]
@@ -60,8 +61,15 @@ TODO:
   [x y | {scope} | + x y] -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-
-[def :add [a b| [{x:a y:b} +]]]
-[def :+ [x y| native)]
+[def :add [a b | [{x:a y:b} +]]]
+[def :+ [x y | native)]
+
+-[ Rest params ]-
+[def :block [a b ...rest | do
+  [log a] [log b] [log rest]
+]]
+[block 1 2 3 4 5]                 -- logs 1 / 2 / [3 4 5]
+[{a:1 b:2 ...rest:[3 4 5]} block] -- ditto
 
 -[ Scoped expressions ]-
 [{a:6} [+ a 7]]

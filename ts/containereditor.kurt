@@ -15,8 +15,7 @@
     [def :loc @:cursor:loc]
     [def :nx [+ loc:x dx]]
     [def :ny [+ loc:y dy]]
-    -- TODO: Rest params for 'and', and upper bounds.
-    [if [and [>= nx 0] [>= ny 0]]
+    [if [and [>= nx 0] [>= ny 0] [< nx @:width] [< ny @:height]]
       [| @:cursor:move-to nx ny]
     ]
   ]

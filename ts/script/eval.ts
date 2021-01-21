@@ -187,21 +187,43 @@ export function _apply(scope: Scope, list: EList): EExpr {
     let params = funcParams(func);
     let frame = scopeNew(scope, scope, func);
     let args = list.slice(1)
-    assertNoExtra(scope, list, params.length + 1);
+
+    let consumedAll = false;
     for (let i = 0; i < params.length; i++) {
       // Don't eval args; they'll get evaluated after the scope transform.
       let sym = isSym(params[i]);
       if (!sym) {
         chuck(scope, `expected sym at param ${i}, but got ${params[i]}`);
       }
-      scopeDef(frame, sym, args[i]);
+      if (isRestParam(sym)) {
+        // A ...rest param consumes all remaining arguments as a list.
+        // They need to be eval'd in place, because the subsequent application won't do so.
+        sym = $(symName(sym).slice(3)); // Remove the ...
+        scopeDef(frame, sym, _(evalListElems(scope, args.slice(i))));
+        consumedAll = true;
+      } else {
+        // Normal argument.
+        scopeDef(frame, sym, args[i]);
+      }
     }
+    if (!consumedAll) {
+      assertNoExtra(scope, list, params.length + 1);
+    }
+
     return _eval(scope, [frame, func]);
   }
 
   // [expr]
   assertNoExtra(scope, list, 1);
   return _eval(scope, elem0);
+}
+
+export function evalListElems(scope: Scope, list: EList): EList {
+  let result: EList = [];
+  for (var i = 0; i < list.length; i++) {
+    result[i] = _eval(scope, list[i]);
+  }
+  return result;
 }
 
 function maybeWrapFunc(scope: Scope, expr: EExpr, result: EExpr): EExpr {
@@ -243,8 +265,13 @@ function applySpecial(scope: Scope, list: EList): [EExpr, boolean] {
     }
 
     if (symName(sym) == '|') {
+      let expr: EExpr = list.slice(i + 1);
+      if (expr.length == 1 && typeof expr[0] == 'function') {
+        // Special case -- make sure [native] gets unwrapped.
+        expr = expr[0];
+      }
       return [{
-        _expr_func: [params, list.slice(i + 1)],
+        _expr_func: [params, expr],
         _expr_scope: scope
       }, true];
     }
@@ -308,4 +335,8 @@ function applyExists(scope: Scope, list: EList): EExpr {
   }
 
   return !!scopeFind(ctx, sym);
+}
+
+function isRestParam(sym: ESym): boolean {
+  return symName(sym).startsWith("...");
 }
