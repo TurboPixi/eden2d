@@ -1,12 +1,12 @@
 import { _eval } from "./eval";
-import { EDict, EExpr, ESym, isDict, nil, symName, $, chuck, isSym, _callerTag, _parentTag, EFunc, _funcTag, _parent, _parentName } from "./script";
+import { EDict, EExpr, ESym, isDict, nil, symName, $, chuck, isSym, _callerTag, _parentTag, EBlock, _parent, _parentName, NameMarker, _nameTag } from "./script";
 
 export type Scope = IScope | EDict;
 
 export const _specials = {
   "[parent]": true, // _parentTag
   "[caller]": true, // _callerTag
-  "[func]": true,   // _funcTag
+  "[name]": true,   // _nameTag
 }
 
 export interface IScope {
@@ -53,11 +53,11 @@ export function isScope(val: EExpr): Scope {
   return isIScope(val);
 }
 
-export function scopeNew(parent: Scope, caller: Scope, func: EFunc): Scope {
+export function scopeNew(parent: Scope, caller: Scope, name: string): Scope {
   return {
     '[parent]': parent,
     '[caller]': caller,
-    '[func]': func
+    '[name]': name,
   };
 }
 
@@ -113,8 +113,8 @@ export function scopeNames(scope: Scope): string[] {
   return Object.getOwnPropertyNames(dict).filter((name) => !(name in _specials));
 }
 
-export function scopeFunc(scope: Scope): EFunc {
-  return scopeRef(scope, _funcTag) as EFunc;
+export function scopeName(scope: Scope): string {
+  return scopeRef(scope, _nameTag) as string || "";
 }
 
 export function scopeCaller(scope: Scope): Scope {

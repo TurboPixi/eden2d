@@ -203,7 +203,7 @@ function peg$parse(input, options) {
       peg$c51 = function(entries) {
           let r = {};
           for (let e of entries) {
-            r[e[0]._expr_sym] = e[1]
+            r[e[0]['[sym]']] = e[1]
           }
           return r
         },
@@ -1172,8 +1172,8 @@ function peg$parse(input, options) {
   }
 
 
-    function _sym(name) { return { _expr_sym: name }}
-    function _quote(expr) { return { _expr_quote: expr }}
+    function _sym(name) { return { '[sym]': name }}
+    function _quote(expr) { return { '[q]': expr }}
 
 
   peg$result = peg$startRuleFunction();

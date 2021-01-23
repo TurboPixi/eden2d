@@ -1,5 +1,5 @@
-import { Scope, scopeCaller, scopeFunc, scopeNames, scopeRef, _specials } from "./scope";
-import { $, isList, EExpr, isSym, isDict, isQuote, isFunc, funcParams, funcExpr, nil, funcName, isOpaque } from "./script";
+import { Scope, scopeCaller, scopeName, scopeNames, scopeRef, _specials } from "./scope";
+import { $, isList, EExpr, isSym, isDict, isQuote, isBlock, blockParams, blockExpr, nil, blockName, QuoteMarker, SymMarker, NameMarker } from "./script";
 
 (window as any)['_print'] = _print;
 (window as any)['_printStack'] = _printStack;
@@ -7,9 +7,9 @@ import { $, isList, EExpr, isSym, isDict, isQuote, isFunc, funcParams, funcExpr,
 export function _printStack(scope: Scope): string {
   let msg = '';
   while (scope) {
-    let fn = scopeFunc(scope);
-    if (fn && fn._expr_name) {
-      msg += `:${fn._expr_name} [`;
+    let name = scopeName(scope);
+    if (name) {
+      msg += `:${name} [`;
     } else {
       msg += ":(anon) [";
     }
@@ -37,20 +37,17 @@ export function _print(expr: EExpr, short = false): string {
 
     case "object":
       let quote = isQuote(expr);
-      let func = isFunc(expr);
-      let opaque = isOpaque(expr);
+      let block = isBlock(expr);
       if (quote) {
-        return ":" + _print(quote._expr_quote);
-      } else if (opaque) {
-        return "<opaque>";
-      } else if (func) {
-        let params = funcParams(func);
-        let name = funcName(func);
-        return `${name ? "-[" + name + "]-" : ""} [${_print(params)} | ${short ? "..." : _print(funcExpr(func))}]`
+        return ":" + _print(quote[QuoteMarker]);
+      } else if (block) {
+        let params = blockParams(block);
+        let name = blockName(block);
+        return `${name ? "-[" + name + "]-" : ""} [${_print(params)} | ${short ? "..." : _print(blockExpr(block))}]`
       } else if (isList(expr)) {
         return short ? "[...]" : `[${isList(expr).map((val) => _print(val)).join(" ")}]`;
       } else if (isSym(expr)) {
-        return `${isSym(expr)._expr_sym}`;
+        return `${isSym(expr)[SymMarker]}`;
       } else if (isDict(expr)) {
         if (short) {
           return "{...}";

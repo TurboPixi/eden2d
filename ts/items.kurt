@@ -26,7 +26,7 @@
       [Render:make ent "object-sword"]
       [Portable:make ent]
       [Usable:make ent [user | do
-        [[Programmed:expr ent:programmed user]]
+        [Programmed:expr ent:programmed user]
       ]]
       [Programmed:make ent]
       [Container:make ent ent:programmed:program]

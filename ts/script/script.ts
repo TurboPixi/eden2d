@@ -1,21 +1,22 @@
 import { _printStack, _print } from "./print";
 import { Scope, _specials } from "./scope";
 
-export type EExpr = ENil | EPrim | ESym | EQuote | EList | Scope | NativeFunc;
-export type EPrim = number | boolean | string | ENil | EOpaque;
+export type EExpr = ENil | EPrim | ESym | EQuote | EList | Scope | NativeBlock;
+export type EPrim = number | boolean | string | ENil;
 export type ENil = undefined;
-export type EOpaque = { _expr_opaque: any };
-export type ESym = { _expr_sym: string };
-export type EQuote = { _expr_quote: EExpr };
-export type EFunc = { _expr_func: [EList, EExpr], _expr_scope: Scope, _expr_name?: string, _expr_self?: EDict };
-export type NativeFunc = (scope: Scope) => EExpr;
+export type ESym = { '[sym]': string };
+export type EQuote = { '[q]': EExpr };
+export type EBlock = { '[block]': [EList, EExpr], '[scope]': Scope, '[name]'?: string, '[self]'?: EDict };
+export type NativeBlock = (scope: Scope) => EExpr;
 export type EList = EExpr[];
 export type EDict = { [arg: string]: EExpr };
 
-const OpaqueMarker = "_expr_opaque";
-const QuoteMarker = '_expr_quote';
-const SymMarker = '_expr_sym';
-const FuncMarker = '_expr_func';
+export const QuoteMarker = '[q]';
+export const SymMarker = '[sym]';
+export const BlockMarker = '[block]';
+export const ScopeMarker = '[scope]';
+export const NameMarker = '[name]';
+export const SelfMarker = '[self]';
 
 // Special symbols.
 export const _parentName = '^';
@@ -31,7 +32,7 @@ export const _def = $('def');
 export const _set = $('set');
 export const _exists = $('?');
 
-export const _funcTag = $('[func]');
+export const _nameTag = $('[name]');
 export const _parentTagName = '[parent]';
 export const _parentTag = $(_parentTagName);
 export const _callerTag = $('[caller]');
@@ -40,12 +41,12 @@ export const _callerTag = $('[caller]');
 export function _(expr: EExpr): EExpr {
   // Quoted primitives are equal to themselves, so no need to do anything here.
   if (typeof expr == 'object') {
-    return { _expr_quote: expr };
+    return { '[q]': expr };
   }
   return expr;
 }
 
-// Makes a func.
+// Makes a block.
 export function __(...exprs: EExpr[]): EList {
   // TODO: Check all cases to make sure this always makes sense.
   let params = isList(exprs[0]);
@@ -57,7 +58,7 @@ export function __(...exprs: EExpr[]): EList {
 
 // Makes an identifier.
 export function $(e: string): ESym {
-  return { _expr_sym: e };
+  return { '[sym]': e };
 }
 
 // Makes a quoted identifier.
@@ -100,12 +101,12 @@ export function eq(a: EExpr, b: EExpr): boolean {
         }
       }
 
-      // TODO: Intern funcs so we don't have to engage in this mess?
-      let aFunc = isFunc(a), bFunc = isFunc(b);
-      if (aFunc && bFunc) {
-        return eq(funcExpr(aFunc), funcExpr(bFunc)) &&
-          eq(funcParams(aFunc), funcParams(bFunc)) &&
-            funcScope(aFunc) === funcScope(bFunc); // We can't do deep equality on the scope; it will cycle.
+      // TODO: Intern blocks so we don't have to engage in this mess?
+      let ABlock = isBlock(a), bBlock = isBlock(b);
+      if (ABlock && bBlock) {
+        return eq(blockExpr(ABlock), blockExpr(bBlock)) &&
+          eq(blockParams(ABlock), blockParams(bBlock)) &&
+            blockScope(ABlock) === blockScope(bBlock); // We can't do deep equality on the scope; it will cycle.
       }
 
       let aSym = isSym(a), bSym = isSym(b);
@@ -148,7 +149,7 @@ export function isList(val: EExpr): EList {
 }
 
 export function isDict(val: EExpr): EDict {
-  if (val && typeof val == 'object' && val.constructor == Object && !isSym(val) && !isFunc(val)) {
+  if (val && typeof val == 'object' && val.constructor == Object && !isSym(val) && !isBlock(val)) {
     return val as EDict;
   }
   return nil;
@@ -162,47 +163,32 @@ export function isSym(val: EExpr): ESym {
 }
 
 export function symName(sym: ESym): string {
-  return sym._expr_sym;
+  return sym['[sym]'];
 }
 
-export function opaque(val: any): EOpaque {
-  return { _expr_opaque: val };
-}
-
-export function isOpaque(val: EExpr): EOpaque {
-  if (val && (typeof val == "object") && OpaqueMarker in (val as any)) {
-    return val as EOpaque;
+export function isBlock(val: EExpr): EBlock {
+  if (val && (typeof val == "object") && BlockMarker in (val as any)) {
+    return val as EBlock;
   }
   return nil;
 }
 
-export function opaqueVal(val: EOpaque): any {
-  return val._expr_opaque;
+export function blockParams(block: EBlock): EList {
+  return isList(block[BlockMarker][0]);
 }
 
-export function isFunc(val: EExpr): EFunc {
-  if (val && (typeof val == "object") && FuncMarker in (val as any)) {
-    return val as EFunc;
-  }
-  return nil;
+export function blockExpr(block: EBlock): EExpr {
+  return block[BlockMarker][1];
 }
 
-export function funcParams(func: EFunc): EList {
-  return isList(func._expr_func[0]);
+export function blockScope(block: EBlock): Scope {
+  return block[ScopeMarker];
 }
 
-export function funcExpr(func: EFunc): EExpr {
-  return func._expr_func[1];
+export function blockName(block: EBlock): string {
+  return block ? block[NameMarker] : "";
 }
 
-export function funcScope(func: EFunc): Scope {
-  return func._expr_scope;
-}
-
-export function funcName(func: EFunc): string {
-  return func._expr_name || "";
-}
-
-export function funcSelf(func: EFunc): EDict {
-  return func._expr_self;
+export function blockSelf(block: EBlock): EDict {
+  return block[SelfMarker];
 }

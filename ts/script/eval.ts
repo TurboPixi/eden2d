@@ -1,6 +1,6 @@
 import { _print } from "./print";
 import { lookupSym, isScope, Scope, scopeDef, scopeFind, scopeNames, scopeNew, scopeRef, _root, _specials, translateSym } from "./scope";
-import { chuck, EExpr, EList, ESym, isDict, isList, isQuote, isSym, NativeFunc, nil, $, _, symName, __, isFunc, funcExpr, funcParams, funcScope, EDict, funcSelf, _self, isOpaque, _parentTag, _parentTagName } from "./script";
+import { chuck, EExpr, EList, ESym, isDict, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockScope, EDict, blockSelf, _self, _parentTag, _parentTagName, ScopeMarker, BlockMarker, QuoteMarker, blockName } from "./script";
 
 const ScriptError = 'script error';
 
@@ -18,7 +18,7 @@ export function _eval(scope: Scope, expr: EExpr): EExpr {
 
     case 'function':
       // Call native impl.
-      let fn = expr as NativeFunc;
+      let fn = expr as NativeBlock;
       return fn(scope);
 
     case 'object':
@@ -26,27 +26,21 @@ export function _eval(scope: Scope, expr: EExpr): EExpr {
         return nil;
       }
 
-      // Opaque expressions evaluate to themselves.
-      let opaque = isOpaque(expr);
-      if (opaque) {
-        return expr;
-      }
-
       // :thing is a literal expression, not evaluated.
       let quote = isQuote(expr);
       if (quote) {
         // When evaluating a quoted object (list, dict, symbol), mark the contained object with the current scope.
         // This scope will be used to evaluate its references later.
-        return quote._expr_quote;
+        return quote[QuoteMarker];
       }
 
       // [f[x] [...]] evaluates to itself.
-      let func = isFunc(expr);
-      if (func) {
-        return func;
+      let block = isBlock(expr);
+      if (block) {
+        return block;
       }
 
-      // foo ({_expr_sym: 'foo'} at runtime) is an identifier.
+      // foo ({[sym]: 'foo'} at runtime) is an identifier.
       let sym = isSym(expr);
       if (sym) {
         let result = lookupSym(scope, sym);
@@ -129,19 +123,19 @@ export function _apply(scope: Scope, list: EList): EExpr {
     let exprSym = isSym(expr);
     if (exprSym) {
       // For the [{scope}:sym] case, short-circuit all the logic below.
-      return maybeWrapFunc(argScope, expr, _eval(argScope, exprSym));
+      return maybeWrapBlock(argScope, expr, _eval(argScope, exprSym));
     } else {
       // Explicit env argument override.
       let overrideEnv = isScope(scopeRef(argScope, $('env')));
 
       // If expr is a function, unwrap it.
-      // [scope func] => [new-scope func-expr]
-      let func = isFunc(expr)
+      // [scope block] => [new-scope block-expr]
+      let block = isBlock(expr);
       let exprEnv: Scope;
-      if (func) {
+      if (block) {
         // Functions have an attached default environment.
-        exprEnv = funcScope(func);
-        expr = funcExpr(func);
+        exprEnv = blockScope(block);
+        expr = blockExpr(block);
         // TODO: Validate params?
       } else {
         // Expressions take their default environment from the arg scope.
@@ -151,30 +145,29 @@ export function _apply(scope: Scope, list: EList): EExpr {
       let env = overrideEnv ? overrideEnv : exprEnv;
 
       // Create a new frame and eval the expression within it.
-      // TODO: Do we really need to copy env over to the frame? Caller seems to be the only reason.
-      let frame = scopeNew(env, scope, func);
+      let frame = scopeNew(env, scope, blockName(block));
       for (let name of scopeNames(argScope)) {
         let sym = $(name);
         scopeDef(frame, sym, scopeRef(argScope, sym));
       }
 
-      // Add func's self to frame if specified.
-      if (func) {
-        let self = funcSelf(func);
+      // Add block's self to frame if specified.
+      if (block) {
+        let self = blockSelf(block);
         if (self) {
           scopeDef(frame, _self, self);
         }
       }
-      return maybeWrapFunc(argScope, expr, _eval(frame, expr));
+      return maybeWrapBlock(argScope, expr, _eval(frame, expr));
     }
   }
 
-  // Transform application of positional arguments to func.
-  // [func expr*] => [scope :func]
-  let func = isFunc(elem0);
-  if (func) {
-    let params = funcParams(func);
-    let frame = scopeNew(scope, scope, func);
+  // Transform application of positional arguments to block.
+  // [block expr*] => [scope :block]
+  let block = isBlock(elem0);
+  if (block) {
+    let params = blockParams(block);
+    let frame = scopeNew(scope, scope, blockName(block));
     let args = list.slice(1)
 
     let consumedAll = false;
@@ -199,7 +192,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
       assertNoExtra(scope, list, params.length + 1);
     }
 
-    return _eval(scope, [frame, func]);
+    return _eval(scope, [frame, block]);
   }
 
   // [expr]
@@ -215,15 +208,15 @@ export function evalListElems(scope: Scope, list: EList): EList {
   return result;
 }
 
-function maybeWrapFunc(scope: Scope, expr: EExpr, result: EExpr): EExpr {
-  let rfunc = isFunc(result);
-  let funcSym = isSym(expr);
-  if (rfunc && funcSym) {
+function maybeWrapBlock(scope: Scope, expr: EExpr, result: EExpr): EExpr {
+  let rblock = isBlock(result);
+  let blockSym = isSym(expr);
+  if (rblock && blockSym) {
     return {
-      _expr_scope: rfunc._expr_scope,
-      _expr_func: rfunc._expr_func,
-      _expr_name: symName(funcSym),
-      _expr_self: scope,
+      '[scope]': rblock[ScopeMarker],
+      '[block]': rblock[BlockMarker],
+      '[name]': symName(blockSym),
+      '[self]': scope,
     };
   }
   return result;
@@ -260,8 +253,8 @@ function applySpecial(scope: Scope, list: EList): [EExpr, boolean] {
         expr = expr[0];
       }
       return [{
-        _expr_func: [params, expr],
-        _expr_scope: scope
+        '[block]': [params, expr],
+        '[scope]': scope
       }, true];
     }
     params.push(sym);

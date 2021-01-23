@@ -11,10 +11,10 @@ export function runTests() {
   testBasic();
   testAccessors();
   testDef();
-  testFuncs();
+  testBlocks();
   testNestedQuoting();
   testDo();
-  testScopesAndFuncs();
+  testScopesAndBlocks();
   testOptDefParams();
   testIf();
   testClosure();
@@ -34,19 +34,18 @@ export function runTests() {
 function run(name: string, ...exprs: EExpr[]) {
   console.log(`\n--[ ${name} ]----------------------`);
 
-  let scope = scopeNew(_root, nil, nil);
+  let scope = scopeNew(_root, nil, "[test]");
   scopeDef(scope, $('failures'), 0);
   _eval(scope, parse(`
     [def {test = [expect expr | if [= expect expr]
-        [|log "--[ pass ]-"]
-        [|do
-          [set {failures = [+ failures 1]}]
-          [log "--[ fail ]-"]
-          [log expect]
-          [log expr]
-        ]
+      [|log "--[ pass ]-"]
+      [|do
+        [set {failures = [+ failures 1]}]
+        [log "--[ fail ]-"]
+        [log expect]
+        [log expr]
       ]
-    }]`
+    ]}]`
   ));
 
   let last: EExpr;
@@ -120,9 +119,9 @@ function testDef() {
   )
 }
 
-function testFuncs() {
+function testBlocks() {
   run(
-    "basic funcs",
+    "basic blocks",
     parse(`[do
       [def {fn = [| 37]}]
       [test [| 37] fn]
@@ -132,7 +131,7 @@ function testFuncs() {
   );
 
   run(
-    "basic func scoping",
+    "basic block scoping",
     parse(`[do
       [def {fn = [| do
         [def {foo = 42}]
@@ -160,9 +159,9 @@ function testFuncs() {
   );
 
   run(
-    "explicitly scoped funcs",
+    "explicitly scoped blocks",
     parse(`[do
-      -- TODO: Explicit func scope in declaration NYI.
+      -- TODO: Explicit block scope in declaration NYI.
       -- [def {
       --   env = {x = 22}
       --   fn = [y | env | + x y]
@@ -222,8 +221,8 @@ function testDo() {
   )
 }
 
-function testScopesAndFuncs() {
-  run("func eval'd in new scope",
+function testScopesAndBlocks() {
+  run("block eval'd in new scope",
     parse(`[test 43 [{foo = 42} [| [+ foo 1]]]]`)
   );
 
