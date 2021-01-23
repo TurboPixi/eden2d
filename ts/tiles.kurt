@@ -1,54 +1,53 @@
-[do
-
--- `kind`: function with a single 'chunk' param that produces an entity.
-[def :make-at [kind chunk x y | do
-  [def :ent [kind chunk]]
-  [ent:move-to x y]
-  ent
-]]
-
-[def :Floor {
-  make: [chunk | do
-    [def :ent [make-ent]]
-    [Loc:make ent]
-    [Render:make ent "tile-blue-tile"]
-    [chunk:add ent]
-  ]
-}]
-
-[def :Wall {
-  make: [chunk | do
-    [def :ent [make-ent]]
-    [Loc:make ent]
-    [Render:make ent "tile-blue-wall"]
-    [chunk:add ent]
-  ]
-}]
-
-[def :Stairs {
-  make: [chunk x y target-chunk target-x target-y up? | do
-    [def :ent [make-ent]]
-    [Loc:make ent]
-    [Render:make ent [if up?
-      "tile-stair-up"
-      "tile-stair-down"
-    ]]
-    [Portal:make ent target-chunk target-x target-y]
+[def {
+  -- `kind`: function with a single 'chunk' param that produces an entity.
+  make-at = [kind chunk x y | do
+    [def {ent = [kind chunk]}]
     [ent:move-to x y]
-    [chunk:add ent]
+    ent
   ]
-}]
 
--- Entities with the Portal component transport an entity to another location/chunk.
-[def :Portal {
-  make: [ent target-chunk target-x target-y | do
-    [def :portal {
-      target-chunk: target-chunk
-      target-x: target-x
-      target-y: target-y
-    }]
-    [set ent :portal portal]
-  ]
-}]
+  Floor = {
+    make = [chunk | do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Render:make ent "tile-blue-tile"]
+      [chunk:add ent]
+    ]
+  }
 
-]
+  Wall = {
+    make = [chunk | do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Render:make ent "tile-blue-wall"]
+      [chunk:add ent]
+    ]
+  }
+
+  Stairs = {
+    make = [chunk x y target-chunk target-x target-y up? | do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Render:make ent [if up?
+        "tile-stair-up"
+        "tile-stair-down"
+      ]]
+      [Portal:make ent target-chunk target-x target-y]
+      [ent:move-to x y]
+      [chunk:add ent]
+    ]
+  }
+
+  -- Entities with the Portal component transport an entity to another location/chunk.
+  Portal = {
+    make = [ent target-chunk target-x target-y |
+      set ent {
+        portal = {
+          target-chunk = target-chunk
+          target-x = target-x
+          target-y = target-y
+        }
+      }
+    ]
+  }
+}]

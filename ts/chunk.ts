@@ -1,13 +1,13 @@
 import { Container } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
-import { IScope, isScope, locNum, locStr, locSym, Scope, scopeEval, scopeParent, scopeRef } from "./script/scope";
-import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _self, _set } from "./script/script";
+import { IScope, isScope, locNum, locSym, Scope, scopeEval, scopeParent, scopeRef } from "./script/scope";
+import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
 import { World } from "./world";
 
 export type ChunkId = number;
 
-export let ChunkClass = [_def, $$('Chunk'), {
+export let ChunkClass = [_def, {'Chunk': {
   'add': [$('ent'), _blk, (scope: Scope) => {
     let chunk = locChunk(scope, _self);
     let ent = locEnt(scope, $('ent'));
@@ -35,7 +35,7 @@ export let ChunkClass = [_def, $$('Chunk'), {
     }
     return nil;
   }],
-}];
+}}];
 
 // TODO: Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
 export class Chunk implements IScope {
@@ -46,7 +46,7 @@ export class Chunk implements IScope {
 
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
-    _eval(_world, [_set, this, _(_parent), $('Chunk')]);
+    _eval(_world, [_set, this, _({'^': $('Chunk')})]);
   }
 
   get id(): number { return this._id }

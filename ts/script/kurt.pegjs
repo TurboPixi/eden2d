@@ -28,7 +28,7 @@ prim
   / boolean
   / nil
 
-// TODO: General number
+// TODO: Floats
 integer
   = digits:[0-9]+ { return parseInt(digits.join(""), 10) }
 
@@ -73,4 +73,4 @@ dict
   }
 
 dict_entry
-  = _ key:sym _ ":" _ val:expr { return [key, val] }
+  = _ key:sym _ "=" _ val:expr { return [key, val] }

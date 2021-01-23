@@ -1,9 +1,10 @@
-
-[def :Cursor {
-  make: [chunk | do
-    [def :ent [make-ent]]
-    [Loc:make ent]
-    [Render:make ent "tile-blue-tile"]
-    [chunk:add ent]
-  ]
+[def {
+  Cursor = {
+    make = [chunk | do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Render:make ent "tile-blue-tile"]
+      [chunk:add ent]
+    ]
+  }
 }]

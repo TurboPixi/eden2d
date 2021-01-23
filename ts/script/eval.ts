@@ -1,6 +1,6 @@
 import { _print } from "./print";
-import { lookupSym, isScope, Scope, scopeDef, scopeFind, scopeNames, scopeNew, scopeParent, scopeRef, _root, _specials } from "./scope";
-import { chuck, EExpr, EList, ESym, isDict, isList, isQuote, isSym, NativeFunc, nil, $, _, symName, EFunc, __, isFunc, funcExpr, funcParams, funcScope, EDict, funcSelf, _self, $$, isOpaque } from "./script";
+import { lookupSym, isScope, Scope, scopeDef, scopeFind, scopeNames, scopeNew, scopeRef, _root, _specials, translateSym } from "./scope";
+import { chuck, EExpr, EList, ESym, isDict, isList, isQuote, isSym, NativeFunc, nil, $, _, symName, __, isFunc, funcExpr, funcParams, funcScope, EDict, funcSelf, _self, isOpaque, _parentTag, _parentTagName } from "./script";
 
 const ScriptError = 'script error';
 
@@ -85,32 +85,22 @@ export function _eval(scope: Scope, expr: EExpr): EExpr {
 }
 
 function evalDict(scope: Scope, dict: EDict): EDict {
-  // TODO: Necessary, but couldn't this be simpler?
-  let parent = scopeParent(dict);
-  if (parent !== nil) {
-    // TODO: This shuffle seems kind of gross.
-    // Seems to be needed to avoid double eval'ing of parent:
-    let maybeScope = isScope(parent);
-    if (!maybeScope) {
-      maybeScope = isScope(_eval(scope, parent));
-      scopeDef(dict, $('parent'), maybeScope);
-    }
-    scope = isScope(maybeScope);
-  }
-
   // Copy the dict to a new expression, so we're not mutating the original.
   let result = {} as EDict;
   for (let key in dict) {
-    result[key] = dict[key];
-
-    if (!(key in _specials)) {
-      result[key] = _eval(scope, result[key]);
+    if (key in _specials) {
+      // Specials are copied, not eval'd.
+      result[key] = dict[key];
+    } else {
+      let sym = translateSym($(key));
+      let val = dict[key];
+      result[symName(sym)] = _eval(scope, val);
     }
   }
 
   // Dicts without an explicit parent automatically get the current scope.
-  if (!('parent' in result)) {
-    result['parent'] = scope;
+  if (!(_parentTagName in result)) {
+    result[_parentTagName] = scope;
   }
   return result;
 }
@@ -138,8 +128,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
     let expr = _eval(argScope, list[1]);
     let exprSym = isSym(expr);
     if (exprSym) {
-      // For the [{scope}:sym] case, short-circuit all the logic below. This is simpler, but also avoids a squirrely edge
-      // case that breaks [{scope}:parent].
+      // For the [{scope}:sym] case, short-circuit all the logic below.
       return maybeWrapFunc(argScope, expr, _eval(argScope, exprSym));
     } else {
       // Explicit env argument override.
@@ -215,7 +204,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
 
   // [expr]
   assertNoExtra(scope, list, 1);
-  return _eval(scope, elem0);
+  return elem0;
 }
 
 export function evalListElems(scope: Scope, list: EList): EList {
@@ -290,35 +279,79 @@ function applyDo(scope: Scope, list: EList): EExpr {
 }
 
 function applyDef(scope: Scope, list: EList): EExpr {
-  let arg0 = _eval(scope, list[1]);
-  let arg1 = _eval(scope, list[2]);
-  let ctx = isScope(arg0);
-  if (ctx) {
-    let value = _eval(scope, list[3]);
-    return scopeDef(ctx, isSym(arg1), value);
+  let target = scope;
+  let values: EDict;
+  switch (list.length) {
+    case 2:
+      values = isDict(_eval(scope, list[1]));
+      break;
+    case 3:
+      target = isScope(_eval(scope, list[1]))
+      values = isDict(_eval(scope, list[2]));
+      break;
+    default:
+      chuck(scope, `expected either 1 or 2 args for def, but got ${_print(list)}`);
   }
-  return scopeDef(scope, isSym(arg0), arg1);
+
+  if (target === nil) {
+    chuck(scope, `no scope found at ${_print(list[1])}`);
+  }
+
+  if (values === nil) {
+    chuck(scope, `expected dict definition at ${_print(list[2])}`);
+  }
+
+  for (let name in values) {
+    if (!(name in _specials)) {
+      scopeDef(target, $(name), values[name]);
+    }
+  }
+  return nil;
 }
 
 function applySet(scope: Scope, list: EList): EExpr {
-  let arg0 = _eval(scope, list[1]);
-  let arg1 = _eval(scope, list[2]);
+  switch (list.length) {
+    case 2: {
+      // If scope is unspecified, set the value at the nearest scope where it's defined.
+      let values = isDict(_eval(scope, list[1]));
+      if (values === nil) {
+        chuck(scope, `single argument to set must be dict`);
+      }
+      for (let name in values) {
+        if (!(name in _specials)) {
+          let target = scopeFind(scope, $(name));
+          if (!target) {
+            chuck(scope, `${name} undefined`);
+          }
+          scopeDef(target, $(name), _eval(scope, values[name]));
+        }
+      }
+      break;
+    }
 
-  let ctx = isScope(arg0);
-  if (ctx) {
-    // When scope is explicitly specified, set the value directly at that scope.
-    let sym = isSym(arg1);
-    let value = _eval(scope, list[3]);
-    return scopeDef(ctx, sym, value);
-  }
+    case 3: {
+      // When scope is explicitly specified, set the value directly at that scope.
+      let ctx = isScope(_eval(scope, list[1]));
+      if (!ctx) {
+        chuck(scope, `first of two set args must be a scope`);
+      }
+      let values = isDict(_eval(scope, list[2]));
+      if (values === nil) {
+        chuck(scope, `second of two set args must be dict`);
+      }
+      for (let name in values) {
+        if (!(name in _specials)) {
+          let value = _eval(scope, values[name]);
+          scopeDef(ctx, $(name), value);
+        }
+      }
+      break;
+    }
 
-  // If scope is unspecified, set the value at the nearest scope where it's defined.
-  let sym = isSym(arg0);
-  let target = scopeFind(scope, sym);
-  if (!target) {
-    chuck(scope, `${_print(sym)} undefined`);
+    default:
+      chuck(scope, `expected either 1 or 2 args for set, but got ${_print(list)}`);
   }
-  return scopeDef(target, sym, arg1);
+  return nil;
 }
 
 function applyExists(scope: Scope, list: EList): EExpr {

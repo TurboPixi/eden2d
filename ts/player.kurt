@@ -1,93 +1,92 @@
-[do
-
-[def :player-make [chunk | do
-  [def :ent [make-ent]]
-  [Loc:make ent]
-  [Render:make ent "player-0"]
-  [Player:make ent]
-  [chunk:add ent]
-]]
-
--- Player component.
-[def :Player {
-  make: [ent | do
-    [def :inv-chunk [make-chunk]]
-    [def :player {
-      slot: 0
-      contents: inv-chunk
-      cursor-ent: [UI:Cursor:make inv-chunk]
-    }]
-    [set ent :player player]
-    ent
+[def {
+  player-make = [chunk | do
+    [def {ent = [make-ent]}]
+    [Loc:make ent]
+    [Render:make ent "player-0"]
+    [Player:make ent]
+    [chunk:add ent]
   ]
 
-  contents: [ent | do
-    [def :player ent:player]
-    [if ?:player [|player:contents]]
-  ]
+  -- Player component.
+  Player = {
+    make = [ent | do
+      [def {inv-chunk = [make-chunk]}]
+      [set ent {player = {
+        slot = 0
+        contents = inv-chunk
+        cursor-ent = [UI:Cursor:make inv-chunk]
+      }}]
+      ent
+    ]
 
-  move: [ent dx dy | do
-    [def :loc ent:loc]
-    [ent:move-to [+ loc:x dx] [+ loc:y dy]]
-  ]
+    contents = [ent | do
+      [def {player = ent:player}]
+      [if ?:player [|player:contents]]
+    ]
 
-  follow: [ent | do
-    [def :portal-ent [ent:top-with :portal]]
-    [if ?:portal-ent [| do
-      [def :portal portal-ent:portal]
-      [ent:jump portal:target-chunk]
-      [ent:move-to portal:target-x portal:target-y]
-    ]]
-  ]
+    move = [ent dx dy | do
+      [def {loc = ent:loc}]
+      [ent:move-to [+ loc:x dx] [+ loc:y dy]]
+    ]
 
-  take: [ent | do
-    [def :target [ent:top-with :portable]]
-    [if ?:target [| do
-      [def :player ent:player]
-      [[[target:jump player:contents]:move-to] player:slot 0]
-    ]]
-  ]
+    follow = [ent | do
+      [def {portal-ent = [ent:top-with :portal]}]
+      [if ?:portal-ent [| do
+        [def {portal = portal-ent:portal}]
+        [ent:jump portal:target-chunk]
+        [ent:move-to portal:target-x portal:target-y]
+      ]]
+    ]
 
-  put: [ent | do
-    [def :player ent:player]
-    [def :target [Player:inv-target ent :portable]]
-    [if ?:target [| do
-      [def :loc ent:loc]
-      [[[target:jump ent:chunk]:move-to] loc:x loc:y]
-    ]]
-  ]
+    take = [ent | do
+      [def {target = [ent:top-with :portable]}]
+      [if ?:target [| do
+        [def {player = ent:player}]
+        [[[target:jump player:contents]:move-to] player:slot 0]
+      ]]
+    ]
 
-  add-inv: [player-ent item | do
-    [def :player player-ent:player]
-    [player:contents:add item]
-    [item:move-to player:slot 0]
-  ]
+    put = [ent | do
+      [def {
+        player = ent:player
+        target = [Player:inv-target ent :portable]
+      }]
+      [if ?:target [| do
+        [def {loc = ent:loc}]
+        [[[target:jump ent:chunk]:move-to] loc:x loc:y]
+      ]]
+    ]
 
-  use-item: [ent | do
-    [def :target [Player:inv-target ent :usable]]
-    [if ?:target [|
-      [target:usable ent]
-    ]]
-  ]
+    add-inv = [player-ent item | do
+      [def {player = player-ent:player}]
+      [player:contents:add item]
+      [item:move-to player:slot 0]
+    ]
 
-  open-item: [ent | do
-    [def :target [Player:inv-target ent :container]]
-    [if ?:target [|
-      target:container:chunk
-    ]]
-  ]
+    use-item = [ent | do
+      [def {target = [Player:inv-target ent :usable]}]
+      [if ?:target [|
+        [target:usable ent]
+      ]]
+    ]
 
-  inv-target: [ent comp | do
-    [def :player ent:player]
-    [player:contents:top-with player:slot 0 comp]
-  ]
+    open-item = [ent | do
+      [def {target = [Player:inv-target ent :container]}]
+      [if ?:target [|
+        target:container:chunk
+      ]]
+    ]
 
-  -- TODO: Validate slot range
-  select: [ent slot | do
-    [def :player ent:player]
-    [set player :slot slot]
-    [player:cursor-ent:move-to slot 0]
-  ]
+    inv-target = [ent comp | do
+      [def {player = ent:player}]
+      [player:contents:top-with player:slot 0 comp]
+    ]
+
+    -- TODO: Validate slot range
+    select = [ent slot | do
+      [def {player = ent:player}]
+      [set player {slot = slot}]
+      [player:cursor-ent:move-to slot 0]
+    ]
+  }
 }]
-
-]

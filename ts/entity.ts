@@ -3,9 +3,9 @@ import { Loc } from "./loc";
 import { Render } from "./render";
 import { parse } from "./script/kurt";
 import { IScope, isScope, locNum, Scope, scopeParent, scopeRef, _root, scopeEval, lookupSym } from "./script/scope";
-import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _set } from "./script/script";
+import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
 
-export let EntityClass = [_def, $$('Entity'), {
+export let EntityClass = [_def, { 'Entity': {
   'jump': [$('chunk'), _blk, (scope: Scope) => {
     let self = locEnt(scope, $('@'));
     let to = locChunk(scope, $('chunk'));
@@ -14,21 +14,21 @@ export let EntityClass = [_def, $$('Entity'), {
   }],
 
   'move': parse(`[dx dy | do
-    [def :loc @:loc]
+    [def {loc = @:loc}]
     [@:move-to [+ loc:x dx] [+ loc:y dy]]
   ]`),
 
   'move-to': parse(`[x y | do
-    [def :loc @:loc]
-    [set loc :x x]
-    [set loc :y y]
+    [def {loc = @:loc}]
+    [set loc {x = x}]
+    [set loc {y = y}]
   ]`),
 
   'top-with': parse(`[comp | do
-    [def :loc @:loc]
+    [def {loc = @:loc}]
     [@:chunk:top-with loc:x loc:y comp]
   ]`),
-}];
+}}];
 
 export class Entity implements IScope {
   private _chunk: Chunk;
@@ -42,14 +42,14 @@ export class Entity implements IScope {
 
   get id(): number { return this._id }
   get chunk(): Chunk { return this._chunk }
-  get names(): string[] { return ['id', 'chunk', 'parent']; }
+  get names(): string[] { return ['id', 'chunk', symName(_parentTag)]; }
 
   def(sym: ESym, value: EExpr): void {
     let name = symName(sym);
     switch (name) {
       case 'chunk':
       case 'id':
-      case 'parent':
+      case symName(_parentTag):
         // TODO: Pass scope to def/ref?
         chuck(_root, `can't set ${symName(sym)} on Entity`);
     }
@@ -61,7 +61,7 @@ export class Entity implements IScope {
     switch (name) {
       case 'chunk': return this._chunk;
       case 'id': return this._id;
-      case 'parent': return this._parent;
+      case symName(_parentTag): return this._parent;
     }
     return this._comps[name];
   }

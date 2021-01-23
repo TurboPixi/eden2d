@@ -3,7 +3,7 @@ import { _eval } from "./script/eval";
 import { parse } from "./script/kurt";
 import { _print } from "./script/print";
 import { scopeDef, scopeNew, _root } from "./script/scope";
-import { $, $$, EExpr, eq, nil, _, _def, _do, _exists, _blk, _parent, _scope, _self, _set, __ } from "./script/script";
+import { $, EExpr, nil, _, _def, _do, _exists, _blk, _scope, _self, _set, __ } from "./script/script";
 
 let totalFailures = 0;
 
@@ -21,6 +21,7 @@ export function runTests() {
   testForEach();
   testClass();
   testSelfScope();
+  testSetParent();
   testRestParams();
 
   if (totalFailures == 0) {
@@ -30,24 +31,22 @@ export function runTests() {
   }
 }
 
-let test = $('test');
 function run(name: string, ...exprs: EExpr[]) {
   console.log(`\n--[ ${name} ]----------------------`);
 
   let scope = scopeNew(_root, nil, nil);
   scopeDef(scope, $('failures'), 0);
   _eval(scope, parse(`
-    [def :test [expect expr|
-      if [= expect expr]
+    [def {test = [expect expr | if [= expect expr]
         [|log "--[ pass ]-"]
         [|do
-          [set :failures [+ failures 1]]
+          [set {failures = [+ failures 1]}]
           [log "--[ fail ]-"]
           [log expect]
           [log expr]
         ]
       ]
-    ]`
+    }]`
   ));
 
   let last: EExpr;
@@ -72,10 +71,9 @@ function testAccessors() {
   run(
     "basic accessors",
     parse(`[do
-      [def scope :foo 42]
+      [def scope {foo = 42}]
       [test 42 [scope :foo]]
-      [set :foo 54]
-      [test 54 [:foo]]
+      [set {foo = 54}]
       [test 54 foo]
     ]`)
   );
@@ -83,10 +81,10 @@ function testAccessors() {
   run(
     "def, set, exists",
     parse(`[do
-      [def :bag {foo:42 bar:"baz"}]
+      [def {bag = {foo = 42 bar = "baz"}}]
       [test true [? bag :foo]]
       [test 42 bag:foo]
-      [test 54 [set bag :foo 54]]
+      [set bag {foo = 54}]
       [test 54 bag:foo]
       [test true [? bag :bar]]
       [test false [? bag :baz]]
@@ -96,9 +94,9 @@ function testAccessors() {
   run(
     "dict accessors",
     parse(`[do
-      [def :thing 42]
-      [def :bag { val:thing }]
-      [test { val:42 } bag]
+      [def { thing = 42 }]
+      [def {bag = {val = thing}}]
+      [test {val = 42} bag]
       [test 42 [bag :val]]
     ]`)
   )
@@ -109,12 +107,12 @@ function testDef() {
     "defs",
     parse(`[do
       [test false [? :foo]]
-      [def :foo 42]
+      [def {foo = 42}]
       [test true [? :foo]]
       [test 42 foo]
 
-      [{foo:42} [| do
-        [def :bar 54]
+      [{foo = 42} [| do
+        [def {bar = 54}]
         [test true [? :bar]]
       ]]
       [test false [? :bar]]
@@ -126,7 +124,7 @@ function testFuncs() {
   run(
     "basic funcs",
     parse(`[do
-      [def :fn [| 37]]
+      [def {fn = [| 37]}]
       [test [| 37] fn]
       [test 37 [fn]]
       [test 37 [{} fn]]
@@ -136,10 +134,10 @@ function testFuncs() {
   run(
     "basic func scoping",
     parse(`[do
-      [def :fn [| do
-        [def :foo 42]
+      [def {fn = [| do
+        [def {foo = 42}]
         [+ foo 1]
-      ]]
+      ]}]
       [test 43 [fn]]
     ]`)
   );
@@ -147,9 +145,9 @@ function testFuncs() {
   run(
     "explicit scoping",
     parse(`[do
-      [test "foo" [{x:"foo" y:"bar"} x]]
-      [test "foo" [{x:"foo" y:"bar"} [| x]]]
-      [test 42 [{vals::[20 22]} +]]
+      [test "foo" [{x = "foo" y = "bar"} x]]
+      [test "foo" [{x = "foo" y = "bar"} [| x]]]
+      [test 42 [{vals = :[20 22]} +]]
       [test 42 [+ 20 22]]
     ]`)
   );
@@ -157,7 +155,7 @@ function testFuncs() {
   run(
     "more explicit scopes",
     parse(`[do
-      [test 42 [{x:20 y:22} [| + x y]]]
+      [test 42 [{x = 20 y = 22} [| + x y]]]
     ]`)
   );
 
@@ -165,16 +163,20 @@ function testFuncs() {
     "explicitly scoped funcs",
     parse(`[do
       -- TODO: Explicit func scope in declaration NYI.
-      -- [def :env {x:22}]
-      -- [def :fn [y | env | + x y]]
+      -- [def {
+      --   env = {x = 22}
+      --   fn = [y | env | + x y]
+      -- }]
       -- [test 42 [fn 20]]
 
-      [def :env2 {x:23}]
-      [def :fn2 [y | + x y]]
-      [test 43 [{y:20 env:env2} fn2]]
+      [def {
+        env2 = {x = 23}
+        fn2 = [y | + x y]
+      }]
+      [test 43 [{y = 20 env = env2} fn2]]
 
-      [def :env2 {x:24}]
-      [test 44 [{y:20 env:env2} [| + x y]]]
+      [def {env2 = {x = 24}}]
+      [test 44 [{y = 20 env = env2} [| + x y]]]
     ]`)
   );
 }
@@ -198,7 +200,7 @@ function testDo() {
     "basic do",
     parse(`[test "w00t"
       [do
-        [def :foo "w00t"]
+        [def {foo = "w00t"}]
         [log foo]
         foo
       ]
@@ -208,7 +210,7 @@ function testDo() {
   run(
     "do with scopes",
     parse(`[do
-      [def :val 42]
+      [def {val = 42}]
       [test 42 [if true [| val]]]
       [test 42 [if true
         [|do
@@ -222,32 +224,34 @@ function testDo() {
 
 function testScopesAndFuncs() {
   run("func eval'd in new scope",
-    parse(`[test 43 [{foo: 42} [| [+ foo 1]]]]`)
+    parse(`[test 43 [{foo = 42} [| [+ foo 1]]]]`)
   );
 
   run("expr eval'd directly in new scope",
-    parse(`[test 44 [{foo: 42} [+ foo 2]]]`)
+    parse(`[test 44 [{foo = 42} [+ foo 2]]]`)
   );
 
   run(
     "Reference to outer scope",
     parse(`[do
-      [def :val 42]
-      [def scope :fn [x| do
-        [def :vals [list x val]]
-        [{vals:vals} +]
-      ]]
-      [test 96 [{x:54} fn]]
+      [def {
+        val = 42
+      }]
+      [def scope {fn = [x | do
+        [def {vals = [list x val]}]
+        [{vals = vals} +]
+      ]}]
+      [test 96 [{x = 54} fn]]
     ]`)
   );
 
   run(
     "simple function (named params)",
     parse(`[do
-      [def :fn [x|
-        [{vals:[list x 54]} +]
-      ]]
-      [test 96 [{x:42} fn]]
+      [def {fn = [x |
+        [{vals = [list x 54]} +]
+      ]}]
+      [test 96 [{x = 42} fn]]
     ]`)
   );
 }
@@ -256,14 +260,14 @@ function testOptDefParams() {
   run(
     "default parameters",
     parse(`[do
-      [def :bump [a val|
+      [def {bump = [a val |
         do
-          [def :amt [if [? :val]
+          [def {amt = [if [? :val]
             [| val]
-            [| 1]]
-          ]
+            [| 1]
+          ]}]
           [+ a amt]
-        ]
+        ]}
       ]
       [test 43 [bump 42]]
       [test 44 [bump 42 2]]
@@ -279,9 +283,9 @@ function testIf() {
     parse(`[do
       [test 42 [if true 42]]
       [test 42 [[| if true 42]]]
-      [def :foo "bar"]
+      [def {foo = "bar"}]
       [test 42  [if [= foo "bar"] 42]]
-      [set :foo "baz"]
+      [set {foo = "baz"}]
       [test 43 [if [= foo "bar"] 42 43]]
     ]`)
   );
@@ -291,8 +295,10 @@ function testClosure() {
   run(
     "simple closure over lexical scope",
     parse(`[do
-      [def :outer 42]
-      [def :fn [x | + x outer]]
+      [def {
+        outer = 42
+        fn = [x | + x outer]
+      }]
       [test 96 [fn 54]]
     ]`)
   )
@@ -300,26 +306,28 @@ function testClosure() {
   run(
     "closure over enclosing scope, after return",
     parse(`[do
-      [def :fn [| do
-        [def :hidden 42]
+      [def {fn = [| do
+        [def {hidden = 42}]
         [| hidden]
-      ]]
-      [def :cl [fn]]
+      ]}]
+      [def {cl = [fn]}]
       [test 42 [cl]]
     ]`)
-  );
+  )
 }
 
 function testForEach() {
   run(
     "basic for-each over list",
     parse(`[do
-      [def :list :[1 2 3 4 3 2 1]]
-      [def :max 0]
+      [def {
+        list = :[0 1 2 3 4 3 2 1]
+        max = 0
+      }]
 
-      [for-each list [val|
+      [for-each list [val |
         if [> val max]
-          [| set :max val]
+          [| set {max = val}]
         ]
       ]
 
@@ -332,14 +340,16 @@ function testClass() {
   run(
     "simple singleton class",
     parse(`[do
-      [def :OneThing {
-        val: 42
-        fn: [| + [@:val] 1]
+      [def {
+        OneThing = {
+          val = 42
+          fn = [| + @:val 1]
+        }
       }]
 
-      [def :thing OneThing]
-      [test 43 [{@:thing} [thing:fn]]]
-      [test 43 [[thing:fn]]]
+      [def {thing = OneThing}]
+      [test 43 [{@ = thing} [thing:fn]]]
+      [test 43 [thing:fn]]
     ]`)
   );
 
@@ -347,44 +357,48 @@ function testClass() {
     "class with callback to closure",
 
     parse(`[do
-      [def :trampoline [callback|
-        [callback]
-      ]]
-
-      [def :Thing {
-        val: 42
-        fn: [|
-          trampoline [| + [@:val] 1]
+      [def {
+        trampoline = [callback|
+          [callback]
         ]
+
+        Thing = {
+          val = 42
+          fn = [|
+            trampoline [| + @:val 1]
+          ]
+        }
       }]
 
-      [test 43 [{@:Thing} [Thing:fn]]]
-      [test 43 [[Thing:fn]]]
+      [test 43 [{@ = Thing} [Thing:fn]]]
+      [test 43 [Thing:fn]]
     ]`)
   );
 
   run(
     "singleton internal method call",
     parse(`[do
-      [def :Thing {
-        val: 42
-        foo: [| [@:bar]]
-        bar: [| @:val]
-      }]
-      [test 42 [[Thing:foo]]]
+      [def {Thing = {
+        val = 42
+        foo = [| [@:bar]]
+        bar = [| @:val]
+      }}]
+      [test 42 [Thing:foo]]
     ]`)
   );
 
   run(
     "instance internal method call",
     parse(`[do
-      [def :Thing {
-        make: [| {parent:Thing val:42}]
-        foo: [| [@:bar]]
-        bar: [| @:val]
+      [def {
+        Thing = {
+          make = [| {^ = Thing val = 42}]
+          foo = [| [@:bar]]
+          bar = [| @:val]
+        }
       }]
-      [def :thing [[Thing:make]]]
-      [test 42 [[thing:foo]]]
+      [def {thing = [Thing:make]}]
+      [test 42 [thing:foo]]
     ]`)
   );
 }
@@ -393,10 +407,10 @@ function testSelfScope() {
   run(
     "internal scopes",
     parse(`[do
-      [def :fn [| do
-        [def :x 42]
-        [{x:43} [+ [scope:x] [[scope:parent]:x]]]
-      ]]
+      [def {fn = [| do
+        [def {x = 42}]
+        [{x = 43} [+ scope:x scope:^:x]]
+      ]}]
       [test 85 [fn]]
     ]`)
   );
@@ -404,16 +418,32 @@ function testSelfScope() {
   run(
     "self vs scope",
     parse(`[do
-      [def :Thing {
-        val: 42
-        fn: [| if true
+      [def {Thing = {
+        val = 42
+        fn = [| if true
           [| do
-            [def :val 43]
-            [@:val]
+            [def {val = 43}]
+            @:val
           ]
         ]
+      }}]
+      [test 42 [Thing:fn]]
+    ]`)
+  );
+}
+
+function testSetParent() {
+  run("test set-parent",
+    parse(`[do
+      [def {
+        Thing = {val1 = 42}
+        thing = {
+          val2 = 54
+          fn = [| + @:val1 @:val2]
+        }
       }]
-      [test 42 [[Thing:fn]]]
+      [set thing :{^ = Thing}]
+      [test 96 [thing:fn]]
     ]`)
   );
 }
@@ -422,17 +452,20 @@ function testRestParams() {
   run(
     "rest params",
     parse(`[do
-      [def :func [a b ...rest | do
-        [def :x [+ a b]]
+      [def {
+        fn = [a b ...rest | do
+          [def {x = [+ a b]}]
 
-        -- TODO: Replace this with a splat... when they're implemented.
-        [for-each rest [val |
-          [set :x [+ x val]]
-        ]]
-        x
-      ]]
-      [test 15 [{a:1 b:2 rest::[3 4 5]} func]]
-      [test 15 [func 1 2 3 4 5]]
+          -- TODO: Replace this with a splat... when they're implemented.
+          [for-each rest [val |
+            [set {x = [+ x val]}]
+          ]]
+          x
+        ]
+      }]
+
+      [test 15 [{a = 1 b = 2 rest = :[3 4 5]} fn]]
+      [test 15 [fn 1 2 3 4 5]]
     ]`)
   )
 }

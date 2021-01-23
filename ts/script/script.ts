@@ -17,6 +17,13 @@ const QuoteMarker = '_expr_quote';
 const SymMarker = '_expr_sym';
 const FuncMarker = '_expr_func';
 
+// Special symbols.
+export const _parentName = '^';
+export const _parent = $(_parentName);
+export const _self = $('@');
+export const _scope = $('scope');
+export const nil: ENil = undefined;
+
 // Special forms.
 export const _blk = $('|');
 export const _do = $('do');
@@ -24,13 +31,10 @@ export const _def = $('def');
 export const _set = $('set');
 export const _exists = $('?');
 
-// Special symbols.
-export const _self = $('@');
-export const _caller = $('caller');
-export const _func = $('func');
-export const _scope = $('scope');
-export const _parent = $('parent');
-export const nil: ENil = undefined;
+export const _funcTag = $('[func]');
+export const _parentTagName = '[parent]';
+export const _parentTag = $(_parentTagName);
+export const _callerTag = $('[caller]');
 
 // Makes a quoted expression (unevaluated).
 export function _(expr: EExpr): EExpr {
@@ -117,7 +121,8 @@ export function eq(a: EExpr, b: EExpr): boolean {
 // Chuck an exception (used internally, and by native builtins).
 export function chuck(scope: Scope, msg: string) {
   let stack = _printStack(scope);
-  console.error(msg, stack);
+  console.error(msg);
+  console.error(stack);
   throw { msg, stack };
 }
 

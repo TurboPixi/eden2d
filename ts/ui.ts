@@ -1,7 +1,7 @@
 import { _eval } from "./script/eval";
 import { parse } from "./script/kurt";
 import { IScope, scopeDef, _root } from "./script/scope";
-import { $, $$, EDict, EExpr, ESym, symName, _def } from "./script/script";
+import { $, $$, EDict, EExpr, ESym, symName, _def, _parentTag } from "./script/script";
 import { World } from "./world";
 
 import ui_kurt from "./ui.kurt";
@@ -12,9 +12,9 @@ export class UI implements IScope {
   private _defs: EDict = {};
 
   constructor(world: World) {
-    scopeDef(this, $('parent'), world);
+    scopeDef(this, _parentTag, world);
     _eval(this, parse(ui_kurt));
-    _eval(world, [_def, $$('UI'), this]);
+    _eval(world, [_def, {'UI': this}]);
   }
 
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }

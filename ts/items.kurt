@@ -1,70 +1,70 @@
-[do
+[def {
+  Key = {
+    make = [| do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Render:make ent "object-key"]
+      [Portable:make ent]
+      ent
+    ]
+  }
 
-[def :Key {
-  make: [| do
-    [def :ent [make-ent]]
-    [Loc:make ent]
-    [Render:make ent "object-key"]
-    [Portable:make ent]
-    ent
-  ]
+  Crate = {
+    make = [| do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Render:make ent "object-crate"]
+      [Portable:make ent]
+      ent
+    ]
+  }
+
+  Wand = {
+    make = [| do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Render:make ent "object-sword"]
+      [Portable:make ent]
+      [Usable:make ent [user | do
+        [[Programmed:expr ent:programmed user]]
+      ]]
+      [Programmed:make ent]
+      [Container:make ent ent:programmed:program]
+      ent
+    ]
+  }
+
+  -- Entities with the Portable component can be moved.
+  Portable = {
+    make = [ent | do
+      [def ent {portable = true}]
+    ]
+  }
+
+  Usable = {
+    make = [ent action |
+      def ent {usable = action}
+    ]
+  }
+
+  Container = {
+    make = [ent chunk |
+      def ent {container = {
+        chunk = chunk
+      }}
+    ]
+  }
+
+  Programmed = {
+    make = [ent | do
+      [def {program = [make-chunk]}]
+      [def ent {programmed = {
+        program = program
+      }}]
+    ]
+
+    expr = [programmed user |
+      [| [[user:chunk:add [Crate:make]] :move-to] user:loc:x user:loc:y]
+    ]
+  }
 }]
-
-[def :Crate {
-  make: [| do
-    [def :ent [make-ent]]
-    [Loc:make ent]
-    [Render:make ent "object-crate"]
-    [Portable:make ent]
-    ent
-  ]
-}]
-
-[def :Wand {
-  make: [| do
-    [def :ent [make-ent]]
-    [Loc:make ent]
-    [Render:make ent "object-sword"]
-    [Portable:make ent]
-    [Usable:make ent [user | do
-      [[Programmed:expr ent:programmed user]]
-    ]]
-    [Programmed:make ent]
-    [Container:make ent ent:programmed:program]
-    ent
-  ]
-}]
-
--- Entities with the Portable component can be moved.
-[def :Portable {
-  make: [ent | do
-    [def ent :portable true]
-  ]
-}]
-
-[def :Usable {
-  make: [ent action |
-    def ent :usable action
-  ]
-}]
-
-[def :Container {
-  make: [ent chunk |
-    def ent :container {
-      chunk: chunk
-    }
-  ]
-}]
-
-[def :Programmed {
-  make: [ent | do
-    [def :program [make-chunk]]
-    [def ent :programmed {program: program}]
-  ]
-
-  expr: [programmed user |
-    [| [[user:chunk:add [Crate:make]] :move-to] user:loc:x user:loc:y]
-  ]
-}]
-
-]

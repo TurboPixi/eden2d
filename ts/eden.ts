@@ -5,7 +5,7 @@ import { _print } from "./script/print";
 import { _root } from "./script/scope";
 import { _blk, _def, _do } from "./script/script";
 import { World } from "./world";
-import { builtins } from "./script/builtins";
+import { builtinDefs } from "./script/builtins";
 import { UI } from "./ui";
 import { WorldPanel } from "./worldpanel";
 import { runTests } from "./test";
@@ -76,6 +76,6 @@ class Eden implements PanelOwner {
   }
 }
 
-_eval(_root, builtins);
-new Eden();
+_eval(_root, builtinDefs);
 // runTests();
+new Eden();

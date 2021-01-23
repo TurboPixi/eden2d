@@ -13,17 +13,14 @@ Principles:
 
 
 TODO:
-- Change maps from : to =
 - Splats...
-- [def/set: {foo:... bar:...}]
 - Resolve def/set ambiguity.
 - Something about accessor functions? [ent :value] vs [[ent :value]]
 - Mixed env + positional args
-- Inline { parent:... } eval'd definitions
 - Explore macros, quasi-quoting
   Making this work will require dynamic dict keys
 - Explore instance/class function patterns (they're weirdly conflated in existing code)
-- Backquote strings?
+- Backquote string literals?
 ]-
 
 -[ Primitive values ]-
@@ -46,13 +43,13 @@ TODO:
   [:sym]                  -- (same -- shorthand for [scope :sym])
   [{scope} expr]          -- expr -- evaluate expr in scope (also gives [scope:expr] as accessor)
   [{scope} block]         -- expr -- evaluate block in scope
-  [{env: ...} block]      -- expr -- evaluate block in scope, with explicit environment
+  [{env = ...} block]     -- expr -- evaluate block in scope, with explicit environment
   [block expr*]           -- rewrite to [{p0:expr0 p1:expr1 ...} expr] -- bind expr* to params, in order
 
 -[ Definition ]-
-  [def (scope):sym expr]  -- define :sym in scope
-  [set (scope):sym expr]  -- set :sym in scope (if defined)
-  [? (scope):sym]         -- true if :sym is defined in scope
+  [def (scope) {sym = expr ...}]  -- define :sym in scope
+  [set (scope) {sym = expr ...}]  -- set :sym in scope (if defined)
+  [? (scope):sym]                 -- true if :sym is defined in scope
 
 -[ Blocks ]-
   [x y | + x y]           -- block with two params
@@ -61,37 +58,37 @@ TODO:
   [x y | {scope} | + x y] -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-
-[def :add [a b | [{x:a y:b} +]]]
+[def :add [a b | + a b]]
 [def :+ [x y | native)]
 
 -[ Rest params ]-
 [def :block [a b ...rest | do
   [log a] [log b] [log rest]
 ]]
-[block 1 2 3 4 5]                 -- logs 1 / 2 / [3 4 5]
-[{a:1 b:2 ...rest:[3 4 5]} block] -- ditto
+[block 1 2 3 4 5]                       -- logs 1 / 2 / [3 4 5]
+[{a = 1 b = 2 ...rest = [3 4 5]} block] -- ditto
 
 -[ Scoped expressions ]-
-[{a:6} [+ a 7]]
+[{a = 6} [+ a 7]]
 -- 13
 
 -[ Block evaluation ]-
-[{a:6 b:7} add]
+[{a = 6 b = 7} add]
 -[
-  [{a:6 b:7} [a b| [{x:a y:b} +]]]  -- named args as prefix scope
-  [{a:6 b:7}       [{x:a y:b} +]]   --   merged with formal parameters
-  [                 {x:6 y:7} +]    --   and evaluated with the body
-                    13
+  [{a = 6 b = 7} [a b| [{x = a y = b} +]]]  -- named args as prefix scope
+  [{a = 6 b = 7}       [{x = a y = b} +]]   --   merged with formal parameters
+  [                     {x = 6 y = 7} +]    --   and evaluated with the body
+                        13
 ]-
 
 -[ With positional args ]-
 [add 6 7]
 -[
-  [[a b|           [{x:a y:b} +]] 6 7]  -- transform positional args
-  [{a:6 b:7} [a b| [{x:a y:b} +]]    ]  --   into named args
-  [{a:6 b:7}       [{x:a y:b} +]]       --   and continue as usual
-                   [{x:6 y:7} +]
-                   13
+  [[a b|               [{x = a y = b} +]] 6 7]  -- transform positional args
+  [{a = 6 b = 7} [a b| [{x = a y = b} +]]    ]  --   into named args
+  [{a = 6 b = 7}       [{x = a y = b} +]]       --   and continue as usual
+                       [{x = 6 y = 7} +]
+                       13
 ]-
 
 -[ Closure ]-

@@ -1,32 +1,35 @@
-[def :ContainerEditor {
-  make: [chunk w h | do
-    [def :ce {
-      chunk: chunk
-      cursor: [UI:Cursor:make chunk]
-      width: w height: h
-    }]
-    [def ce :parent ContainerEditor]
-    ce
-  ]
-
-  close: [| @:chunk:remove @:cursor]
-
-  move-cursor: [dx dy| do
-    [def :loc @:cursor:loc]
-    [def :nx [+ loc:x dx]]
-    [def :ny [+ loc:y dy]]
-    [if [and [>= nx 0] [>= ny 0] [< nx @:width] [< ny @:height]]
-      [| @:cursor:move-to nx ny]
+[def {
+  ContainerEditor = {
+    make = [chunk w h |
+      {
+        ^ = ContainerEditor
+        chunk = chunk
+        cursor = [UI:Cursor:make chunk]
+        width = w
+        height = h
+      }
     ]
-  ]
 
-  toggle: [| do
-    [def :key [@:cursor:top-with :portable]]
-    [if ?:key
-      [| @:chunk:remove key]
-      [| [[@:chunk:add [Key:make]] :move]
-           @:cursor:loc:x @:cursor:loc:y
+    close = [| @:chunk:remove @:cursor]
+
+    move-cursor = [dx dy| do
+      [def {
+        nx = [+ @:cursor:loc:x dx]
+        ny = [+ @:cursor:loc:y dy]
+      }]
+      [if [and [>= nx 0] [>= ny 0] [< nx @:width] [< ny @:height]]
+        [| @:cursor:move-to nx ny]
       ]
     ]
-  ]
+
+    toggle = [| do
+      [def {key = [@:cursor:top-with :portable]}]
+      [if ?:key
+        [| @:chunk:remove key]
+        [| [[@:chunk:add [Key:make]] :move]
+            @:cursor:loc:x @:cursor:loc:y
+        ]
+      ]
+    ]
+  }
 }]

@@ -1,12 +1,12 @@
 import { _eval } from "./eval";
-import { EDict, EExpr, ESym, isDict, nil, symName, $, chuck, isSym, _caller, _parent, EFunc, _func } from "./script";
+import { EDict, EExpr, ESym, isDict, nil, symName, $, chuck, isSym, _callerTag, _parentTag, EFunc, _funcTag, _parent, _parentName } from "./script";
 
 export type Scope = IScope | EDict;
 
 export const _specials = {
-  "parent": true,
-  "caller": true,
-  "func": true,
+  "[parent]": true, // _parentTag
+  "[caller]": true, // _callerTag
+  "[func]": true,   // _funcTag
 }
 
 export interface IScope {
@@ -31,9 +31,14 @@ export function isIScope(val: EExpr): IScope {
 }
 
 export function scopeFind(scope: Scope, sym: ESym): Scope {
+  sym = translateSym(sym);
+
   while (scope) {
     if (scopeExists(scope, sym)) {
       return scope;
+    }
+    if (scope == scopeParent(scope)) {
+      debugger;
     }
     scope = scopeParent(scope);
   }
@@ -49,7 +54,11 @@ export function isScope(val: EExpr): Scope {
 }
 
 export function scopeNew(parent: Scope, caller: Scope, func: EFunc): Scope {
-  return { parent, caller, func };
+  return {
+    '[parent]': parent,
+    '[caller]': caller,
+    '[func]': func
+  };
 }
 
 export function scopeExists(scope: Scope, sym: ESym): boolean {
@@ -65,7 +74,16 @@ export function scopeEval(scope: Scope, sym: ESym): EExpr {
   return _eval(scope, scopeRef(scope, sym));
 }
 
+// For special symbol forms, like ^ that translate to internal ones like [parent].
+export function translateSym(sym: ESym): ESym {
+  if (symName(sym) == _parentName) {
+    sym = _parentTag;
+  }
+  return sym;
+}
+
 export function scopeRef(scope: Scope, sym: ESym): EExpr {
+  sym = translateSym(sym);
   let iscope = isIScope(scope);
   if (iscope) {
     return iscope.ref(sym);
@@ -75,6 +93,7 @@ export function scopeRef(scope: Scope, sym: ESym): EExpr {
 }
 
 export function scopeDef(scope: Scope, sym: ESym, value: EExpr): EExpr {
+  sym = translateSym(sym);
   let iscope = isIScope(scope);
   if (iscope) {
     iscope.def(sym, value);
@@ -95,15 +114,15 @@ export function scopeNames(scope: Scope): string[] {
 }
 
 export function scopeFunc(scope: Scope): EFunc {
-  return scopeRef(scope, _func) as EFunc;
+  return scopeRef(scope, _funcTag) as EFunc;
 }
 
 export function scopeCaller(scope: Scope): Scope {
-  return scopeRef(scope, _caller) as Scope;
+  return scopeRef(scope, _callerTag) as Scope;
 }
 
 export function scopeParent(scope: Scope): Scope {
-  return scopeRef(scope, _parent) as Scope;
+  return scopeRef(scope, _parentTag) as Scope;
 }
 
 export function lookupSym(scope: Scope, sym: ESym): EExpr {

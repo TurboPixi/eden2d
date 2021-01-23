@@ -1,7 +1,7 @@
 import { EExpr, $, $$, chuck, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } from "./script/script";
 import { Chunk, ChunkClass, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
-import { IScope, Scope, scopeDef, scopeParent, _root } from "./script/scope";
+import { IScope, Scope, scopeParent, _root } from "./script/scope";
 import { Entity, EntityClass } from "./entity";
 import { parse } from "./script/kurt";
 import { Loc } from "./loc";
@@ -20,26 +20,26 @@ export class World implements IScope {
   constructor() {
     _eval(this, ChunkClass);
     _eval(this, EntityClass);
-    _eval(this, [_def, $$('Loc'), Loc.Dict]);
-    _eval(this, [_def, $$('Render'), Render.Dict]);
+    _eval(this, [_def, {'Loc': Loc.Dict}]);
+    _eval(this, [_def, {'Render': Render.Dict}]);
     _eval(this, parse(player_kurt));
     _eval(this, parse(tiles_kurt));
     _eval(this, parse(items_kurt));
 
-    scopeDef(this, $('parent'), _root);
-    _eval(this, [_do,
-      [_def, $$('make-chunk'), [_blk,
+    _eval(_root, [_set, this, _({'^': _root})]);
+    _eval(this, [_def, {
+      'make-chunk': [_blk,
         function (scope: Scope): EExpr {
           return worldFrom(scope).makeChunk();
         }
-      ]],
+      ],
 
-      [_def, $$('make-ent'), [_blk,
+      'make-ent': [_blk,
         function (scope: Scope): EExpr {
           return new Entity(scope);
         }
-      ]],
-    ]);
+      ],
+    }]);
   }
 
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }

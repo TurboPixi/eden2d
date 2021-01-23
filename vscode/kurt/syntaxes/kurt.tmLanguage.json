@@ -4,20 +4,18 @@
   "patterns": [
     { "include": "#comment-line" },
     { "include": "#comment-block" },
-    { "include": "#list" },
     { "include": "#strings" },
     { "include": "#constants" },
-    { "include": "#dict-key" }
+    { "include": "#dict-key" },
+    { "include": "#list" }
   ],
   "repository": {
     "list": {
       "name": "keyword",
-      "begin": "\\[",
-      "end": "\\]",
       "patterns": [
         {
           "name": "keyword.control",
-          "match": "(if|do|def|set|@|\\^|\\?)"
+          "match": "(true|false|if|do|def|set|list|<|>|<=|>=|\\+|-|\\/|\\*|@|\\^|\\?)"
         },
         {
           "name": "support.type",
@@ -51,7 +49,7 @@
       "patterns": [
         {
           "name": "entity.name.function",
-          "match": "[^ \\t\\r\\n\\[\\]{}:\\|]+:"
+          "match": "[^ \\t\\r\\n\\[\\]{}:\\|=]+\\s="
         }
       ]
     },
@@ -61,23 +59,13 @@
         {
           "name": "constant.numeric",
           "match": "[\\d]+\\.?[\\d]*"
-        },
-        {
-          "name": "constant.language",
-          "match": "(true|false)"
         }
       ]
     },
     "strings": {
       "name": "string.quoted.double.kurt",
       "begin": "\"",
-      "end": "\"",
-      "patterns": [
-        {
-          "name": "constant.character.escape.kurt",
-          "match": "\\\\."
-        }
-      ]
+      "end": "\""
     }
   },
   "scopeName": "source.kurt"
