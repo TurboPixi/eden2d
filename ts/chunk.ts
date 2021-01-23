@@ -1,28 +1,29 @@
 import { Container } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
-import { IScope, isScope, locNum, locSym, Scope, scopeEval, scopeParent, scopeRef } from "./script/scope";
+import { IDict, Dict, dictParent, dictRef, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
 import { World } from "./world";
+import { locNum, locSym, scopeEval } from "./script/scope";
 
 export type ChunkId = number;
 
 export let ChunkClass = [_def, {'Chunk': {
-  'add': [$('ent'), _blk, (scope: Scope) => {
+  'add': [$('ent'), _blk, (scope: Dict) => {
     let chunk = locChunk(scope, _self);
     let ent = locEnt(scope, $('ent'));
     chunk.addEntity(ent);
     return ent;
   }],
 
-  'remove': [$('ent'), _blk, (scope: Scope) => {
+  'remove': [$('ent'), _blk, (scope: Dict) => {
     let chunk = locChunk(scope, _self);
     let ent = locEnt(scope, $('ent'));
     chunk.removeEntity(ent);
     return ent;
   }],
 
-  'top-with': [$('x'), $('y'), $('comp'), _blk, (scope: Scope) => {
+  'top-with': [$('x'), $('y'), $('comp'), _blk, (scope: Dict) => {
     let chunk = locChunk(scope, _self);
     let x = locNum(scope, $('x'));
     let y = locNum(scope, $('y'));
@@ -38,7 +39,7 @@ export let ChunkClass = [_def, {'Chunk': {
 }}];
 
 // TODO: Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
-export class Chunk implements IScope {
+export class Chunk implements IDict {
   private _entities: { [id: number]: Entity } = {};
   private _nextId = 1;
   private _container: Container;
@@ -117,20 +118,20 @@ export class Chunk implements IScope {
 }
 
 export function isChunk(expr: EExpr): Chunk {
-  let scope = isScope(expr);
+  let scope = isDict(expr);
   while (scope) {
     if (scope instanceof Chunk) {
       return expr as Chunk;
     }
-    scope = scopeParent(scope);
+    scope = dictParent(scope);
   }
   return undefined;
 }
 
-export function locChunk(scope: Scope, sym: ESym): Chunk {
+export function locChunk(scope: Dict, sym: ESym): Chunk {
   let chunk = isChunk(scopeEval(scope, sym));
   if (chunk === undefined) {
-    chuck(scope, `${name}: ${scopeRef(scope, sym)} is not a chunk`);
+    chuck(scope, `${name}: ${dictRef(scope, sym)} is not a chunk`);
   }
   return chunk as Chunk;
 }

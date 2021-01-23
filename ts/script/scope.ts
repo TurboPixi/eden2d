@@ -1,59 +1,8 @@
+import { Dict, dictFind, dictRef, isEDict } from "./dict";
 import { _eval } from "./eval";
-import { EDict, EExpr, ESym, isDict, nil, symName, $, chuck, isSym, _callerTag, _parentTag, EBlock, _parent, _parentName, NameMarker, _nameTag } from "./script";
+import { chuck, EExpr, ESym, isSym, nil, symName, _callerTag, _nameTag, _parentTag } from "./script";
 
-export type Scope = IScope | EDict;
-
-export const _specials = {
-  "[parent]": true, // _parentTag
-  "[caller]": true, // _callerTag
-  "[name]": true,   // _nameTag
-}
-
-export interface IScope {
-  readonly names: string[];
-  ref(sym: ESym): EExpr;
-  def(sym: ESym, value: EExpr): void;
-}
-
-class RootScope implements IScope {
-  private _defs: EDict = {};
-  get names(): string[] { return Object.getOwnPropertyNames(this._defs); }
-  ref(sym: ESym): EExpr { return this._defs[symName(sym)]; }
-  def(sym: ESym, value: EExpr): void { this._defs[symName(sym)] = value; }
-}
-
-export const _root = new RootScope();
-
-// Scope utilities, that understand both Dict and IScope.
-export function isIScope(val: EExpr): IScope {
-  return (typeof val == 'object') && ('def' in val) && ('ref' in val) &&
-    ('names' in val) ? (val as IScope) : nil;
-}
-
-export function scopeFind(scope: Scope, sym: ESym): Scope {
-  sym = translateSym(sym);
-
-  while (scope) {
-    if (scopeExists(scope, sym)) {
-      return scope;
-    }
-    if (scope == scopeParent(scope)) {
-      debugger;
-    }
-    scope = scopeParent(scope);
-  }
-  return nil;
-}
-
-export function isScope(val: EExpr): Scope {
-  let dict = isDict(val);
-  if (dict) {
-    return dict;
-  }
-  return isIScope(val);
-}
-
-export function scopeNew(parent: Scope, caller: Scope, name: string): Scope {
+export function scopeNew(parent: Dict, caller: Dict, name: string): Dict {
   return {
     '[parent]': parent,
     '[caller]': caller,
@@ -61,110 +10,58 @@ export function scopeNew(parent: Scope, caller: Scope, name: string): Scope {
   };
 }
 
-export function scopeExists(scope: Scope, sym: ESym): boolean {
-  let iscope = isIScope(scope);
-  if (iscope) {
-    return iscope.ref(sym) !== nil;
-  }
-  let dict = scope as EDict;
-  return dict[symName(sym)] !== nil;
+export function scopeEval(scope: Dict, sym: ESym): EExpr {
+  return _eval(scope, dictRef(scope, sym));
 }
 
-export function scopeEval(scope: Scope, sym: ESym): EExpr {
-  return _eval(scope, scopeRef(scope, sym));
+export function scopeName(scope: Dict): string {
+  return dictRef(scope, _nameTag) as string || "";
 }
 
-// For special symbol forms, like ^ that translate to internal ones like [parent].
-export function translateSym(sym: ESym): ESym {
-  if (symName(sym) == _parentName) {
-    sym = _parentTag;
-  }
-  return sym;
+export function scopeCaller(scope: Dict): Dict {
+  return dictRef(scope, _callerTag) as Dict;
 }
 
-export function scopeRef(scope: Scope, sym: ESym): EExpr {
-  sym = translateSym(sym);
-  let iscope = isIScope(scope);
-  if (iscope) {
-    return iscope.ref(sym);
-  }
-  let dict = scope as EDict;
-  return dict[symName(sym)];
-}
-
-export function scopeDef(scope: Scope, sym: ESym, value: EExpr): EExpr {
-  sym = translateSym(sym);
-  let iscope = isIScope(scope);
-  if (iscope) {
-    iscope.def(sym, value);
-  } else {
-    let dict = scope as EDict;
-    dict[symName(sym)] = value;
-  }
-  return value;
-}
-
-export function scopeNames(scope: Scope): string[] {
-  let iscope = isIScope(scope);
-  if (iscope) {
-    return iscope.names;
-  }
-  let dict = scope as EDict;
-  return Object.getOwnPropertyNames(dict).filter((name) => !(name in _specials));
-}
-
-export function scopeName(scope: Scope): string {
-  return scopeRef(scope, _nameTag) as string || "";
-}
-
-export function scopeCaller(scope: Scope): Scope {
-  return scopeRef(scope, _callerTag) as Scope;
-}
-
-export function scopeParent(scope: Scope): Scope {
-  return scopeRef(scope, _parentTag) as Scope;
-}
-
-export function lookupSym(scope: Scope, sym: ESym): EExpr {
+export function lookupSym(scope: Dict, sym: ESym): EExpr {
   if (symName(sym) == 'scope') {
     return scope;
   }
 
-  let target = scopeFind(scope, sym);
+  let target = dictFind(scope, sym);
   if (target !== nil) {
-    return scopeRef(target, sym);
+    return dictRef(target, sym);
   }
 
   return nil;
 }
 
-export function locNum(scope: Scope, sym: ESym): number {
+export function locNum(scope: Dict, sym: ESym): number {
   return expectNum(scope, lookupSym(scope, sym));
 }
 
-export function expectNum(scope: Scope, value: EExpr): number {
+export function expectNum(scope: Dict, value: EExpr): number {
   if (typeof value != 'number') {
     chuck(scope, `${value} is not a number`);
   }
   return value as number;
 }
 
-export function locStr(scope: Scope, sym: ESym): string {
+export function locStr(scope: Dict, sym: ESym): string {
   return expectStr(scope, lookupSym(scope, sym));
 }
 
-export function expectStr(scope: Scope, value: EExpr): string {
+export function expectStr(scope: Dict, value: EExpr): string {
   if (typeof value != 'string') {
     chuck(scope, `${value} is not a string`);
   }
   return value as string;
 }
 
-export function locSym(scope: Scope, sym: ESym): ESym {
+export function locSym(scope: Dict, sym: ESym): ESym {
   return expectSym(scope, lookupSym(scope, sym));
 }
 
-export function expectSym(scope: Scope, value: EExpr): ESym {
+export function expectSym(scope: Dict, value: EExpr): ESym {
   let vsym = isSym(value);
   if (!vsym) {
     chuck(scope, `${value} is not a symbol`);
@@ -172,12 +69,12 @@ export function expectSym(scope: Scope, value: EExpr): ESym {
   return vsym;
 }
 
-export function locScope(scope: Scope, sym: ESym): Scope {
+export function locScope(scope: Dict, sym: ESym): Dict {
   return expectScope(scope, lookupSym(scope, sym));
 }
 
-export function expectScope(scope: Scope, value: EExpr): Scope {
-  let vscope = isScope(value);
+export function expectScope(scope: Dict, value: EExpr): Dict {
+  let vscope = isEDict(value);
   if (!vscope) {
     chuck(scope, `${value} is not a dictionary`);
   }

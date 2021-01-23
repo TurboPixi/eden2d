@@ -2,11 +2,12 @@ import { Chunk, locChunk } from "./chunk";
 import { Loc } from "./loc";
 import { Render } from "./render";
 import { parse } from "./script/kurt";
-import { IScope, isScope, locNum, Scope, scopeParent, scopeRef, _root, scopeEval, lookupSym } from "./script/scope";
-import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
+import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
+import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
+import { lookupSym, scopeEval } from "./script/scope";
 
 export let EntityClass = [_def, { 'Entity': {
-  'jump': [$('chunk'), _blk, (scope: Scope) => {
+  'jump': [$('chunk'), _blk, (scope: Dict) => {
     let self = locEnt(scope, $('@'));
     let to = locChunk(scope, $('chunk'));
     to.addEntity(self);
@@ -30,13 +31,13 @@ export let EntityClass = [_def, { 'Entity': {
   ]`),
 }}];
 
-export class Entity implements IScope {
+export class Entity implements IDict {
   private _chunk: Chunk;
   private _id: number;
   private _comps: EDict = {};
   private _parent: EExpr;
 
-  constructor(scope: Scope) {
+  constructor(scope: Dict) {
     this._parent = lookupSym(scope, $('Entity'));
   }
 
@@ -80,7 +81,7 @@ export class Entity implements IScope {
 
 // Convenience scope implementation for simple components.
 // TODO: add type checking and read-only semantics?
-export class NativeComp implements IScope {
+export class NativeComp implements IDict {
 
   get names(): string[] {
     return Object.getOwnPropertyNames(this);
@@ -105,20 +106,20 @@ export class NativeComp implements IScope {
 }
 
 export function isEntity(expr: EExpr): Entity {
-  let scope = isScope(expr);
+  let scope = isDict(expr);
   while (scope) {
     if (scope instanceof Entity) {
       return expr as Entity;
     }
-    scope = scopeParent(scope);
+    scope = dictParent(scope);
   }
   return undefined;
 }
 
-export function locEnt(scope: Scope, sym: ESym): Entity {
+export function locEnt(scope: Dict, sym: ESym): Entity {
   let ent = isEntity(scopeEval(scope, sym));
   if (ent === undefined) {
-    chuck(scope, `${name}: ${scopeRef(scope, sym)} is not an entity`);
+    chuck(scope, `${name}: ${dictRef(scope, sym)} is not an entity`);
   }
   return ent as Entity;
 }

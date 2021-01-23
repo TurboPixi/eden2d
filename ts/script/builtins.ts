@@ -1,7 +1,8 @@
 import { evalListElems, _apply, _eval } from "./eval";
 import { _print } from "./print";
-import { expectNum, locNum, Scope, scopeRef, _root } from "./scope";
+import { Dict, dictRef, _root } from "./dict";
 import { chuck, $, isList, EExpr, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
+import { expectNum, locNum } from "./scope";
 
 export const _debug = $('debug');
 export const _and = $('and');
@@ -18,17 +19,17 @@ export const __eval = $('eval');
 export const _list = $('list');
 
 export let builtinDefs = [_def, {
-  'debug': [_blk, (scope: Scope) => {
+  'debug': [_blk, (scope: Dict) => {
     debugger;
     return nil;
   }],
 
-  'eval': [$('expr'), _blk, (scope: Scope) => {
-    return _eval(scope, scopeRef(scope, $('expr')));
+  'eval': [$('expr'), _blk, (scope: Dict) => {
+    return _eval(scope, dictRef(scope, $('expr')));
   }],
 
-  'list': [$('...elems'), _blk, (scope: Scope) => {
-    let elemsExpr = scopeRef(scope, $('elems'));
+  'list': [$('...elems'), _blk, (scope: Dict) => {
+    let elemsExpr = dictRef(scope, $('elems'));
     let elems = isList(elemsExpr);
     if (!elems) {
       chuck(scope, `expected list; got ${_print(elemsExpr)}`);
@@ -37,8 +38,8 @@ export let builtinDefs = [_def, {
   }],
 
   // TODO: Use rest params once implemented.
-  'and': [$('...vals'), _blk, (scope: Scope) => {
-    let valsExpr = scopeRef(scope, $('vals'));
+  'and': [$('...vals'), _blk, (scope: Dict) => {
+    let valsExpr = dictRef(scope, $('vals'));
     let vals = isList(valsExpr);
     if (!vals) {
       chuck(scope, `expected list; got ${_print(valsExpr)}`);
@@ -59,9 +60,9 @@ export let builtinDefs = [_def, {
     return true;
   }],
 
-  'if': [$('expr'), $('then'), $('else'), _blk, (scope: Scope) => {
+  'if': [$('expr'), $('then'), $('else'), _blk, (scope: Dict) => {
     // if:
-    let b = scopeRef(scope, $('expr'));
+    let b = dictRef(scope, $('expr'));
     if (typeof b != 'boolean') {
       chuck(scope, `${b} must be boolean`);
     }
@@ -69,7 +70,7 @@ export let builtinDefs = [_def, {
     // TODO: This apply/eval switch is really gross. Maybe just require blocks for then/else params?
     if (b) {
       // then:
-      let then = scopeRef(scope, $('then'));
+      let then = dictRef(scope, $('then'));
       let block = isBlock(then);
       if (block) {
         return _apply(scope, [{}, block]);
@@ -77,7 +78,7 @@ export let builtinDefs = [_def, {
       return _eval(scope, then);
     } else {
       // else:
-      let els = scopeRef(scope, $('else'));
+      let els = dictRef(scope, $('else'));
       if (els !== nil) {
         let block = isBlock(els);
         if (block) {
@@ -90,23 +91,23 @@ export let builtinDefs = [_def, {
     return nil;
   }],
 
-  'for-each': [$('list'), $('expr'), _blk, (scope: Scope) => {
-    let list = isList(scopeRef(scope, $('list')));
-    let expr = scopeRef(scope, $('expr'))
+  'for-each': [$('list'), $('expr'), _blk, (scope: Dict) => {
+    let list = isList(dictRef(scope, $('list')));
+    let expr = dictRef(scope, $('expr'))
     for (let item of list) {
       _apply(scope, [expr, item]);
     }
     return nil;
   }],
 
-  'log': [$('msg'), _blk, (scope: Scope) => {
-    let msg = scopeRef(scope, $('msg'));
+  'log': [$('msg'), _blk, (scope: Dict) => {
+    let msg = dictRef(scope, $('msg'));
     console.log(_print(msg));
     return nil;
   }],
 
-  '+': [$('...vals'), _blk, (scope: Scope) => {
-    let valsExpr = scopeRef(scope, $('vals'));
+  '+': [$('...vals'), _blk, (scope: Dict) => {
+    let valsExpr = dictRef(scope, $('vals'));
     let vals = isList(valsExpr);
     if (!vals) {
       chuck(scope, `expected list; got ${_print(valsExpr)}`);
@@ -118,25 +119,25 @@ export let builtinDefs = [_def, {
     return result;
   }],
 
-  '>': [$('x'), $('y'), _blk, (scope: Scope) => {
+  '>': [$('x'), $('y'), _blk, (scope: Dict) => {
     return locNum(scope, $('x')) > locNum(scope, $('y'));
   }],
 
-  '<': [$('x'), $('y'), _blk, (scope: Scope) => {
+  '<': [$('x'), $('y'), _blk, (scope: Dict) => {
     return locNum(scope, $('x')) < locNum(scope, $('y'));
   }],
 
-  '>=': [$('x'), $('y'), _blk, (scope: Scope) => {
+  '>=': [$('x'), $('y'), _blk, (scope: Dict) => {
     return locNum(scope, $('x')) >= locNum(scope, $('y'));
   }],
 
-  '<=': [$('x'), $('y'), _blk, (scope: Scope) => {
+  '<=': [$('x'), $('y'), _blk, (scope: Dict) => {
     return locNum(scope, $('x')) <= locNum(scope, $('y'));
   }],
 
-  '=': [$('a'), $('b'), _blk, (scope: Scope) => {
-    let a = scopeRef(scope, $('a'));
-    let b = scopeRef(scope, $('b'));
+  '=': [$('a'), $('b'), _blk, (scope: Dict) => {
+    let a = dictRef(scope, $('a'));
+    let b = dictRef(scope, $('b'));
     return eq(a, b);
   }]
 }];

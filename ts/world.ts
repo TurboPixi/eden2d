@@ -1,7 +1,7 @@
 import { EExpr, $, $$, chuck, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } from "./script/script";
 import { Chunk, ChunkClass, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
-import { IScope, Scope, scopeParent, _root } from "./script/scope";
+import { IDict, Dict, dictParent, _root } from "./script/dict";
 import { Entity, EntityClass } from "./entity";
 import { parse } from "./script/kurt";
 import { Loc } from "./loc";
@@ -12,7 +12,7 @@ import tiles_kurt from "./tiles.kurt";
 import items_kurt from "./items.kurt";
 
 // TODO: Reliable garbage-collection on chunks.
-export class World implements IScope {
+export class World implements IDict {
   private _chunks: { [id: number]: Chunk } = {};
   private _nextId: ChunkId = 1;
   private _defs: EDict = {};
@@ -29,13 +29,13 @@ export class World implements IScope {
     _eval(_root, [_set, this, _({'^': _root})]);
     _eval(this, [_def, {
       'make-chunk': [_blk,
-        function (scope: Scope): EExpr {
+        function (scope: Dict): EExpr {
           return worldFrom(scope).makeChunk();
         }
       ],
 
       'make-ent': [_blk,
-        function (scope: Scope): EExpr {
+        function (scope: Dict): EExpr {
           return new Entity(scope);
         }
       ],
@@ -73,13 +73,13 @@ export class World implements IScope {
   }
 }
 
-function worldFrom(scope: Scope): World {
+function worldFrom(scope: Dict): World {
   let cur = scope;
   while (cur) {
     if (cur instanceof World) {
       return cur;
     }
-    cur = scopeParent(cur);
+    cur = dictParent(cur);
   }
   chuck(scope, "missing world scope");
 }

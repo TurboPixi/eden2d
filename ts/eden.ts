@@ -2,7 +2,7 @@ import { Application, Container } from "pixi.js";
 import { Resources } from "./res";
 import { _eval } from "./script/eval";
 import { _print } from "./script/print";
-import { _root } from "./script/scope";
+import { _root } from "./script/dict";
 import { _blk, _def, _do } from "./script/script";
 import { World } from "./world";
 import { builtinDefs } from "./script/builtins";

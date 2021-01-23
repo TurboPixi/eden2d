@@ -2,8 +2,9 @@ import { _add, _eq, _forEach, _gt, _if, _log } from "./script/builtins";
 import { _eval } from "./script/eval";
 import { parse } from "./script/kurt";
 import { _print } from "./script/print";
-import { scopeDef, scopeNew, _root } from "./script/scope";
+import { dictDef, _root } from "./script/dict";
 import { $, EExpr, nil, _, _def, _do, _exists, _blk, _scope, _self, _set, __ } from "./script/script";
+import { scopeNew } from "./script/scope";
 
 let totalFailures = 0;
 
@@ -35,7 +36,7 @@ function run(name: string, ...exprs: EExpr[]) {
   console.log(`\n--[ ${name} ]----------------------`);
 
   let scope = scopeNew(_root, nil, "[test]");
-  scopeDef(scope, $('failures'), 0);
+  dictDef(scope, $('failures'), 0);
   _eval(scope, parse(`
     [def {test = [expect expr | if [= expect expr]
       [|log "--[ pass ]-"]

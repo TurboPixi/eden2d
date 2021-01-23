@@ -1,13 +1,13 @@
 import { _printStack, _print } from "./print";
-import { Scope, _specials } from "./scope";
+import { Dict, isEDict, _specials } from "./dict";
 
-export type EExpr = ENil | EPrim | ESym | EQuote | EList | Scope | NativeBlock;
+export type EExpr = ENil | EPrim | ESym | EQuote | EList | Dict | NativeBlock;
 export type EPrim = number | boolean | string | ENil;
 export type ENil = undefined;
 export type ESym = { '[sym]': string };
 export type EQuote = { '[q]': EExpr };
-export type EBlock = { '[block]': [EList, EExpr], '[scope]': Scope, '[name]'?: string, '[self]'?: EDict };
-export type NativeBlock = (scope: Scope) => EExpr;
+export type EBlock = { '[block]': [EList, EExpr], '[scope]': Dict, '[name]'?: string, '[self]'?: EDict };
+export type NativeBlock = (scope: Dict) => EExpr;
 export type EList = EExpr[];
 export type EDict = { [arg: string]: EExpr };
 
@@ -85,7 +85,7 @@ export function eq(a: EExpr, b: EExpr): boolean {
         return true;
       }
 
-      let aDict = isDict(a), bDict = isDict(b);
+      let aDict = isEDict(a), bDict = isEDict(b);
       if (aDict && bDict) {
         let aKeys = Object.keys(aDict);
         let bKeys = Object.keys(bDict);
@@ -120,7 +120,7 @@ export function eq(a: EExpr, b: EExpr): boolean {
 }
 
 // Chuck an exception (used internally, and by native builtins).
-export function chuck(scope: Scope, msg: string) {
+export function chuck(scope: Dict, msg: string) {
   let stack = _printStack(scope);
   console.error(msg);
   console.error(stack);
@@ -144,13 +144,6 @@ export function isString(val: any): string {
 export function isList(val: EExpr): EList {
   if (val && typeof val == 'object' && val.constructor == Array) {
     return val;
-  }
-  return nil;
-}
-
-export function isDict(val: EExpr): EDict {
-  if (val && typeof val == 'object' && val.constructor == Object && !isSym(val) && !isBlock(val)) {
-    return val as EDict;
   }
   return nil;
 }
@@ -181,7 +174,7 @@ export function blockExpr(block: EBlock): EExpr {
   return block[BlockMarker][1];
 }
 
-export function blockScope(block: EBlock): Scope {
+export function blockScope(block: EBlock): Dict {
   return block[ScopeMarker];
 }
 

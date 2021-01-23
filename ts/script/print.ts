@@ -1,10 +1,11 @@
-import { Scope, scopeCaller, scopeName, scopeNames, scopeRef, _specials } from "./scope";
-import { $, isList, EExpr, isSym, isDict, isQuote, isBlock, blockParams, blockExpr, nil, blockName, QuoteMarker, SymMarker, NameMarker } from "./script";
+import { Dict, dictNames, dictRef, isEDict, _specials } from "./dict";
+import { scopeCaller, scopeName } from "./scope";
+import { $, isList, EExpr, isSym, isQuote, isBlock, blockParams, blockExpr, nil, blockName, QuoteMarker, SymMarker } from "./script";
 
 (window as any)['_print'] = _print;
 (window as any)['_printStack'] = _printStack;
 
-export function _printStack(scope: Scope): string {
+export function _printStack(scope: Dict): string {
   let msg = '';
   while (scope) {
     let name = scopeName(scope);
@@ -14,8 +15,8 @@ export function _printStack(scope: Scope): string {
       msg += ":(anon) [";
     }
 
-    for (let name of scopeNames(scope)) {
-      msg += `${name}: ${_print(scopeRef(scope, $(name)), true)} `
+    for (let name of dictNames(scope)) {
+      msg += `${name}: ${_print(dictRef(scope, $(name)), true)} `
     }
     msg += '| ... ]\n';
     scope = scopeCaller(scope);
@@ -48,7 +49,7 @@ export function _print(expr: EExpr, short = false): string {
         return short ? "[...]" : `[${isList(expr).map((val) => _print(val)).join(" ")}]`;
       } else if (isSym(expr)) {
         return `${isSym(expr)[SymMarker]}`;
-      } else if (isDict(expr)) {
+      } else if (isEDict(expr)) {
         if (short) {
           return "{...}";
         }

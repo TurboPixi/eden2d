@@ -1,11 +1,12 @@
 import { _print } from "./print";
-import { lookupSym, isScope, Scope, scopeDef, scopeFind, scopeNames, scopeNew, scopeRef, _root, _specials, translateSym } from "./scope";
-import { chuck, EExpr, EList, ESym, isDict, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockScope, EDict, blockSelf, _self, _parentTag, _parentTagName, ScopeMarker, BlockMarker, QuoteMarker, blockName } from "./script";
+import { Dict, dictDef, dictFind, dictNames, dictRef, _root, _specials, translateSym, isDict, isEDict } from "./dict";
+import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockScope, EDict, blockSelf, _self, _parentTag, _parentTagName, ScopeMarker, BlockMarker, QuoteMarker, blockName } from "./script";
+import { lookupSym, scopeNew } from "./scope";
 
 const ScriptError = 'script error';
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.
-export function _eval(scope: Scope, expr: EExpr): EExpr {
+export function _eval(scope: Dict, expr: EExpr): EExpr {
   switch (typeof expr) {
     case 'number':
     case 'boolean':
@@ -59,15 +60,15 @@ export function _eval(scope: Scope, expr: EExpr): EExpr {
 
       // {foo:a bar:b ...} is a dict.
       // TODO: Consider whether to make it possible to eval dict keys (weird in js, but useful in general).
-      let dict = isDict(expr);
-      if (dict) {
-        return evalDict(scope, dict);
+      let edict = isEDict(expr);
+      if (edict) {
+        return evalDict(scope, edict);
       }
 
-      // Generic (native) scope.
-      let newScope = isScope(expr);
-      if (newScope) {
-        return newScope;
+      // Native dict.
+      let dict = isDict(expr);
+      if (dict) {
+        return dict;
       }
 
     // No idea what this is. Fall through.
@@ -78,7 +79,7 @@ export function _eval(scope: Scope, expr: EExpr): EExpr {
   return expr;
 }
 
-function evalDict(scope: Scope, dict: EDict): EDict {
+function evalDict(scope: Dict, dict: EDict): EDict {
   // Copy the dict to a new expression, so we're not mutating the original.
   let result = {} as EDict;
   for (let key in dict) {
@@ -99,13 +100,13 @@ function evalDict(scope: Scope, dict: EDict): EDict {
   return result;
 }
 
-function assertNoExtra(scope: Scope, list: EList, expected: number) {
+function assertNoExtra(scope: Dict, list: EList, expected: number) {
   if (list.length > expected) {
     chuck(scope, `expected ${expected} list items; got ${list.length}\n${_print(list)}`);
   }
 }
 
-export function _apply(scope: Scope, list: EList): EExpr {
+export function _apply(scope: Dict, list: EList): EExpr {
   // Special forms.
   let [result, found] = applySpecial(scope, list);
   if (found) {
@@ -115,7 +116,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
   // [arg-scope expr] => expr
   // TODO: [{scope} expr expr*] for mixed scope + positional args
   let elem0 = _eval(scope, list[0]);
-  let argScope = isScope(elem0);
+  let argScope = isDict(elem0);
   if (argScope && list.length > 1) {
     assertNoExtra(scope, list, 2);
 
@@ -126,12 +127,12 @@ export function _apply(scope: Scope, list: EList): EExpr {
       return maybeWrapBlock(argScope, expr, _eval(argScope, exprSym));
     } else {
       // Explicit env argument override.
-      let overrideEnv = isScope(scopeRef(argScope, $('env')));
+      let overrideEnv = isDict(dictRef(argScope, $('env')));
 
       // If expr is a function, unwrap it.
       // [scope block] => [new-scope block-expr]
       let block = isBlock(expr);
-      let exprEnv: Scope;
+      let exprEnv: Dict;
       if (block) {
         // Functions have an attached default environment.
         exprEnv = blockScope(block);
@@ -146,16 +147,16 @@ export function _apply(scope: Scope, list: EList): EExpr {
 
       // Create a new frame and eval the expression within it.
       let frame = scopeNew(env, scope, blockName(block));
-      for (let name of scopeNames(argScope)) {
+      for (let name of dictNames(argScope)) {
         let sym = $(name);
-        scopeDef(frame, sym, scopeRef(argScope, sym));
+        dictDef(frame, sym, dictRef(argScope, sym));
       }
 
       // Add block's self to frame if specified.
       if (block) {
         let self = blockSelf(block);
         if (self) {
-          scopeDef(frame, _self, self);
+          dictDef(frame, _self, self);
         }
       }
       return maybeWrapBlock(argScope, expr, _eval(frame, expr));
@@ -181,11 +182,11 @@ export function _apply(scope: Scope, list: EList): EExpr {
         // A ...rest param consumes all remaining arguments as a list.
         // They need to be eval'd in place, because the subsequent application won't do so.
         sym = $(symName(sym).slice(3)); // Remove the ...
-        scopeDef(frame, sym, _(evalListElems(scope, args.slice(i))));
+        dictDef(frame, sym, _(evalListElems(scope, args.slice(i))));
         consumedAll = true;
       } else {
         // Normal argument.
-        scopeDef(frame, sym, args[i]);
+        dictDef(frame, sym, args[i]);
       }
     }
     if (!consumedAll) {
@@ -200,7 +201,7 @@ export function _apply(scope: Scope, list: EList): EExpr {
   return elem0;
 }
 
-export function evalListElems(scope: Scope, list: EList): EList {
+export function evalListElems(scope: Dict, list: EList): EList {
   let result: EList = [];
   for (var i = 0; i < list.length; i++) {
     result[i] = _eval(scope, list[i]);
@@ -208,7 +209,7 @@ export function evalListElems(scope: Scope, list: EList): EList {
   return result;
 }
 
-function maybeWrapBlock(scope: Scope, expr: EExpr, result: EExpr): EExpr {
+function maybeWrapBlock(scope: Dict, expr: EExpr, result: EExpr): EExpr {
   let rblock = isBlock(result);
   let blockSym = isSym(expr);
   if (rblock && blockSym) {
@@ -222,7 +223,7 @@ function maybeWrapBlock(scope: Scope, expr: EExpr, result: EExpr): EExpr {
   return result;
 }
 
-function applySpecial(scope: Scope, list: EList): [EExpr, boolean] {
+function applySpecial(scope: Dict, list: EList): [EExpr, boolean] {
   let sym = isSym(list[0]);
   if (sym) {
     switch (symName(sym)) {
@@ -263,7 +264,7 @@ function applySpecial(scope: Scope, list: EList): [EExpr, boolean] {
   return [nil, false];
 }
 
-function applyDo(scope: Scope, list: EList): EExpr {
+function applyDo(scope: Dict, list: EList): EExpr {
   let last: EExpr;
   for (let i = 1; i < list.length; i++) {
     last = _eval(scope, list[i]);
@@ -271,16 +272,16 @@ function applyDo(scope: Scope, list: EList): EExpr {
   return last;
 }
 
-function applyDef(scope: Scope, list: EList): EExpr {
+function applyDef(scope: Dict, list: EList): EExpr {
   let target = scope;
   let values: EDict;
   switch (list.length) {
     case 2:
-      values = isDict(_eval(scope, list[1]));
+      values = isEDict(_eval(scope, list[1]));
       break;
     case 3:
-      target = isScope(_eval(scope, list[1]))
-      values = isDict(_eval(scope, list[2]));
+      target = isDict(_eval(scope, list[1]))
+      values = isEDict(_eval(scope, list[2]));
       break;
     default:
       chuck(scope, `expected either 1 or 2 args for def, but got ${_print(list)}`);
@@ -296,27 +297,27 @@ function applyDef(scope: Scope, list: EList): EExpr {
 
   for (let name in values) {
     if (!(name in _specials)) {
-      scopeDef(target, $(name), values[name]);
+      dictDef(target, $(name), values[name]);
     }
   }
   return nil;
 }
 
-function applySet(scope: Scope, list: EList): EExpr {
+function applySet(scope: Dict, list: EList): EExpr {
   switch (list.length) {
     case 2: {
       // If scope is unspecified, set the value at the nearest scope where it's defined.
-      let values = isDict(_eval(scope, list[1]));
+      let values = isEDict(_eval(scope, list[1]));
       if (values === nil) {
         chuck(scope, `single argument to set must be dict`);
       }
       for (let name in values) {
         if (!(name in _specials)) {
-          let target = scopeFind(scope, $(name));
+          let target = dictFind(scope, $(name));
           if (!target) {
             chuck(scope, `${name} undefined`);
           }
-          scopeDef(target, $(name), _eval(scope, values[name]));
+          dictDef(target, $(name), _eval(scope, values[name]));
         }
       }
       break;
@@ -324,18 +325,18 @@ function applySet(scope: Scope, list: EList): EExpr {
 
     case 3: {
       // When scope is explicitly specified, set the value directly at that scope.
-      let ctx = isScope(_eval(scope, list[1]));
+      let ctx = isDict(_eval(scope, list[1]));
       if (!ctx) {
         chuck(scope, `first of two set args must be a scope`);
       }
-      let values = isDict(_eval(scope, list[2]));
+      let values = isEDict(_eval(scope, list[2]));
       if (values === nil) {
         chuck(scope, `second of two set args must be dict`);
       }
       for (let name in values) {
         if (!(name in _specials)) {
           let value = _eval(scope, values[name]);
-          scopeDef(ctx, $(name), value);
+          dictDef(ctx, $(name), value);
         }
       }
       break;
@@ -347,12 +348,12 @@ function applySet(scope: Scope, list: EList): EExpr {
   return nil;
 }
 
-function applyExists(scope: Scope, list: EList): EExpr {
+function applyExists(scope: Dict, list: EList): EExpr {
   let arg0 = _eval(scope, list[1]);
   let arg1 = _eval(scope, list[2]);
 
   let sym: ESym;
-  let ctx = isScope(arg0);
+  let ctx = isDict(arg0) as Dict;
   if (ctx) {
     sym = isSym(arg1);
   } else {
@@ -360,7 +361,7 @@ function applyExists(scope: Scope, list: EList): EExpr {
     sym = isSym(arg0);
   }
 
-  return !!scopeFind(ctx, sym);
+  return !!dictFind(ctx, sym);
 }
 
 function isRestParam(sym: ESym): boolean {

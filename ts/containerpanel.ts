@@ -4,14 +4,14 @@ import { Panel, PanelOwner } from "./eden";
 import { Key } from "./key";
 import { _eval } from "./script/eval";
 import { $, $$ } from "./script/script";
-import { isScope, Scope } from "./script/scope";
+import { Dict, isDict } from "./script/dict";
 import { parse } from "./script/kurt";
 
 import containereditor_kurt from "./containereditor.kurt";
 
 export class ContainerPanel implements Panel {
   private _container: Container;
-  private _editor: Scope;
+  private _editor: Dict;
 
   constructor(private _contChunk: Chunk, private _owner: PanelOwner) {
     _eval(_owner.world, parse(containereditor_kurt)); // TODO: Do this only once.
@@ -19,7 +19,7 @@ export class ContainerPanel implements Panel {
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._editor = isScope(_eval(_owner.world, [[$('ContainerEditor'), $$('make')], _contChunk, 10, 10]));
+    this._editor = isDict(_eval(_owner.world, [[$('ContainerEditor'), $$('make')], _contChunk, 10, 10]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);

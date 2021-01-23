@@ -1,10 +1,10 @@
 import { Entity, locEnt, NativeComp } from "./entity";
-import { Scope } from "./script/scope";
+import { Dict } from "./script/dict";
 import { $, _blk, _def, _do } from "./script/script";
 
 export class Loc extends NativeComp {
   static Dict = {
-    make: [$('ent'), _blk, (scope: Scope) => {
+    make: [$('ent'), _blk, (scope: Dict) => {
       return new Loc(locEnt(scope, $('ent')))
     }],
   };
