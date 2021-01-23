@@ -77,5 +77,5 @@ class Eden implements PanelOwner {
 }
 
 _eval(_root, builtinDefs);
-// runTests();
+runTests();
 new Eden();

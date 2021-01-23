@@ -1,4 +1,4 @@
-import { evalListElems, _apply, _eval } from "./eval";
+import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictRef, _root } from "./dict";
 import { chuck, $, isList, EExpr, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
@@ -56,7 +56,6 @@ export let builtinDefs = [_def, {
         return false;
       }
     }
-
     return true;
   }],
 
@@ -67,27 +66,17 @@ export let builtinDefs = [_def, {
       chuck(scope, `${b} must be boolean`);
     }
 
-    // TODO: This apply/eval switch is really gross. Maybe just require blocks for then/else params?
     if (b) {
       // then:
       let then = dictRef(scope, $('then'));
-      let block = isBlock(then);
-      if (block) {
-        return _apply(scope, [{}, block]);
-      }
-      return _eval(scope, then);
+      return _eval(scope, [{}, then]);
     } else {
       // else:
       let els = dictRef(scope, $('else'));
       if (els !== nil) {
-        let block = isBlock(els);
-        if (block) {
-          return _apply(scope, [{}, block]);
-        }
-        return _eval(scope, els);
+        return _eval(scope, [{}, els]);
       }
     }
-
     return nil;
   }],
 

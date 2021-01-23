@@ -30,8 +30,6 @@ export function _eval(scope: Dict, expr: EExpr): EExpr {
       // :thing is a literal expression, not evaluated.
       let quote = isQuote(expr);
       if (quote) {
-        // When evaluating a quoted object (list, dict, symbol), mark the contained object with the current scope.
-        // This scope will be used to evaluate its references later.
         return quote[QuoteMarker];
       }
 
