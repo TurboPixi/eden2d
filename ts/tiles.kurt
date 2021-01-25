@@ -24,6 +24,15 @@
     ]
   }
 
+  WoodDoor = {
+    make = [chunk | do
+      [def {ent = [make-ent]}]
+      [Loc:make ent]
+      [Door:make ent :["tile-door-ew" "tile-door-ns"]]
+      [chunk:add ent]
+    ]
+  }
+
   Stairs = {
     make = [chunk x y target-chunk target-x target-y up? | do
       [def {ent = [make-ent]}]
@@ -35,6 +44,28 @@
       [Portal:make ent target-chunk target-x target-y]
       [ent:move-to x y]
       [chunk:add ent]
+    ]
+  }
+
+  Door = {
+    make = [ent states | do
+      [def {
+        render = [Render:make ent "tile-door-ns"]
+        door = {
+          open = false
+          states = states
+        }
+      }]
+      [set ent {door = door}]
+    ]
+
+    toggle = [ent | do
+      [def {
+        door = ent:door
+        render = ent:render
+      }]
+      [set door {open = [! door:open]}]
+      [set render {image-key = [door:states [if door:open 1 0]]}]
     ]
   }
 

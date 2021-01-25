@@ -12,24 +12,6 @@ const _texMap: { [key: string]: string } = {
   "items": "rogue/items.png",
 };
 
-
-export enum ImageKey {
-  TileEmpty = "tile-empty",
-  TileBlueTile = "tile-blue-tile",
-  TileBlueTile1 = "tile-blue-tile-1",
-  TileBlueWall = "tile-blue-wall",
-  TileBlueWallW = "tile-blue-wall-w",
-  TileBlueWallEW = "tile-blue-wall-ew",
-  TileBlueWallE = "tile-blue-wall-e",
-  TileStairDown = "tile-stair-down",
-  TileStairUp = "tile-stair-up",
-
-  Player0 = "player-0",
-  ObjectKey = "object-key",
-  ObjectCrate = "object-crate",
-  ObjectSword = "object-sword"
-}
-
 const _imageMap: { [key: string]: Image } = {
   "tile-empty": img(TexKey.Tiles, 4 * 16, 4 * 16),
   "tile-blue-tile": img(TexKey.Tiles, 5 * 16, 0 * 16),
@@ -40,6 +22,9 @@ const _imageMap: { [key: string]: Image } = {
   "tile-blue-wall-ew": img(TexKey.Tiles, 2 * 16, 0 * 16),
   "tile-stair-down": img(TexKey.Tiles, 5 * 16, 7 * 16),
   "tile-stair-up": img(TexKey.Tiles, 6 * 16, 7 * 16),
+
+  "tile-door-ew": img(TexKey.Tiles, 1 * 16, 8 * 16),
+  "tile-door-ns": img(TexKey.Tiles, 0, 8 * 16, 16, 32, 0, 0.5),
 
   "player-0": img(TexKey.Player, 16, 0, 16, 24, 0, 1-(12/24)),
   "object-key": img(TexKey.Items, 0, 0),
@@ -83,7 +68,7 @@ export class Resources {
     return btex;
   }
 
-  static tex(key: ImageKey): Texture {
+  static tex(key: string): Texture {
     if (!(key in Resources._texCache)) {
       if (!(key in _imageMap)) {
         throw `no image found for key ${key}`
@@ -100,7 +85,7 @@ export class Resources {
     return Resources._texCache[key];
   }
 
-  static sprite(key: ImageKey): Sprite {
+  static sprite(key: string): Sprite {
     let tex = Resources.tex(key)
     return new Sprite(tex);
   }

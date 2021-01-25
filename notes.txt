@@ -35,7 +35,7 @@ Ideas:
 - Gather qi from external sources -- sun, minerals, ...?
   - Certain functions + entities needed to access different sources.
 - Scenario: Natural world (trees, plants) is ill because of local energy siphoning magic.
-  - Should be easy to express, as a script running in chunk scope that siphons qi from plants.
+  - Should be easy to express, as a script running in chunk env that siphons qi from plants.
   - Plant metabolism driven by qi, derived from sunlight.
 - Find a way to preserve the feeling of objects being rare and special.
   E.g., a book containing code that can't be easily or cheaply copied because... reasons?

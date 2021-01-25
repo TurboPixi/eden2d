@@ -1,25 +1,25 @@
-import { Dict, dictNames, dictRef, isEDict, _specials } from "./dict";
-import { scopeCaller, scopeName } from "./scope";
-import { $, isList, EExpr, isSym, isQuote, isBlock, blockParams, blockExpr, nil, blockName, QuoteMarker, SymMarker } from "./script";
+import { Dict, dictNames, dictRef, isEDict, _specialProps } from "./dict";
+import { envCaller, envName } from "./env";
+import { $, isList, EExpr, isSym, isQuote, isBlock, blockParams, blockExpr, nil, blockName, QuoteMarker, SymMarker, EList, EBlock } from "./script";
 
 (window as any)['_print'] = _print;
 (window as any)['_printStack'] = _printStack;
 
-export function _printStack(scope: Dict): string {
+export function _printStack(env: Dict): string {
   let msg = '';
-  while (scope) {
-    let name = scopeName(scope);
+  while (env) {
+    let name = envName(env);
     if (name) {
       msg += `:${name} [`;
     } else {
       msg += ":(anon) [";
     }
 
-    for (let name of dictNames(scope)) {
-      msg += `${name}: ${_print(dictRef(scope, $(name)), true)} `
+    for (let name of dictNames(env)) {
+      msg += `${name}: ${_print(dictRef(env, $(name)), true)} `
     }
     msg += '| ... ]\n';
-    scope = scopeCaller(scope);
+    env = envCaller(env);
   }
   return msg;
 }
@@ -44,9 +44,9 @@ export function _print(expr: EExpr, short = false): string {
       } else if (block) {
         let params = blockParams(block);
         let name = blockName(block);
-        return `${name ? "-[" + name + "]-" : ""} [${_print(params)} | ${short ? "..." : _print(blockExpr(block))}]`
+        return `[${name ? "-[" + name + "]-" : ""} ${printListContents(params)} | ${short ? "..." : printBody(block)}]`
       } else if (isList(expr)) {
-        return short ? "[...]" : `[${isList(expr).map((val) => _print(val)).join(" ")}]`;
+        return short ? "[...]" : `${printList(isList(expr))}`;
       } else if (isSym(expr)) {
         return `${isSym(expr)[SymMarker]}`;
       } else if (isEDict(expr)) {
@@ -57,11 +57,11 @@ export function _print(expr: EExpr, short = false): string {
         let obj = expr as { [key: string]: EExpr };
         let entries: string[] = [];
         for (let key in obj) {
-          if (!(key in _specials)) {
+          if (!(key in _specialProps)) {
             let entry = "";
             entry += key;
             if (obj[key] !== nil) {
-              entry += `:${_print(obj[key])}`
+              entry += ` = ${_print(obj[key])}`
             }
             entries.push(entry);
           }
@@ -76,4 +76,29 @@ export function _print(expr: EExpr, short = false): string {
   }
 
   return `[unknown ${expr}]`
+}
+
+function printBody(block: EBlock): string {
+  let body = blockExpr(block);
+  let list = isList(body);
+  if (list) {
+    return printListContents(list);
+  }
+  return _print(body);
+}
+
+function printList(list: EList): string {
+  if (list.length == 2) {
+    let sym = isSym(list[0]);
+    let q = isQuote(list[1]);
+    if (sym && q) {
+      return `${_print(sym)}${_print(q)}`;
+    }
+  }
+
+  return `[${printListContents(list)}]`;
+}
+
+function printListContents(list: EList): string {
+  return list.map((val) => _print(val)).join(" ")
 }

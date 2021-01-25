@@ -1,4 +1,5 @@
 [def {
+  -- Quick utility to make a player entity.
   player-make = [chunk | do
     [def {ent = [make-ent]}]
     [Loc:make ent]
@@ -19,6 +20,8 @@
       ent
     ]
 
+    -- Static blocks to operate directly on entities with a player component.
+    -- TODO: Seems like there ought to be a better pattern for this.
     contents = [ent | do
       [def {player = ent:player}]
       [if ?:player [|player:contents]]
@@ -82,7 +85,6 @@
       [player:contents:top-with player:slot 0 comp]
     ]
 
-    -- TODO: Validate slot range
     select = [ent slot | do
       [def {player = ent:player}]
       [set player {slot = slot}]

@@ -1,20 +1,20 @@
 import { _printStack, _print } from "./print";
-import { Dict, isEDict, _specials } from "./dict";
+import { Dict, isEDict, _specialProps } from "./dict";
 
 export type EExpr = ENil | EPrim | ESym | EQuote | EList | Dict | NativeBlock;
 export type EPrim = number | boolean | string | ENil;
 export type ENil = undefined;
 export type ESym = { '[sym]': string };
 export type EQuote = { '[q]': EExpr };
-export type EBlock = { '[block]': [EList, EExpr], '[scope]': Dict, '[name]'?: string, '[self]'?: EDict };
-export type NativeBlock = (scope: Dict) => EExpr;
+export type EBlock = { '[block]': [EList, EExpr], '[env]': Dict, '[name]'?: string, '[self]'?: EDict };
+export type NativeBlock = (env: Dict) => EExpr;
 export type EList = EExpr[];
 export type EDict = { [arg: string]: EExpr };
 
 export const QuoteMarker = '[q]';
 export const SymMarker = '[sym]';
 export const BlockMarker = '[block]';
-export const ScopeMarker = '[scope]';
+export const EnvMarker = '[env]';
 export const NameMarker = '[name]';
 export const SelfMarker = '[self]';
 
@@ -22,7 +22,7 @@ export const SelfMarker = '[self]';
 export const _parentName = '^';
 export const _parent = $(_parentName);
 export const _self = $('@');
-export const _scope = $('scope');
+export const _env = $('env');
 export const nil: ENil = undefined;
 
 // Special forms.
@@ -32,10 +32,12 @@ export const _def = $('def');
 export const _set = $('set');
 export const _exists = $('?');
 
-export const _nameTag = $('[name]');
 export const _parentTagName = '[parent]';
+export const _callerTagName = '[caller]';
+export const _nameTagName = '[name]';
+export const _nameTag = $(_nameTagName);
 export const _parentTag = $(_parentTagName);
-export const _callerTag = $('[caller]');
+export const _callerTag = $(_callerTagName);
 
 // Makes a quoted expression (unevaluated).
 export function _(expr: EExpr): EExpr {
@@ -91,7 +93,7 @@ export function eq(a: EExpr, b: EExpr): boolean {
         let bKeys = Object.keys(bDict);
         if (aKeys.length == bKeys.length) {
           for (let key of aKeys) {
-            if (!(key in _specials)) {
+            if (!(key in _specialProps)) {
               if (!eq(aDict[key], bDict[key])) {
                 return false;
               }
@@ -106,7 +108,7 @@ export function eq(a: EExpr, b: EExpr): boolean {
       if (ABlock && bBlock) {
         return eq(blockExpr(ABlock), blockExpr(bBlock)) &&
           eq(blockParams(ABlock), blockParams(bBlock)) &&
-            blockScope(ABlock) === blockScope(bBlock); // We can't do deep equality on the scope; it will cycle.
+            blockEnv(ABlock) === blockEnv(bBlock); // We can't do deep equality on the env; it will cycle.
       }
 
       let aSym = isSym(a), bSym = isSym(b);
@@ -120,8 +122,8 @@ export function eq(a: EExpr, b: EExpr): boolean {
 }
 
 // Chuck an exception (used internally, and by native builtins).
-export function chuck(scope: Dict, msg: string) {
-  let stack = _printStack(scope);
+export function chuck(env: Dict, msg: string) {
+  let stack = _printStack(env);
   console.error(msg);
   console.error(stack);
   throw { msg, stack };
@@ -174,8 +176,8 @@ export function blockExpr(block: EBlock): EExpr {
   return block[BlockMarker][1];
 }
 
-export function blockScope(block: EBlock): Dict {
-  return block[ScopeMarker];
+export function blockEnv(block: EBlock): Dict {
+  return block[EnvMarker];
 }
 
 export function blockName(block: EBlock): string {

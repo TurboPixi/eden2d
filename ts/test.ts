@@ -3,8 +3,8 @@ import { _eval } from "./script/eval";
 import { parse } from "./script/kurt";
 import { _print } from "./script/print";
 import { dictDef, _root } from "./script/dict";
-import { $, EExpr, nil, _, _def, _do, _exists, _blk, _scope, _self, _set, __ } from "./script/script";
-import { scopeNew } from "./script/scope";
+import { $, EExpr, nil, _, _def, _do, _exists, _blk, _self, _set, __ } from "./script/script";
+import { envNew } from "./script/env";
 
 let totalFailures = 0;
 
@@ -15,13 +15,13 @@ export function runTests() {
   testBlocks();
   testNestedQuoting();
   testDo();
-  testScopesAndBlocks();
+  testEnvAndBlocks();
   testOptDefParams();
   testIf();
   testClosure();
   testForEach();
   testClass();
-  testSelfScope();
+  testSelfEnv();
   testSetParent();
   testRestParams();
 
@@ -35,9 +35,9 @@ export function runTests() {
 function run(name: string, ...exprs: EExpr[]) {
   console.log(`\n--[ ${name} ]----------------------`);
 
-  let scope = scopeNew(_root, nil, "[test]");
-  dictDef(scope, $('failures'), 0);
-  _eval(scope, parse(`
+  let env = envNew(_root, nil, "[test]");
+  dictDef(env, $('failures'), 0);
+  _eval(env, parse(`
     [def {test = [expect expr | if [= expect expr]
       [|log "--[ pass ]-"]
       [|do
@@ -51,19 +51,19 @@ function run(name: string, ...exprs: EExpr[]) {
 
   let last: EExpr;
   for (let expr of exprs) {
-    last = _eval(scope, expr);
+    last = _eval(env, expr);
   }
 
-  totalFailures += _eval(scope, $('failures')) as number;
+  totalFailures += _eval(env, $('failures')) as number;
 }
 
 function testBasic() {
   run("number", parse(`[test 42 42]`));
   run("string", parse(`[test "foo" "foo"]`));
   run("boolean", parse(`[test true true]`));
-  run("quoted number", parse(`[test 42 :42]`));
-  run("quoted string", parse(`[test "foo" :"foo"]`));
-  run("quoted number", parse(`[test true :true]`));
+  run("quoted number", parse(`[test :42 :42]`));
+  run("quoted string", parse(`[test :"foo" :"foo"]`));
+  run("quoted number", parse(`[test :true :true]`));
   run("quoted list", parse(`[test :[42 54] :[42 54]]`));
 }
 
@@ -71,8 +71,8 @@ function testAccessors() {
   run(
     "basic accessors",
     parse(`[do
-      [def scope {foo = 42}]
-      [test 42 [scope :foo]]
+      [def env {foo = 42}]
+      [test 42 [env :foo]]
       [set {foo = 54}]
       [test 54 foo]
     ]`)
@@ -153,16 +153,16 @@ function testBlocks() {
   );
 
   run(
-    "more explicit scopes",
+    "more explicit env",
     parse(`[do
       [test 42 [{x = 20 y = 22} [| + x y]]]
     ]`)
   );
 
   run(
-    "explicitly scoped blocks",
+    "blocks with explicit env",
     parse(`[do
-      -- TODO: Explicit block scope in declaration NYI.
+      -- TODO: Explicit block env in declaration NYI.
       -- [def {
       --   env = {x = 22}
       --   fn = [y | env | + x y]
@@ -170,13 +170,13 @@ function testBlocks() {
       -- [test 42 [fn 20]]
 
       [def {
-        env2 = {x = 23}
+        env2 = {^ = env x = 23}
         fn2 = [y | + x y]
       }]
-      [test 43 [{y = 20 env = env2} fn2]]
+      [test 43 [{^ = env2 y = 20} fn2]]
 
       [def {env2 = {x = 24}}]
-      [test 44 [{y = 20 env = env2} [| + x y]]]
+      [test 44 [{^ = env2 y = 20} [| + x y]]]
     ]`)
   );
 }
@@ -208,7 +208,7 @@ function testDo() {
   )
 
   run(
-    "do with scopes",
+    "do with env",
     parse(`[do
       [def {val = 42}]
       [test 42 [if true [| val]]]
@@ -222,25 +222,25 @@ function testDo() {
   )
 }
 
-function testScopesAndBlocks() {
-  run("block eval'd in new scope",
+function testEnvAndBlocks() {
+  run("block eval'd in new env",
     parse(`[test 43 [{foo = 42} [| [+ foo 1]]]]`)
   );
 
-  run("expr eval'd directly in new scope",
+  run("expr eval'd directly in new env",
     parse(`[test 44 [{foo = 42} [+ foo 2]]]`)
   );
 
   run(
-    "Reference to outer scope",
+    "Reference to outer env",
     parse(`[do
-      [def {
-        val = 42
+      [def {val = 42}]
+      [def env {
+        fn = [x | do
+          [def {vals = [list x val]}]
+          [{vals = vals} +]
+        ]
       }]
-      [def scope {fn = [x | do
-        [def {vals = [list x val]}]
-        [{vals = vals} +]
-      ]}]
       [test 96 [{x = 54} fn]]
     ]`)
   );
@@ -293,7 +293,7 @@ function testIf() {
 
 function testClosure() {
   run(
-    "simple closure over lexical scope",
+    "simple closure over lexical env",
     parse(`[do
       [def {
         outer = 42
@@ -304,7 +304,7 @@ function testClosure() {
   )
 
   run(
-    "closure over enclosing scope, after return",
+    "closure over enclosing env, after return",
     parse(`[do
       [def {fn = [| do
         [def {hidden = 42}]
@@ -392,7 +392,7 @@ function testClass() {
     parse(`[do
       [def {
         Thing = {
-          make = [| {^ = Thing val = 42}]
+          make = [| {^ = Thing val = 42}] -- borken because evalDict() doesn't translate ^, but changing that breaks def/set.
           foo = [| [@:bar]]
           bar = [| @:val]
         }
@@ -403,20 +403,20 @@ function testClass() {
   );
 }
 
-function testSelfScope() {
+function testSelfEnv() {
   run(
-    "internal scopes",
+    "internal env",
     parse(`[do
       [def {fn = [| do
         [def {x = 42}]
-        [{x = 43} [+ scope:x scope:^:x]]
+        [{x = 43} [+ env:x env:^:x]]
       ]}]
       [test 85 [fn]]
     ]`)
   );
 
   run(
-    "self vs scope",
+    "self vs env",
     parse(`[do
       [def {Thing = {
         val = 42
@@ -442,7 +442,7 @@ function testSetParent() {
           fn = [| + @:val1 @:val2]
         }
       }]
-      [set thing :{^ = Thing}]
+      [set thing {^ = Thing}]
       [test 96 [thing:fn]]
     ]`)
   );
@@ -464,7 +464,7 @@ function testRestParams() {
         ]
       }]
 
-      [test 15 [{a = 1 b = 2 rest = :[3 4 5]} fn]]
+      [test 15 [{^ = env a = 1 b = 2 rest = :[3 4 5]} fn]]
       [test 15 [fn 1 2 3 4 5]]
     ]`)
   )

@@ -2,32 +2,32 @@ import { Container } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, dictRef, isDict } from "./script/dict";
-import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
+import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parentTagName, _self, _set } from "./script/script";
 import { World } from "./world";
-import { locNum, locSym, scopeEval } from "./script/scope";
+import { locNum, locSym, envEval } from "./script/env";
 
 export type ChunkId = number;
 
 export let ChunkClass = [_def, {'Chunk': {
-  'add': [$('ent'), _blk, (scope: Dict) => {
-    let chunk = locChunk(scope, _self);
-    let ent = locEnt(scope, $('ent'));
+  'add': [$('ent'), _blk, (env: Dict) => {
+    let chunk = locChunk(env, _self);
+    let ent = locEnt(env, $('ent'));
     chunk.addEntity(ent);
     return ent;
   }],
 
-  'remove': [$('ent'), _blk, (scope: Dict) => {
-    let chunk = locChunk(scope, _self);
-    let ent = locEnt(scope, $('ent'));
+  'remove': [$('ent'), _blk, (env: Dict) => {
+    let chunk = locChunk(env, _self);
+    let ent = locEnt(env, $('ent'));
     chunk.removeEntity(ent);
     return ent;
   }],
 
-  'top-with': [$('x'), $('y'), $('comp'), _blk, (scope: Dict) => {
-    let chunk = locChunk(scope, _self);
-    let x = locNum(scope, $('x'));
-    let y = locNum(scope, $('y'));
-    let comp = locSym(scope, $('comp'));
+  'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
+    let chunk = locChunk(env, _self);
+    let x = locNum(env, $('x'));
+    let y = locNum(env, $('y'));
+    let comp = locSym(env, $('comp'));
     let ents = chunk.entitiesAt(x, y);
     for (var ent of ents) {
       if (ent.ref(comp) !== nil) {
@@ -47,7 +47,7 @@ export class Chunk implements IDict {
 
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
-    _eval(_world, [_set, this, _({'^': $('Chunk')})]);
+    _eval(_world, [_set, this, {'^': $('Chunk')}]);
   }
 
   get id(): number { return this._id }
@@ -118,20 +118,20 @@ export class Chunk implements IDict {
 }
 
 export function isChunk(expr: EExpr): Chunk {
-  let scope = isDict(expr);
-  while (scope) {
-    if (scope instanceof Chunk) {
+  let env = isDict(expr);
+  while (env) {
+    if (env instanceof Chunk) {
       return expr as Chunk;
     }
-    scope = dictParent(scope);
+    env = dictParent(env);
   }
   return undefined;
 }
 
-export function locChunk(scope: Dict, sym: ESym): Chunk {
-  let chunk = isChunk(scopeEval(scope, sym));
+export function locChunk(env: Dict, sym: ESym): Chunk {
+  let chunk = isChunk(envEval(env, sym));
   if (chunk === undefined) {
-    chuck(scope, `${name}: ${dictRef(scope, sym)} is not a chunk`);
+    chuck(env, `${name}: ${dictRef(env, sym)} is not a chunk`);
   }
   return chunk as Chunk;
 }

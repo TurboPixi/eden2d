@@ -26,17 +26,17 @@ export class World implements IDict {
     _eval(this, parse(tiles_kurt));
     _eval(this, parse(items_kurt));
 
-    _eval(_root, [_set, this, _({'^': _root})]);
+    _eval(_root, [_set, this, {'^': _root}]);
     _eval(this, [_def, {
       'make-chunk': [_blk,
-        function (scope: Dict): EExpr {
-          return worldFrom(scope).makeChunk();
+        function (env: Dict): EExpr {
+          return worldFrom(env).makeChunk();
         }
       ],
 
       'make-ent': [_blk,
-        function (scope: Dict): EExpr {
-          return new Entity(scope);
+        function (env: Dict): EExpr {
+          return new Entity(env);
         }
       ],
     }]);
@@ -66,20 +66,25 @@ export class World implements IDict {
     }
 
     for (let x = 1; x < 9; x++) {
-      _eval(this, [$('make-at'), [$('Wall'), $$('make')], chunk, x, 0]);
+      if (x == 5) {
+        _eval(this, [$('make-at'), [$('WoodDoor'), $$('make')], chunk, x, 1]);
+      } else {
+        _eval(this, [$('make-at'), [$('Wall'), $$('make')], chunk, x, 1]);
+      }
     }
+
 
     return chunk;
   }
 }
 
-function worldFrom(scope: Dict): World {
-  let cur = scope;
+function worldFrom(env: Dict): World {
+  let cur = env;
   while (cur) {
     if (cur instanceof World) {
       return cur;
     }
     cur = dictParent(cur);
   }
-  chuck(scope, "missing world scope");
+  chuck(env, "missing world env");
 }

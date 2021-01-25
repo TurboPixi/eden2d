@@ -1,8 +1,8 @@
 import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictRef, _root } from "./dict";
-import { chuck, $, isList, EExpr, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
-import { expectNum, locNum } from "./scope";
+import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
+import { expectNum, locBool, locNum } from "./env";
 
 export const _debug = $('debug');
 export const _and = $('and');
@@ -15,42 +15,43 @@ export const _lt = $('<');
 export const _gte = $('>=');
 export const _lte = $('<=');
 export const _eq = $('=');
+export const _not = $('!');
 export const __eval = $('eval');
 export const _list = $('list');
 
 export let builtinDefs = [_def, {
-  'debug': [_blk, (scope: Dict) => {
+  'debug': [_blk, (env: Dict) => {
     debugger;
     return nil;
   }],
 
-  'eval': [$('expr'), _blk, (scope: Dict) => {
-    return _eval(scope, dictRef(scope, $('expr')));
+  'eval': [$('expr'), _blk, (env: Dict) => {
+    return _eval(env, dictRef(env, $('expr')));
   }],
 
-  'list': [$('...elems'), _blk, (scope: Dict) => {
-    let elemsExpr = dictRef(scope, $('elems'));
+  'list': [$('...elems'), _blk, (env: Dict) => {
+    let elemsExpr = dictRef(env, $('elems'));
     let elems = isList(elemsExpr);
     if (!elems) {
-      chuck(scope, `expected list; got ${_print(elemsExpr)}`);
+      chuck(env, `expected list; got ${_print(elemsExpr)}`);
     }
     return elems;
   }],
 
   // TODO: Use rest params once implemented.
-  'and': [$('...vals'), _blk, (scope: Dict) => {
-    let valsExpr = dictRef(scope, $('vals'));
+  'and': [$('...vals'), _blk, (env: Dict) => {
+    let valsExpr = dictRef(env, $('vals'));
     let vals = isList(valsExpr);
     if (!vals) {
-      chuck(scope, `expected list; got ${_print(valsExpr)}`);
+      chuck(env, `expected list; got ${_print(valsExpr)}`);
     }
     for (let val of vals) {
       let block = isBlock(val);
       if (block !== nil) {
-        val = _apply(scope, [{}, block]);
+        val = _apply(env, [{}, block]);
       }
       if (typeof val != 'boolean') {
-        chuck(scope, `${val} must be boolean; got ${_print(val)}`);
+        chuck(env, `${val} must be boolean; got ${_print(val)}`);
       }
       if (!val) {
         return false;
@@ -59,74 +60,78 @@ export let builtinDefs = [_def, {
     return true;
   }],
 
-  'if': [$('expr'), $('then'), $('else'), _blk, (scope: Dict) => {
+  'if': [$('expr'), $('then'), $('else'), _blk, (env: Dict) => {
     // if:
-    let b = dictRef(scope, $('expr'));
+    let b = dictRef(env, $('expr'));
     if (typeof b != 'boolean') {
-      chuck(scope, `${b} must be boolean`);
+      chuck(env, `${b} must be boolean`);
     }
 
     if (b) {
       // then:
-      let then = dictRef(scope, $('then'));
-      return _eval(scope, [{}, then]);
+      let then = dictRef(env, $('then'));
+      return _eval(env, [{}, then]);
     } else {
       // else:
-      let els = dictRef(scope, $('else'));
+      let els = dictRef(env, $('else'));
       if (els !== nil) {
-        return _eval(scope, [{}, els]);
+        return _eval(env, [{}, els]);
       }
     }
     return nil;
   }],
 
-  'for-each': [$('list'), $('expr'), _blk, (scope: Dict) => {
-    let list = isList(dictRef(scope, $('list')));
-    let expr = dictRef(scope, $('expr'))
+  'for-each': [$('list'), $('expr'), _blk, (env: Dict) => {
+    let list = isList(dictRef(env, $('list')));
+    let expr = dictRef(env, $('expr'))
     for (let item of list) {
-      _apply(scope, [expr, item]);
+      _apply(env, [expr, item]);
     }
     return nil;
   }],
 
-  'log': [$('msg'), _blk, (scope: Dict) => {
-    let msg = dictRef(scope, $('msg'));
+  'log': [$('msg'), _blk, (env: Dict) => {
+    let msg = dictRef(env, $('msg'));
     console.log(_print(msg));
     return nil;
   }],
 
-  '+': [$('...vals'), _blk, (scope: Dict) => {
-    let valsExpr = dictRef(scope, $('vals'));
+  '+': [$('...vals'), _blk, (env: Dict) => {
+    let valsExpr = dictRef(env, $('vals'));
     let vals = isList(valsExpr);
     if (!vals) {
-      chuck(scope, `expected list; got ${_print(valsExpr)}`);
+      chuck(env, `expected list; got ${_print(valsExpr)}`);
     }
     let result = 0;
     for (let val of vals) {
-      result += expectNum(scope, val);
+      result += expectNum(env, val);
     }
     return result;
   }],
 
-  '>': [$('x'), $('y'), _blk, (scope: Dict) => {
-    return locNum(scope, $('x')) > locNum(scope, $('y'));
+  '>': [$('x'), $('y'), _blk, (env: Dict) => {
+    return locNum(env, $('x')) > locNum(env, $('y'));
   }],
 
-  '<': [$('x'), $('y'), _blk, (scope: Dict) => {
-    return locNum(scope, $('x')) < locNum(scope, $('y'));
+  '<': [$('x'), $('y'), _blk, (env: Dict) => {
+    return locNum(env, $('x')) < locNum(env, $('y'));
   }],
 
-  '>=': [$('x'), $('y'), _blk, (scope: Dict) => {
-    return locNum(scope, $('x')) >= locNum(scope, $('y'));
+  '>=': [$('x'), $('y'), _blk, (env: Dict) => {
+    return locNum(env, $('x')) >= locNum(env, $('y'));
   }],
 
-  '<=': [$('x'), $('y'), _blk, (scope: Dict) => {
-    return locNum(scope, $('x')) <= locNum(scope, $('y'));
+  '<=': [$('x'), $('y'), _blk, (env: Dict) => {
+    return locNum(env, $('x')) <= locNum(env, $('y'));
   }],
 
-  '=': [$('a'), $('b'), _blk, (scope: Dict) => {
-    let a = dictRef(scope, $('a'));
-    let b = dictRef(scope, $('b'));
+  '=': [$('a'), $('b'), _blk, (env: Dict) => {
+    let a = dictRef(env, $('a'));
+    let b = dictRef(env, $('b'));
     return eq(a, b);
-  }]
+  }],
+
+  '!': [$('x'), _blk, (env: Dict) => {
+    return !locBool(env, $('x'));
+  }],
 }];

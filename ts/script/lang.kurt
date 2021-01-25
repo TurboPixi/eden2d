@@ -9,17 +9,19 @@ Principles:
 - Eval all the things: If it's possible to eval it, do. Maximize dynamic insanity.
 - Error early: Don't silently coerce things. Broken programs should fail quickly.
 - Blocks are nothing special: Just lists that follow the right structure.
-- TODO: Something about scopes, dicts, params...
+- TODO: Something about env, dicts, params...
 
 
 TODO:
 - Splats...
-- Resolve def/set ambiguity.
+- single-quote symbols.
+- Resolve def/set ambiguity. nil === missing?
 - Something about accessor functions? [ent :value] vs [[ent :value]]
 - Mixed env + positional args
 - Explore macros, quasi-quoting
   Making this work will require dynamic dict keys
 - Backquote string literals?
+- Read caller?
 ]-
 
 -[ Primitive values ]-
@@ -38,23 +40,23 @@ TODO:
   {sym:expr ...}          -- eval'd dict
 
 -[ Evaluation ]-
-  sym                     -- default scope value at sym
-  [:sym]                  -- (same -- shorthand for [scope :sym])
-  [{scope} expr]          -- expr -- evaluate expr in scope (also gives [scope:expr] as accessor)
-  [{scope} block]         -- expr -- evaluate block in scope
-  [{env = ...} block]     -- expr -- evaluate block in scope, with explicit environment
+  sym                     -- default env value at sym
+  [:sym]                  -- (same -- shorthand for [env :sym])
+  [{env} expr]            -- expr -- evaluate expr in env (also gives [env:expr] as accessor)
+  [{env} block]           -- expr -- evaluate block in env
+  [{env = ...} block]     -- expr -- evaluate block in env, with explicit environment
   [block expr*]           -- rewrite to [{p0:expr0 p1:expr1 ...} expr] -- bind expr* to params, in order
 
 -[ Definition ]-
-  [def (scope) {sym = expr ...}]  -- define :sym in scope
-  [set (scope) {sym = expr ...}]  -- set :sym in scope (if defined)
-  [? (scope):sym]                 -- true if :sym is defined in scope
+  [def (env) {sym = expr ...}]  -- define :sym in env
+  [set (env) {sym = expr ...}]  -- set :sym in env (if defined)
+  [? (env):sym]                 -- true if :sym is defined in env
 
 -[ Blocks ]-
   [x y | + x y]           -- block with two params
   [x | + x 1]             -- block with one param
   [| + 1 2]               -- block with no params
-  [x y | {scope} | + x y] -- (TODO) block with two params, with an explicit environment
+  [x y | {env} | + x y]   -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-
 [def :add [a b | + a b]]
@@ -67,14 +69,14 @@ TODO:
 [block 1 2 3 4 5]                       -- logs 1 / 2 / [3 4 5]
 [{a = 1 b = 2 ...rest = [3 4 5]} block] -- ditto
 
--[ Scoped expressions ]-
+-[ Expressions with env ]-
 [{a = 6} [+ a 7]]
 -- 13
 
 -[ Block evaluation ]-
 [{a = 6 b = 7} add]
 -[
-  [{a = 6 b = 7} [a b| [{x = a y = b} +]]]  -- named args as prefix scope
+  [{a = 6 b = 7} [a b| [{x = a y = b} +]]]  -- named args as prefix env
   [{a = 6 b = 7}       [{x = a y = b} +]]   --   merged with formal parameters
   [                     {x = 6 y = 7} +]    --   and evaluated with the body
                         13

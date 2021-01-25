@@ -4,12 +4,12 @@ import { Render } from "./render";
 import { parse } from "./script/kurt";
 import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
-import { lookupSym, scopeEval } from "./script/scope";
+import { lookupSym, envEval } from "./script/env";
 
 export let EntityClass = [_def, { 'Entity': {
-  'jump': [$('chunk'), _blk, (scope: Dict) => {
-    let self = locEnt(scope, $('@'));
-    let to = locChunk(scope, $('chunk'));
+  'jump': [$('chunk'), _blk, (env: Dict) => {
+    let self = locEnt(env, $('@'));
+    let to = locChunk(env, $('chunk'));
     to.addEntity(self);
     return self;
   }],
@@ -37,8 +37,8 @@ export class Entity implements IDict {
   private _comps: EDict = {};
   private _parent: EExpr;
 
-  constructor(scope: Dict) {
-    this._parent = lookupSym(scope, $('Entity'));
+  constructor(env: Dict) {
+    this._parent = lookupSym(env, $('Entity'));
   }
 
   get id(): number { return this._id }
@@ -51,7 +51,7 @@ export class Entity implements IDict {
       case 'chunk':
       case 'id':
       case symName(_parentTag):
-        // TODO: Pass scope to def/ref?
+        // TODO: Pass env to def/ref?
         chuck(_root, `can't set ${symName(sym)} on Entity`);
     }
     this._comps[name] = value;
@@ -79,7 +79,7 @@ export class Entity implements IDict {
   }
 }
 
-// Convenience scope implementation for simple components.
+// Convenience env implementation for simple components.
 // TODO: add type checking and read-only semantics?
 export class NativeComp implements IDict {
 
@@ -106,20 +106,20 @@ export class NativeComp implements IDict {
 }
 
 export function isEntity(expr: EExpr): Entity {
-  let scope = isDict(expr);
-  while (scope) {
-    if (scope instanceof Entity) {
+  let env = isDict(expr);
+  while (env) {
+    if (env instanceof Entity) {
       return expr as Entity;
     }
-    scope = dictParent(scope);
+    env = dictParent(env);
   }
   return undefined;
 }
 
-export function locEnt(scope: Dict, sym: ESym): Entity {
-  let ent = isEntity(scopeEval(scope, sym));
+export function locEnt(env: Dict, sym: ESym): Entity {
+  let ent = isEntity(envEval(env, sym));
   if (ent === undefined) {
-    chuck(scope, `${name}: ${dictRef(scope, sym)} is not an entity`);
+    chuck(env, `${name}: ${dictRef(env, sym)} is not an entity`);
   }
   return ent as Entity;
 }

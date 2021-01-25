@@ -9,7 +9,6 @@ import { builtinDefs } from "./script/builtins";
 import { UI } from "./ui";
 import { WorldPanel } from "./worldpanel";
 import { runTests } from "./test";
-import { parse } from "./script/kurt";
 
 export interface PanelOwner {
   readonly world: World;
