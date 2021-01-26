@@ -3,23 +3,23 @@ import { Chunk } from "./chunk";
 import { Panel, PanelOwner } from "./eden";
 import { Key } from "./key";
 import { _eval } from "./script/eval";
-import { $, $$ } from "./script/script";
+import { $, $$, EExpr } from "./script/script";
 import { Dict, isDict } from "./script/dict";
 import { parse } from "./script/kurt";
 
-import containereditor_kurt from "./containereditor.kurt";
+import containerpanel_kurt from "./containerpanel.kurt";
 
 export class ContainerPanel implements Panel {
   private _container: Container;
-  private _editor: Dict;
+  private _impl: Dict;
 
   constructor(private _contChunk: Chunk, private _owner: PanelOwner) {
-    _eval(_owner.world, parse(containereditor_kurt)); // TODO: Do this only once.
+    _eval(_owner.world, parse(containerpanel_kurt)); // TODO: Do this only once.
 
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._editor = isDict(_eval(_owner.world, [[$('ContainerEditor'), $$('make')], _contChunk, 10, 10]));
+    this._impl = isDict(_eval(_owner.world, [[$('ContainerPanel'), $$('make')], _contChunk, 10, 10]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);
@@ -39,23 +39,20 @@ export class ContainerPanel implements Panel {
 
   keyDown(evt: KeyboardEvent): void {
     switch (evt.keyCode) {
-      case Key.ESCAPE: this.close(); break;
-      case Key.W: this.moveCursor(0, -1); break;
-      case Key.S: this.moveCursor(0, 1); break;
-      case Key.A: this.moveCursor(-1, 0); break;
-      case Key.D: this.moveCursor(1, 0); break;
-      case Key.SPACE:
-        _eval(this._owner.world, [[this._editor, $$('toggle')]]);
+      case Key.W:     this.call('move-cursor', 0, -1); break;
+      case Key.S:     this.call('move-cursor', 0, 1); break;
+      case Key.A:     this.call('move-cursor', -1, 0); break;
+      case Key.D:     this.call('move-cursor', 1, 0); break;
+      case Key.SPACE: this.call('toggle'); break;
+
+      case Key.ESCAPE:
+        this.call('close');
+        this._owner.popPanel();
         break;
     }
   }
 
-  private close() {
-    this._owner.popPanel();
-    _eval(this._owner.world, [[this._editor, $$('close')]]);
-  }
-
-  private moveCursor(dx: number, dy: number) {
-    _eval(this._owner.world, [[this._editor, $$('move-cursor')], dx, dy]);
+  private call(blockName: string, ...expr: EExpr[]): EExpr {
+    return _eval(this._owner.world, [[this._impl, $$(blockName)], ...expr]);
   }
 }

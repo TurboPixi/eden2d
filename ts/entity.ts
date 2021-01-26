@@ -76,8 +76,8 @@ export class Entity implements IDict {
   hasComp(key: ESym): boolean { return symName(key) in this._comps; }
 
   // Accessors for common component types.
-  loc(): Loc { return this.ref($('loc')) as Loc }
-  render(): Render { return this.ref($('render')) as Render }
+  get loc(): Loc { return this.ref($('loc')) as Loc }
+  get render(): Render { return this.ref($('render')) as Render }
 
   setChunkAndId(chunk: Chunk, id: number) {
     this._chunk = chunk;

@@ -71,7 +71,7 @@ export class Chunk implements IDict {
     let ents: Entity[] = [];
     for (let id in this._entities) {
       let ent = this._entities[id];
-      let loc = ent.loc();
+      let loc = ent.loc;
       if (loc) {
         if (loc.x == x && loc.y == y) {
           ents.push(ent);
@@ -92,8 +92,8 @@ export class Chunk implements IDict {
     let idx = this._nextId++;
     entity.setChunkAndId(this, idx);
     this._entities[idx] = entity;
-    if (entity.render()) {
-      this._container.addChild(entity.render().sprite);
+    if (entity.render) {
+      this._container.addChild(entity.render.sprite);
     }
   }
 
@@ -104,8 +104,8 @@ export class Chunk implements IDict {
 
     delete this._entities[entity.id];
     entity.setChunkAndId(null, 0);
-    if (entity.render()) {
-      this._container.removeChild(entity.render().sprite);
+    if (entity.render) {
+      this._container.removeChild(entity.render.sprite);
     }
   }
 
@@ -116,8 +116,8 @@ export class Chunk implements IDict {
     // TODO: Add some kind of component dirty tracking to avoid running through them all?
     for (let id in this._entities) {
       let ent = this._entities[id];
-      let loc = ent.loc();
-      let render = ent.render();
+      let loc = ent.loc;
+      let render = ent.render;
       if (loc && render) {
         render.sprite.position.x = loc.x * 16;
         render.sprite.position.y = loc.y * 16;

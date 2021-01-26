@@ -74,12 +74,22 @@
     make = [ent target-chunk target-x target-y |
       set ent {
         portal = {
+          ^ = Portal:impl
           target-chunk = target-chunk
           target-x = target-x
           target-y = target-y
         }
       }
     ]
+
+    impl = {
+      perform = [ent action | if [= action:action :enter]
+        [| do
+          [action:ent:jump @:target-chunk]
+          [action:ent:move-to @:target-x @:target-y]
+        ]
+      ]
+    }
   }
 
 }]

@@ -22,66 +22,18 @@
     ]
 
     impl = {
-      selected-item = [ent | @:contents:top-with @:slot 0 :portable]
+      selected-item = [ent |
+        @:contents:top-with @:slot 0 :portable
+      ]
+
+      select-inv = [slot | do
+        [set @ {slot = slot}]
+        [@:cursor-ent:move-to slot 0]
+      ]
+
+      inv-target = [comp |
+        @:contents:top-with @:slot 0 comp
+      ]
     }
-
-    -- Static blocks to operate directly on entities with a player component.
-    -- TODO: Seems like there ought to be a better pattern for this.
-    contents = [ent | do
-      [def {player = ent:player}]
-      [if ?:player [|player:contents]]
-    ]
-
-    follow = [ent | do
-      [def {portal-ent = [ent:top-with :portal]}]
-      [if ?:portal-ent [| do
-        [def {portal = portal-ent:portal}]
-        [ent:jump portal:target-chunk]
-        [ent:move-to portal:target-x portal:target-y]
-      ]]
-    ]
-
-    take = [ent | do
-      [def {target = [ent:top-with :portable]}]
-      [if ?:target [| do
-        [def {player = ent:player}]
-        [[[target:jump player:contents]:move-to] player:slot 0]
-      ]]
-    ]
-
-    put = [ent | do
-      [def {
-        player = ent:player
-        target = [Player:inv-target ent :portable]
-      }]
-      [if ?:target [| do
-        [def {loc = ent:loc}]
-        [[[target:jump ent:chunk]:move-to] loc:x loc:y]
-      ]]
-    ]
-
-    add-inv = [player-ent item | do
-      [def {player = player-ent:player}]
-      [player:contents:add item]
-      [item:move-to player:slot 0]
-    ]
-
-    open-item = [ent | do
-      [def {target = [Player:inv-target ent :container]}]
-      [if ?:target [|
-        target:container:chunk
-      ]]
-    ]
-
-    inv-target = [ent comp | do
-      [def {player = ent:player}]
-      [player:contents:top-with player:slot 0 comp]
-    ]
-
-    select = [ent slot | do
-      [def {player = ent:player}]
-      [set player {slot = slot}]
-      [player:cursor-ent:move-to slot 0]
-    ]
   }
 }]

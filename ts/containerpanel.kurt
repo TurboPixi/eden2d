@@ -1,8 +1,8 @@
 [def {
-  ContainerEditor = {
+  ContainerPanel = {
     make = [chunk w h |
       {
-        ^ = ContainerEditor:impl
+        ^ = ContainerPanel:impl
         chunk = chunk
         cursor = [UI:Cursor:make chunk]
         width = w

@@ -4,9 +4,13 @@ import { ContainerPanel } from "./containerpanel";
 import { Panel, PanelOwner } from "./eden";
 import { Entity, isEntity } from "./entity";
 import { Key } from "./key";
+import { Dict, isDict } from "./script/dict";
 import { _eval } from "./script/eval";
+import { parse } from "./script/kurt";
 import { $, $$, EExpr, nil } from "./script/script";
 import { World } from "./world";
+
+import worldpanel_kurt from "./worldpanel.kurt";
 
 export class WorldPanel implements Panel {
   private _world: World;
@@ -14,23 +18,26 @@ export class WorldPanel implements Panel {
   private _chunk: Chunk;
   private _invChunk: Chunk;
   private _player: Entity;
+  private _impl: Dict;
 
   constructor(private _owner: PanelOwner) {
+    _eval(_owner.world, parse(worldpanel_kurt)); // TODO: Do this only once.
+
     this._world = this._owner.world;
 
     let chunk = this.createChunk();
     this._player = isEntity(this.eval($('player-make'), chunk));
-
-    this._invChunk = this.eval([$('Player'), $$('contents')], this._player) as Chunk;
-
-    this._container = new Container();
+    this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')], this._player]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);
     bg.drawRect(0, 0, 16 * 10 * 4, 16 * 4);
     bg.endFill();
 
+    this._container = new Container();
     this._container.addChild(bg);
+
+    this._invChunk = this.eval([this._player, $$('player')], $$('contents')) as Chunk;
     this._container.addChild(this._invChunk.container);
 
     this.showChunk(chunk);
@@ -38,10 +45,6 @@ export class WorldPanel implements Panel {
 
   get container(): Container {
     return this._container;
-  }
-
-  private eval(...expr: EExpr[]): EExpr {
-    return _eval(this._world, expr);
   }
 
   private createChunk(): Chunk {
@@ -53,32 +56,6 @@ export class WorldPanel implements Panel {
     return chunk0;
   }
 
-  private openContainer(chunk: Chunk) {
-    this._owner.showPanel(new ContainerPanel(chunk, this._owner));
-  }
-
-  private move(dx: number, dy: number) {
-    this.eval([this._player, $$('perform')], [$('action-move'), dx, dy]);
-  }
-
-  private enter() {
-    let portal = this.eval([[this._player, $$('player')], $$('selected-item')]);
-    if (portal !== nil) {
-      this.eval([portal, $$('perform')], [$('action-enter'), portal]);
-    }
-  }
-
-  private useSelected() {
-    let selected = this.eval([[this._player, $$('player')], $$('selected-item')]);
-    if (selected !== nil) {
-      this.eval([selected, $$('perform')], [$('action-use'), this._player]);
-    }
-  }
-
-  private select(slot: number) {
-    this.eval([$('Player'), $$('select')], this._player, slot);
-  }
-
   tick(): void {
     // Follow the player across chunks.
     let chunk = this._player.chunk;
@@ -88,8 +65,8 @@ export class WorldPanel implements Panel {
 
     this._invChunk.render(0, 0, 4);
 
-    let px = this._player.loc().x;
-    let py = this._player.loc().y;
+    let px = this._player.loc.x;
+    let py = this._player.loc.y;
     let x = (px - 4) * 16;
     let y = (py - 4) * 16;
     this._chunk.render(x, y, 4);
@@ -97,38 +74,28 @@ export class WorldPanel implements Panel {
 
   keyDown(evt: KeyboardEvent) {
     switch (evt.keyCode) {
-      // Move.
-      case Key.UP: case Key.W: this.move(0, -1); break;
-      case Key.DOWN: case Key.S: this.move(0, 1); break;
-      case Key.LEFT: case Key.A: this.move(-1, 0); break;
-      case Key.RIGHT: case Key.D: this.move(1, 0); break;
+      case Key.UP:    case Key.W: this.call('move',  0, -1); break;
+      case Key.DOWN:  case Key.S: this.call('move',  0,  1); break;
+      case Key.LEFT:  case Key.A: this.call('move', -1,  0); break;
+      case Key.RIGHT: case Key.D: this.call('move',  1,  0); break;
 
-      // Enter.
-      case Key.ENTER: this.eval([$('Player'), $$('follow')], this._player); break;
+      case Key.ENTER: this.call('enter');        break;
+      case Key.Q:     this.call('use-selected'); break;
+      case Key.SPACE: this.call('take');         break;
+      case Key.R:     this.call('put');          break;
+      case Key.E:     this.openSelected();       break;
 
-      // Use.
-      case Key.Q: this.useSelected(); break;
+      case Key._1: case Key._2: case Key._3:
+      case Key._4: case Key._5: case Key._6:
+      case Key._7: case Key._8: case Key._9: this.call('select-inv', evt.keyCode - Key._1); break;
+      case Key._0:                           this.call('select-inv', 9);                    break;
+    }
+  }
 
-      // Open
-      case Key.E:
-        let chunk = isChunk(this.eval([$('Player'), $$('open-item')], this._player));
-        if (chunk) {
-          this.openContainer(chunk);
-        }
-        break;
-
-      // Take, put.
-      case Key.SPACE: this.eval([$('Player'), $$('take')], this._player); break;
-      case Key.R: this.eval([$('Player'), $$('put')], this._player); break;
-
-      // Selection.
-      case Key._1: case Key._2: case Key._3: case Key._4:
-      case Key._5: case Key._6: case Key._7: case Key._8: case Key._9:
-        this.select(evt.keyCode - Key._1)
-        break;
-      case Key._0:
-        this.select(9);
-        break;
+  private openSelected() {
+    let chunk = isChunk(this.call('selected-container'));
+    if (chunk) {
+      this._owner.showPanel(new ContainerPanel(chunk, this._owner));
     }
   }
 
@@ -138,5 +105,13 @@ export class WorldPanel implements Panel {
     }
     this._chunk = chunk;
     this._container.addChildAt(this._chunk.container, 0);
+  }
+
+  private call(blockName: string, ...expr: EExpr[]): EExpr {
+    return _eval(this._owner.world, [[this._impl, $$(blockName)], ...expr]);
+  }
+
+  private eval(...expr: EExpr[]): EExpr {
+    return _eval(this._world, expr);
   }
 }

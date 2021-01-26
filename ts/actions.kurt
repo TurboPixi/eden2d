@@ -1,6 +1,6 @@
 [def {
   action-move  = [dx dy | {action = :move dx = dx dy = dy}]
   action-use   = [user | {action = :use user = user}]
-  action-enter = [portal | {action = :enter portal = portal}]
+  action-enter = [ent | {action = :enter ent = ent}]
   action-open  = [ent | {action = :open ent = ent}]
 }]
