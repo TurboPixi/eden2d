@@ -84,6 +84,7 @@ export class WorldPanel implements Panel {
       case Key.SPACE: this.call('take');         break;
       case Key.R:     this.call('put');          break;
       case Key.E:     this.openSelected();       break;
+      case Key.O:     this.call('open');         break;
 
       case Key._1: case Key._2: case Key._3:
       case Key._4: case Key._5: case Key._6:

@@ -28,7 +28,7 @@
     make = [chunk | do
       [def {ent = [make-ent]}]
       [Loc:make ent]
-      [Door:make ent :["tile-door-ew" "tile-door-ns"]]
+      [Door:make ent "tile-door-ew" "tile-door-ns"]
       [chunk:add ent]
     ]
   }
@@ -47,26 +47,32 @@
     ]
   }
 
+  -- Door component.
   Door = {
-    make = [ent states | do
+    make = [ent closed-img open-img | do
       [def {
-        render = [Render:make ent "tile-door-ew"]
+        render = [Render:make ent closed-img]
         door = {
+          ^ = Door:impl
           open = false
-          states = states
+          closed-img = closed-img
+          open-img = open-img
         }
       }]
       [set ent {door = door}]
     ]
 
-    toggle = [ent | do
-      [def {
-        door = ent:door
-        render = ent:render
-      }]
-      [set door {open = [! door:open]}]
-      [set render {image-key = [door:states [if door:open 1 0]]}]
-    ]
+    impl = {
+      perform = [ent action | if [= action:action :open]
+        [| @:toggle ent]
+      ]
+
+      toggle = [ent | do
+        [set @ {open = [! @:open]}]
+        [log @:open]
+        [set ent:render {image-key = [if @:open @:open-img @:closed-img]}]
+      ]
+    }
   }
 
   -- Entities with the Portal component transport an entity to another location/chunk.
@@ -91,5 +97,4 @@
       ]
     }
   }
-
 }]

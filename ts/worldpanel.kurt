@@ -15,8 +15,15 @@
       enter = [| do
         [def {loc = @:player:loc}]
         [def {portal = [@:player:chunk:top-with loc:x loc:y :portal]}]
-        [if [? :portal] [|
+        [if ?:portal [|
           [portal:perform [action-enter @:player]]
+        ]]
+      ]
+
+      open = [| do
+        [def {door = [@:player:top-with :door]}]
+        [if ?:door [|
+          door:perform [action-open @:player]
         ]]
       ]
 
