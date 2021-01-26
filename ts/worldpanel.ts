@@ -5,20 +5,23 @@ import { Panel, PanelOwner } from "./eden";
 import { Entity, isEntity } from "./entity";
 import { Key } from "./key";
 import { _eval } from "./script/eval";
-import { $, $$, EExpr } from "./script/script";
+import { $, $$, EExpr, nil } from "./script/script";
+import { World } from "./world";
 
 export class WorldPanel implements Panel {
+  private _world: World;
   private _container: Container;
   private _chunk: Chunk;
   private _invChunk: Chunk;
   private _player: Entity;
 
   constructor(private _owner: PanelOwner) {
-    let world = this._owner.world;
-    let chunk = this.createChunk();
-    this._player = isEntity(_eval(world, [$('player-make'), chunk]));
+    this._world = this._owner.world;
 
-    this._invChunk = _eval(world, [[$('Player'), $$('contents')], this._player]) as Chunk;
+    let chunk = this.createChunk();
+    this._player = isEntity(this.eval($('player-make'), chunk));
+
+    this._invChunk = this.eval([$('Player'), $$('contents')], this._player) as Chunk;
 
     this._container = new Container();
 
@@ -37,13 +40,16 @@ export class WorldPanel implements Panel {
     return this._container;
   }
 
+  private eval(...expr: EExpr[]): EExpr {
+    return _eval(this._world, expr);
+  }
+
   private createChunk(): Chunk {
-    let world = this._owner.world;
-    let chunk0 = world.toyChunk();
-    let chunk1 = world.toyChunk();
-    _eval(world, [[$('Stairs'), $$('make')], chunk0, 1, 5, chunk1, 0, 5, false]);
-    _eval(world, [[$('Stairs'), $$('make')], chunk1, 1, 5, chunk0, 2, 5, true]);
-    _eval(world, [[chunk0, $$('add')], [[$('Wand'), $$('make')]]]);
+    let chunk0 = this._world.toyChunk();
+    let chunk1 = this._world.toyChunk();
+    this.eval([$('Stairs'), $$('make')], chunk0, 1, 5, chunk1, 0, 5, false);
+    this.eval([$('Stairs'), $$('make')], chunk1, 1, 5, chunk0, 2, 5, true);
+    this.eval([chunk0, $$('add')], [[$('Wand'), $$('make')]]);
     return chunk0;
   }
 
@@ -51,16 +57,19 @@ export class WorldPanel implements Panel {
     this._owner.showPanel(new ContainerPanel(chunk, this._owner));
   }
 
-  private perform(action: EExpr) {
-    _eval(this._owner.world, [[this._player, $$('perform')], action]);
+  private move(dx: number, dy: number) {
+    this.eval([this._player, $$('perform')], [$('action-move'), dx, dy]);
   }
 
-  private move(dx: number, dy: number) {
-    this.perform([$('action-move'), this._player, dx, dy]);
+  private useSelected() {
+    let selected = this.eval([[this._player, $$('player')], $$('selected-item')]);
+    if (selected !== nil) {
+      this.eval([selected, $$('perform')], [$('action-use'), this._player]);
+    }
   }
 
   private select(slot: number) {
-    _eval(this._owner.world, [[$('Player'), $$('select')], this._player, slot]);
+    this.eval([$('Player'), $$('select')], this._player, slot);
   }
 
   tick(): void {
@@ -80,8 +89,6 @@ export class WorldPanel implements Panel {
   }
 
   keyDown(evt: KeyboardEvent) {
-    let world = this._owner.world;
-
     switch (evt.keyCode) {
       // Move.
       case Key.UP: case Key.W: this.move(0, -1); break;
@@ -90,22 +97,22 @@ export class WorldPanel implements Panel {
       case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
       // Go.
-      case Key.ENTER: _eval(world, [[$('Player'), $$('follow')], this._player]); break;
+      case Key.ENTER: this.eval([$('Player'), $$('follow')], this._player); break;
 
       // Use.
-      case Key.Q: _eval(world, [[$('Player'), $$('use-item')], this._player]); break;
+      case Key.Q: this.useSelected(); break;
 
       // Open
       case Key.E:
-        let chunk = isChunk(_eval(world, [[$('Player'), $$('open-item')], this._player]));
+        let chunk = isChunk(this.eval([$('Player'), $$('open-item')], this._player));
         if (chunk) {
           this.openContainer(chunk);
         }
         break;
 
       // Take, put.
-      case Key.SPACE: _eval(world, [[$('Player'), $$('take')], this._player]); break;
-      case Key.R: _eval(world, [[$('Player'), $$('put')], this._player]); break;
+      case Key.SPACE: this.eval([$('Player'), $$('take')], this._player); break;
+      case Key.R: this.eval([$('Player'), $$('put')], this._player); break;
 
       // Selection.
       case Key._1: case Key._2: case Key._3: case Key._4:

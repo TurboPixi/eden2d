@@ -343,18 +343,24 @@ function applySet(env: Dict, list: EList): EExpr {
 }
 
 function applyExists(env: Dict, list: EList): EExpr {
-  let arg0 = _eval(env, list[1]);
-  let arg1 = _eval(env, list[2]);
-
+  let ctx: Dict;
   let sym: ESym;
-  let ctx = isDict(arg0) as Dict;
-  if (ctx) {
-    sym = isSym(arg1);
-  } else {
-    ctx = env;
-    sym = isSym(arg0);
+  switch (list.length) {
+    case 2:
+      ctx = env;
+      sym = isSym(_eval(env, list[1]));
+      break;
+    case 3:
+      ctx = isDict(_eval(env, list[1]));
+      sym = isSym(_eval(env, list[2]));
+      break;
+    default:
+      chuck(env, `? requires 1 or two arguments; got ${list.length - 1}`);
   }
 
+  if (ctx === nil) {
+    return false;
+  }
   return !!dictFind(ctx, sym);
 }
 

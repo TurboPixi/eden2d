@@ -26,7 +26,7 @@
       [Render:make ent "object-sword"]
       [Portable:make ent]
       [Usable:make ent [user | do
-        [Programmed:expr ent:programmed user]
+        [ent:programmed:block user]
       ]]
       [Programmed:make ent]
       [Container:make ent ent:programmed:program]
@@ -42,9 +42,18 @@
   }
 
   Usable = {
-    make = [ent action |
-      def ent {usable = action}
+    make = [ent fn |
+      def ent {usable = {
+        ^ = Usable:impl
+        fn = fn
+      }}
     ]
+
+    impl = {
+      perform = [ent action | if [= action:action :use]
+        [| @:fn action:user]
+      ]
+    }
   }
 
   Container = {
@@ -56,15 +65,18 @@
   }
 
   Programmed = {
-    make = [ent | do
-      [def {program = [make-chunk]}]
-      [def ent {programmed = {
-        program = program
-      }}]
+    make = [ent |
+      def ent {programmed = {
+        ^ = Programmed:impl
+        program = [make-chunk]
+      }}
     ]
 
-    expr = [programmed user |
-      [| [[user:chunk:add [Crate:make]] :move-to] user:loc:x user:loc:y]
-    ]
+    impl = {
+      block = [user |
+        -- Fake placeholder code. Should come from program chunk.
+        [| [[user:chunk:add [Crate:make]] :move-to] user:loc:x user:loc:y]
+      ]
+    }
   }
 }]

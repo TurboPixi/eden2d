@@ -25,6 +25,13 @@ export class Chunk implements IDict {
       return ent;
     }],
 
+    'entities-at': [$('x'), $('y'), _blk, (env: Dict) => {
+      let chunk = locChunk(env, _self);
+      let x = locNum(env, $('x'));
+      let y = locNum(env, $('y'));
+      return chunk.entitiesAt(x, y);
+    }],
+
     'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
       let chunk = locChunk(env, _self);
       let x = locNum(env, $('x'));
@@ -38,6 +45,7 @@ export class Chunk implements IDict {
       }
       return nil;
     }],
+
   };
 
   private _entities: { [id: number]: Entity } = {};

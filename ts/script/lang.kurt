@@ -13,7 +13,8 @@ Principles:
 
 
 TODO:
-- Single-symbol dict initialization
+- Allow dict entries without ' = ' spacing.
+- Single-symbol dict initialization.
 - Splats...
 - single-quote symbols.
 - Resolve def/set ambiguity. nil === missing?

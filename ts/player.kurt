@@ -13,12 +13,17 @@
     make = [ent | do
       [def {inv-chunk = [make-chunk]}]
       [set ent {player = {
+        ^ = Player:impl
         slot = 0
         contents = inv-chunk
         cursor-ent = [UI:Cursor:make inv-chunk]
       }}]
       ent
     ]
+
+    impl = {
+      selected-item = [ent | @:contents:top-with @:slot 0 :portable]
+    }
 
     -- Static blocks to operate directly on entities with a player component.
     -- TODO: Seems like there ought to be a better pattern for this.
@@ -59,13 +64,6 @@
       [def {player = player-ent:player}]
       [player:contents:add item]
       [item:move-to player:slot 0]
-    ]
-
-    use-item = [ent | do
-      [def {target = [Player:inv-target ent :usable]}]
-      [if ?:target [|
-        [target:usable ent]
-      ]]
     ]
 
     open-item = [ent | do
