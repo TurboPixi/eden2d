@@ -8,38 +8,38 @@ import { locNum, locSym, envEval } from "./script/env";
 
 export type ChunkId = number;
 
-export let ChunkClass = [_def, {'Chunk': {
-  'add': [$('ent'), _blk, (env: Dict) => {
-    let chunk = locChunk(env, _self);
-    let ent = locEnt(env, $('ent'));
-    chunk.addEntity(ent);
-    return ent;
-  }],
-
-  'remove': [$('ent'), _blk, (env: Dict) => {
-    let chunk = locChunk(env, _self);
-    let ent = locEnt(env, $('ent'));
-    chunk.removeEntity(ent);
-    return ent;
-  }],
-
-  'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
-    let chunk = locChunk(env, _self);
-    let x = locNum(env, $('x'));
-    let y = locNum(env, $('y'));
-    let comp = locSym(env, $('comp'));
-    let ents = chunk.entitiesAt(x, y);
-    for (var ent of ents) {
-      if (ent.ref(comp) !== nil) {
-        return ent;
-      }
-    }
-    return nil;
-  }],
-}}];
-
 // TODO: Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
 export class Chunk implements IDict {
+  static Dict = {
+    'add': [$('ent'), _blk, (env: Dict) => {
+      let chunk = locChunk(env, _self);
+      let ent = locEnt(env, $('ent'));
+      chunk.addEntity(ent);
+      return ent;
+    }],
+
+    'remove': [$('ent'), _blk, (env: Dict) => {
+      let chunk = locChunk(env, _self);
+      let ent = locEnt(env, $('ent'));
+      chunk.removeEntity(ent);
+      return ent;
+    }],
+
+    'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
+      let chunk = locChunk(env, _self);
+      let x = locNum(env, $('x'));
+      let y = locNum(env, $('y'));
+      let comp = locSym(env, $('comp'));
+      let ents = chunk.entitiesAt(x, y);
+      for (var ent of ents) {
+        if (ent.ref(comp) !== nil) {
+          return ent;
+        }
+      }
+      return nil;
+    }],
+  };
+
   private _entities: { [id: number]: Entity } = {};
   private _nextId = 1;
   private _container: Container;
@@ -50,6 +50,7 @@ export class Chunk implements IDict {
     _eval(_world, [_set, this, {'^': $('Chunk')}]);
   }
 
+  get world(): World { return this._world }
   get id(): number { return this._id }
   get container(): Container { return this._container }
 

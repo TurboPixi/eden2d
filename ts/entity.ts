@@ -6,32 +6,36 @@ import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
 import { lookupSym, envEval } from "./script/env";
 
-export let EntityClass = [_def, { 'Entity': {
-  'jump': [$('chunk'), _blk, (env: Dict) => {
-    let self = locEnt(env, $('@'));
-    let to = locChunk(env, $('chunk'));
-    to.addEntity(self);
-    return self;
-  }],
-
-  'move': parse(`[dx dy | do
-    [def {loc = @:loc}]
-    [@:move-to [+ loc:x dx] [+ loc:y dy]]
-  ]`),
-
-  'move-to': parse(`[x y | do
-    [def {loc = @:loc}]
-    [set loc {x = x}]
-    [set loc {y = y}]
-  ]`),
-
-  'top-with': parse(`[comp | do
-    [def {loc = @:loc}]
-    [@:chunk:top-with loc:x loc:y comp]
-  ]`),
-}}];
-
 export class Entity implements IDict {
+  static Dict = {
+    'jump': [$('chunk'), _blk, (env: Dict) => {
+      let self = locEnt(env, $('@'));
+      let to = locChunk(env, $('chunk'));
+      to.addEntity(self);
+      return self;
+    }],
+
+    'move': parse(`[dx dy | do
+      [def {loc = @:loc}]
+      [@:move-to [+ loc:x dx] [+ loc:y dy]]
+    ]`),
+
+    'move-to': parse(`[x y | do
+      [def {loc = @:loc}]
+      [set loc {x = x}]
+      [set loc {y = y}]
+    ]`),
+
+    'top-with': parse(`[comp | do
+      [def {loc = @:loc}]
+      [@:chunk:top-with loc:x loc:y comp]
+    ]`),
+
+    'perform': parse(`[action | [for-each-entry @:comps [name comp |
+       [if [? comp :perform] [| comp:perform @ action]]
+     ]]]`)
+  };
+
   private _chunk: Chunk;
   private _id: number;
   private _comps: EDict = {};
@@ -50,6 +54,7 @@ export class Entity implements IDict {
     switch (name) {
       case 'chunk':
       case 'id':
+      case 'comps':
       case symName(_parentTag):
         // TODO: Pass env to def/ref?
         chuck(_root, `can't set ${symName(sym)} on Entity`);
@@ -62,6 +67,7 @@ export class Entity implements IDict {
     switch (name) {
       case 'chunk': return this._chunk;
       case 'id': return this._id;
+      case 'comps': return this._comps;
       case symName(_parentTag): return this._parent;
     }
     return this._comps[name];

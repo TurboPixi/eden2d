@@ -27,11 +27,6 @@
       [if ?:player [|player:contents]]
     ]
 
-    move = [ent dx dy | do
-      [def {loc = ent:loc}]
-      [ent:move-to [+ loc:x dx] [+ loc:y dy]]
-    ]
-
     follow = [ent | do
       [def {portal-ent = [ent:top-with :portal]}]
       [if ?:portal-ent [| do

@@ -1,12 +1,13 @@
 import { EExpr, $, $$, chuck, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } from "./script/script";
-import { Chunk, ChunkClass, ChunkId } from "./chunk";
+import { Chunk, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, _root } from "./script/dict";
-import { Entity, EntityClass } from "./entity";
+import { Entity } from "./entity";
 import { parse } from "./script/kurt";
 import { Loc } from "./loc";
 import { Render } from "./render";
 
+import actions_kurt from "./actions.kurt";
 import player_kurt from "./player.kurt";
 import tiles_kurt from "./tiles.kurt";
 import items_kurt from "./items.kurt";
@@ -18,10 +19,13 @@ export class World implements IDict {
   private _defs: EDict = {};
 
   constructor() {
-    _eval(this, ChunkClass);
-    _eval(this, EntityClass);
+    // TODO: It's kind of gross to have to initialize all the scripts this way.
+    // May need some more generalized mechanism for importing.
+    _eval(this, [_def, {'Chunk': Chunk.Dict}]);
+    _eval(this, [_def, {'Entity': Entity.Dict}]);
     _eval(this, [_def, {'Loc': Loc.Dict}]);
     _eval(this, [_def, {'Render': Render.Dict}]);
+    _eval(this, parse(actions_kurt));
     _eval(this, parse(player_kurt));
     _eval(this, parse(tiles_kurt));
     _eval(this, parse(items_kurt));

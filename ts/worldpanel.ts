@@ -5,7 +5,7 @@ import { Panel, PanelOwner } from "./eden";
 import { Entity, isEntity } from "./entity";
 import { Key } from "./key";
 import { _eval } from "./script/eval";
-import { $, $$ } from "./script/script";
+import { $, $$, EExpr } from "./script/script";
 
 export class WorldPanel implements Panel {
   private _container: Container;
@@ -51,8 +51,12 @@ export class WorldPanel implements Panel {
     this._owner.showPanel(new ContainerPanel(chunk, this._owner));
   }
 
+  private perform(action: EExpr) {
+    _eval(this._owner.world, [[this._player, $$('perform')], action]);
+  }
+
   private move(dx: number, dy: number) {
-    _eval(this._owner.world, [[this._player, $$('move')], dx, dy]);
+    this.perform([$('action-move'), this._player, dx, dy]);
   }
 
   private select(slot: number) {

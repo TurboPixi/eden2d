@@ -1,6 +1,6 @@
 import { _apply, _eval } from "./eval";
 import { _print } from "./print";
-import { Dict, dictRef, _root } from "./dict";
+import { Dict, dictNames, dictRef, isDict, _root } from "./dict";
 import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
 import { expectNum, locBool, locNum } from "./env";
 
@@ -86,6 +86,16 @@ export let builtinDefs = [_def, {
     let expr = dictRef(env, $('expr'))
     for (let item of list) {
       _apply(env, [expr, item]);
+    }
+    return nil;
+  }],
+
+  'for-each-entry': [$('dict'), $('expr'), _blk, (env: Dict) => {
+    let dict = isDict(dictRef(env, $('dict')));
+    let expr = dictRef(env, $('expr'))
+    for (let name of dictNames(dict)) {
+      let sym = $(name);
+      _apply(env, [expr, _(sym), dictRef(dict, sym)]);
     }
     return nil;
   }],

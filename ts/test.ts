@@ -1,4 +1,3 @@
-import { _add, _eq, _forEach, _gt, _if, _log } from "./script/builtins";
 import { _eval } from "./script/eval";
 import { parse } from "./script/kurt";
 import { _print } from "./script/print";

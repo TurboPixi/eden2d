@@ -13,6 +13,7 @@ Principles:
 
 
 TODO:
+- Single-symbol dict initialization
 - Splats...
 - single-quote symbols.
 - Resolve def/set ambiguity. nil === missing?

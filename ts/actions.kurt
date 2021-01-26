@@ -1,0 +1,11 @@
+[def {
+  action-move = [ent dx dy | {
+    action = :move
+    ent = ent
+    dx = dx
+    dy = dy
+  }]
+
+  action-use  = [ent | { action = :use  ent = ent}]
+  action-open = [ent | { action = :open ent = ent}]
+}]
