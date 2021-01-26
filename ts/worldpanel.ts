@@ -61,6 +61,13 @@ export class WorldPanel implements Panel {
     this.eval([this._player, $$('perform')], [$('action-move'), dx, dy]);
   }
 
+  private enter() {
+    let portal = this.eval([[this._player, $$('player')], $$('selected-item')]);
+    if (portal !== nil) {
+      this.eval([portal, $$('perform')], [$('action-enter'), portal]);
+    }
+  }
+
   private useSelected() {
     let selected = this.eval([[this._player, $$('player')], $$('selected-item')]);
     if (selected !== nil) {
@@ -96,7 +103,7 @@ export class WorldPanel implements Panel {
       case Key.LEFT: case Key.A: this.move(-1, 0); break;
       case Key.RIGHT: case Key.D: this.move(1, 0); break;
 
-      // Go.
+      // Enter.
       case Key.ENTER: this.eval([$('Player'), $$('follow')], this._player); break;
 
       // Use.

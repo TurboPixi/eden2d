@@ -50,7 +50,7 @@
   Door = {
     make = [ent states | do
       [def {
-        render = [Render:make ent "tile-door-ns"]
+        render = [Render:make ent "tile-door-ew"]
         door = {
           open = false
           states = states
