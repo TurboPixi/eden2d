@@ -1,24 +1,28 @@
 [def {
-  -- Quick utility to make a player entity.
-  player-make = [chunk | do
-    [def {ent = [make-ent]}]
-    [Loc:make ent]
-    [Render:make ent "player-0"]
-    [Player:make ent]
-    [chunk:add ent]
-  ]
-
   -- Player component.
   Player = {
-    make = [ent | do
-      [def {inv-chunk = [make-chunk]}]
-      [set ent {player = {
-        ^ = Player:impl
-        slot = 0
-        contents = inv-chunk
-        cursor-ent = [UI:Cursor:make inv-chunk]
-      }}]
-      ent
+    -- Quick utility to make a player entity.
+    make-ent = [chunk |
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent "player-0"]
+        [Player:make ent]
+        [chunk:add ent]
+      ]
+    ]
+
+    make = [ent |
+      {inv-chunk = [make-chunk]}
+      [do
+        [set ent {player = {
+          ^ = Player:impl
+          slot = 0
+          contents = inv-chunk
+          cursor-ent = [UI:Cursor:make inv-chunk]
+        }}]
+        ent
+      ]
     ]
 
     impl = {

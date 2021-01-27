@@ -26,7 +26,7 @@ export class WorldPanel implements Panel {
     this._world = this._owner.world;
 
     let chunk = this.createChunk();
-    this._player = isEntity(this.eval($('player-make'), chunk));
+    this._player = isEntity(this.eval([$('Player'), $$('make-ent')], chunk));
     this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')], this._player]));
 
     let bg = new Graphics();
@@ -109,7 +109,7 @@ export class WorldPanel implements Panel {
   }
 
   private call(blockName: string, ...expr: EExpr[]): EExpr {
-    return _eval(this._owner.world, [[this._impl, $$(blockName)], ...expr]);
+    return this.eval([this._impl, $$(blockName)], ...expr);
   }
 
   private eval(...expr: EExpr[]): EExpr {

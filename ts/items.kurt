@@ -1,43 +1,49 @@
 [def {
   Key = {
-    make = [| do
-      [def {ent = [make-ent]}]
-      [Loc:make ent]
-      [Render:make ent "object-key"]
-      [Portable:make ent]
-      ent
+    make = [|
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent "object-key"]
+        [Portable:make ent]
+        ent
+      ]
     ]
   }
 
   Crate = {
-    make = [| do
-      [def {ent = [make-ent]}]
-      [Loc:make ent]
-      [Render:make ent "object-crate"]
-      [Portable:make ent]
-      ent
+    make = [|
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent "object-crate"]
+        [Portable:make ent]
+        ent
+      ]
     ]
   }
 
   Wand = {
-    make = [| do
-      [def {ent = [make-ent]}]
-      [Loc:make ent]
-      [Render:make ent "object-sword"]
-      [Portable:make ent]
-      [Usable:make ent [user | do
-        [ent:programmed:block user]
-      ]]
-      [Programmed:make ent]
-      [Container:make ent ent:programmed:program]
-      ent
+    make = [|
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent "object-sword"]
+        [Portable:make ent]
+        [Usable:make ent [user | do
+          [ent:programmed:block user]
+        ]]
+        [Programmed:make ent]
+        [Container:make ent ent:programmed:program]
+        ent
+      ]
     ]
   }
 
   -- Entities with the Portable component can be moved.
   Portable = {
-    make = [ent | do
-      [def ent {portable = true}]
+    make = [ent |
+      def ent {portable = true}
     ]
   }
 

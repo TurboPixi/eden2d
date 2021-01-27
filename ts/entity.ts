@@ -31,9 +31,12 @@ export class Entity implements IDict {
       [@:chunk:top-with loc:x loc:y comp]
     ]`),
 
-    'perform': parse(`[action | [for-each-entry @:comps [name comp |
-       [if [? comp :perform] [| comp:perform @ action]]
-     ]]]`)
+    'perform': parse(`[action |
+      for-each-entry @:comps [name comp |
+        if [? comp :perform] [|
+          comp:perform @ action
+        ]
+     ]]`)
   };
 
   private _chunk: Chunk;

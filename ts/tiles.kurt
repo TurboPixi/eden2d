@@ -1,56 +1,66 @@
 [def {
   -- `kind`: function with a single 'chunk' param that produces an entity.
-  make-at = [kind chunk x y | do
-    [def {ent = [kind chunk]}]
-    [ent:move-to x y]
-    ent
+  make-at = [kind chunk x y | 
+    {ent = [kind chunk]}
+    [do
+      [ent:move-to x y]
+      ent
+    ]
   ]
 
   Floor = {
-    make = [chunk | do
-      [def {ent = [make-ent]}]
-      [Loc:make ent]
-      [Render:make ent "tile-blue-tile"]
-      [chunk:add ent]
+    make = [chunk |
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent "tile-blue-tile"]
+        [chunk:add ent]
+      ]
     ]
   }
 
   Wall = {
-    make = [chunk | do
-      [def {ent = [make-ent]}]
-      [Loc:make ent]
-      [Render:make ent "tile-blue-wall"]
-      [chunk:add ent]
+    make = [chunk |
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent "tile-blue-wall"]
+        [chunk:add ent]
+      ]
     ]
   }
 
   WoodDoor = {
-    make = [chunk | do
-      [def {ent = [make-ent]}]
-      [Loc:make ent]
-      [Door:make ent "tile-door-ew" "tile-door-ns"]
-      [chunk:add ent]
+    make = [chunk |
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Door:make ent "tile-door-ew" "tile-door-ns"]
+        [chunk:add ent]
+      ]
     ]
   }
 
   Stairs = {
-    make = [chunk x y target-chunk target-x target-y up? | do
-      [def {ent = [make-ent]}]
-      [Loc:make ent]
-      [Render:make ent [if up?
-        "tile-stair-up"
-        "tile-stair-down"
-      ]]
-      [Portal:make ent target-chunk target-x target-y]
-      [ent:move-to x y]
-      [chunk:add ent]
+    make = [chunk x y target-chunk target-x target-y up? |
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent [if up?
+          "tile-stair-up"
+          "tile-stair-down"
+        ]]
+        [Portal:make ent target-chunk target-x target-y]
+        [ent:move-to x y]
+        [chunk:add ent]
+      ]
     ]
   }
 
   -- Door component.
   Door = {
-    make = [ent closed-img open-img | do
-      [def {
+    make = [ent closed-img open-img |
+      {
         render = [Render:make ent closed-img]
         door = {
           ^ = Door:impl
@@ -58,19 +68,18 @@
           closed-img = closed-img
           open-img = open-img
         }
-      }]
+      }
       [set ent {door = door}]
     ]
 
     impl = {
-      perform = [ent action | if [= action:action :open]
-        [| @:toggle ent]
-      ]
-
-      toggle = [ent | do
-        [set @ {open = [! @:open]}]
-        [log @:open]
-        [set ent:render {image-key = [if @:open @:open-img @:closed-img]}]
+      perform = [ent action |
+        if [= action:action :open] [| do
+          [set @ {open = [! @:open]}]
+          [log @:open]
+          [debug]
+          [set ent:render {image-key = [if @:open @:open-img @:closed-img]}]
+        ]
       ]
     }
   }
