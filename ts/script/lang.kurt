@@ -18,7 +18,9 @@ TODO:
 - Splats...
 - single-quote symbols.
 - Resolve def/set ambiguity. nil === missing?
+- Drop def altogether, in favor of [{local = 42} [+ local 1]] pattern
 - Something about accessor functions? [ent :value] vs [[ent :value]]
+  Also consider something like [obj:set :foo 42] or [obj:set-foo 42] or [obj:set {foo = 42}]
 - Mixed env + positional args
 - Explore macros, quasi-quoting
   Making this work will require dynamic dict keys
