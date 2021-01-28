@@ -85,9 +85,9 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
   return expr;
 }
 
-export function _apply(env: Dict, expr: EList): EExpr {
+export function _apply(env: Dict, _expr: EList): EExpr {
   // Copy so we can see expr in the debugger after modification.
-  let list = expr;
+  let list = _expr;
 
   // Special forms.
   let [result, found] = applySpecial(env, list);
@@ -95,9 +95,10 @@ export function _apply(env: Dict, expr: EList): EExpr {
     return result;
   }
 
+  let elem0 = _eval(env, list[0]);
+
   // Transform application of positional arguments to block.
   // TODO: [{env} expr expr*] for mixed env + positional args
-  let elem0 = _eval(env, list[0]);
   let block = isBlock(elem0);
   if (block) {
     // [block expr*] => [env :block]
@@ -158,6 +159,21 @@ export function _apply(env: Dict, expr: EList): EExpr {
         }
       }
       return maybeWrapBlock(argEnv, expr, _eval(frame, expr));
+    }
+  }
+
+  let arr = isList(elem0);
+  if (arr && list.length == 2) {
+    let acc = _eval(env, list[1]);
+    let accSym = isSym(acc);
+    if (accSym) {
+      let idx = parseInt(symName(accSym));
+      if (isNaN(idx)) {
+        chuck(env, `expected list index; got ${_print(acc)}`);
+      }
+      return arr[idx];
+    } else if (typeof acc == 'number') {
+      return arr[acc];
     }
   }
 

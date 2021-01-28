@@ -2,7 +2,7 @@ import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictNames, dictRef, isDict, _root } from "./dict";
 import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
-import { expectNum, locBool, locNum } from "./env";
+import { envNew, expectNum, locBool, locNum } from "./env";
 
 export const _debug = $('debug');
 export const _and = $('and');
@@ -85,7 +85,7 @@ export let builtinDefs = [_def, {
     let list = isList(dictRef(env, $('list')));
     let expr = dictRef(env, $('expr'))
     for (let item of list) {
-      _apply(env, [expr, item]);
+      _eval(env, [expr, _(item)]);
     }
     return nil;
   }],
@@ -95,7 +95,7 @@ export let builtinDefs = [_def, {
     let expr = dictRef(env, $('expr'))
     for (let name of dictNames(dict)) {
       let sym = $(name);
-      _apply(env, [expr, _(sym), dictRef(dict, sym)]);
+      _eval(env, [expr, _(sym), _(dictRef(dict, sym))]);
     }
     return nil;
   }],

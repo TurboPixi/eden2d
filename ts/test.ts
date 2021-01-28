@@ -23,7 +23,8 @@ export function runTests() {
   testSelfEnv();
   testSetParent();
   testRestParams();
-  testWonkyShit();
+  testListAccessors();
+  testForEachCallbacks();
 
   if (totalFailures == 0) {
     console.log("--[ all passed ]-------------------");
@@ -470,19 +471,41 @@ function testRestParams() {
   )
 }
 
-function testWonkyShit() {
+function testListAccessors() {
   run(
-    "wonky shit",
+    "list accessors",
+    parse(`[do
+      [def {things = :[1 2 3 4 5]}]
+      [test 2 [things 1]]
+      [test 3 things:2]
+      [test 4 [things [+ 1 2]]]
+    ]`)
+  )
+}
+
+function testForEachCallbacks() {
+  run(
+    "for-each callbacks",
     parse(`[do
       [def {
         Comp = {
-          make = [| { ^ = Comp foo = "orig"}]
+          make = [| {
+            ^ = Comp
+            foo = "orig"
+          }]
           mutate = [| set @ {foo = "mutated"}]
         }
       }]
-      [def {comp = [Comp:make]}]
-      [comp:mutate]
-      [test "mutated" comp:foo]
+
+      -- These are cases where we ended up with inadvertent copies of 'comp',
+      -- so mutations wouldn't stick.
+      [def {comps = {comp = [Comp:make]}}]
+      [for-each-entry comps [name value | [value:mutate]]]
+      [test "mutated" comps:comp:foo]
+
+      [def {comps = [list [Comp:make]]}]
+      [for-each comps [value | [value:mutate]]]
+      [test "mutated" comps:0:foo]
     ]`)
   )
 }

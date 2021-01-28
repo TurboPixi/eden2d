@@ -13,18 +13,18 @@
     impl = {
       close = [| @:chunk:remove @:cursor]
 
-      move-cursor = [dx dy| do
-        [def {
+      move-cursor = [dx dy|
+        {
           nx = [+ @:cursor:loc:x dx]
           ny = [+ @:cursor:loc:y dy]
-        }]
+        }
         [if [and [>= nx 0] [>= ny 0] [< nx @:width] [< ny @:height]]
           [| @:cursor:move-to nx ny]
         ]
       ]
 
-      toggle = [| do
-        [def {key = [@:cursor:top-with :portable]}]
+      toggle = [|
+        {key = [@:cursor:top-with :portable]}
         [if ?:key
           [| @:chunk:remove key]
           [| [[@:chunk:add [Key:make]] :move]

@@ -98,19 +98,12 @@ export class NativeComp implements IDict {
 
   ref(sym: ESym): EExpr {
     let name = symName(sym);
-    if (this.hasOwnProperty(name)) {
-      return (this as any)[name];
-    }
-    return nil;
+    return (this as any)[name];
   }
 
   def(sym: ESym, value: EExpr): void {
     let name = symName(sym);
-    if (this.hasOwnProperty(name)) {
-      (this as any)[name] = value;
-      return;
-    }
-    chuck(_root, `unknown property ${name}`);
+    (this as any)[name] = value;
   }
 }
 

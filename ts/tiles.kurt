@@ -76,8 +76,6 @@
       perform = [ent action |
         if [= action:action :open] [| do
           [set @ {open = [! @:open]}]
-          [log @:open]
-          [debug]
           [set ent:render {image-key = [if @:open @:open-img @:closed-img]}]
         ]
       ]

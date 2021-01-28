@@ -1,6 +1,6 @@
 [def {
   WorldPanel = {
-    make = [player | do
+    make = [player |
       {
         ^ = WorldPanel:impl
         player = player 
@@ -8,57 +8,56 @@
     ]
 
     impl = {
-      move = [dx dy |
-        @:player:perform [action-move dx dy]
-      ]
+      move = [dx dy | @:player:perform [action-move dx dy]]
 
-      enter = [| do
-        [def {loc = @:player:loc}]
-        [def {portal = [@:player:chunk:top-with loc:x loc:y :portal]}]
-        [if ?:portal [|
-          [portal:perform [action-enter @:player]]
-        ]]
+      enter = [|
+        {loc = @:player:loc} [
+          {portal = [@:player:chunk:top-with loc:x loc:y :portal]}
+          [if ?:portal [|
+            portal:perform [action-enter @:player]
+          ]]
+        ]
       ]
 
       open = [|
-        {door = [@:player:top-with :door]}
-        [if ?:door [| do
-          [door:perform [action-open @:player]]
-          [log door:door:open]
-        ]]
+        {door = [@:player:top-with :door]} [
+          if ?:door [|
+            door:perform [action-open @:player]
+          ]
+        ]
       ]
 
       select-inv = [slot |
         @:player:player:select-inv slot
       ]
 
-      use-selected = [| do
-        [def {selected = [@:player:player:selected-item]}]
+      use-selected = [|
+        {selected = [@:player:player:selected-item]}
         [if ?:selected [|
           selected:perform [action-use @:player]
         ]]
       ]
 
-      selected-container = [| do
-        [def {target = [@:player:player:inv-target :container]}]
+      selected-container = [|
+        {target = [@:player:player:inv-target :container]}
         [if ?:target [|
           target:container:chunk
         ]]
       ]
 
-      take = [| do
-        [def {target = [@:player:top-with :portable]}]
+      take = [|
+        {target = [@:player:top-with :portable]}
         [if ?:target [| do
           [def {player = @:player:player}]
           [[[target:jump player:contents]:move-to] player:slot 0]
         ]]
       ]
 
-      put = [| do
-        [def {
+      put = [|
+        {
           loc = @:player:loc
           target = [@:player:player:inv-target :portable]
-        }]
+        }
         [if ?:target [|
           [[target:jump @:player:chunk]:move-to] loc:x loc:y
         ]]
