@@ -23,6 +23,7 @@ export function runTests() {
   testSelfEnv();
   testSetParent();
   testRestParams();
+  testWonkyShit();
 
   if (totalFailures == 0) {
     console.log("--[ all passed ]-------------------");
@@ -465,6 +466,23 @@ function testRestParams() {
 
       [test 15 [{^ = env a = 1 b = 2 rest = :[3 4 5]} fn]]
       [test 15 [fn 1 2 3 4 5]]
+    ]`)
+  )
+}
+
+function testWonkyShit() {
+  run(
+    "wonky shit",
+    parse(`[do
+      [def {
+        Comp = {
+          make = [| { ^ = Comp foo = "orig"}]
+          mutate = [| set @ {foo = "mutated"}]
+        }
+      }]
+      [def {comp = [Comp:make]}]
+      [comp:mutate]
+      [test "mutated" comp:foo]
     ]`)
   )
 }
