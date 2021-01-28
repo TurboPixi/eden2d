@@ -1,6 +1,6 @@
 import { _print } from "./print";
 import { Dict, dictDef, dictFind, dictNames, dictRef, _root, _specialProps, isDict, isEDict, translateSym, dictParent } from "./dict";
-import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName } from "./script";
+import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock } from "./script";
 import { lookupSym, envNew, TeeEnv } from "./env";
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.
@@ -58,7 +58,17 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
       // TODO: Consider whether to make it possible to eval dict keys (weird in js, but useful in general).
       let edict = isEDict(expr);
       if (edict) {
-        return evalDict(env, edict);
+        // Copy the dict to a new expression, so we're not mutating the original.
+        let result = {} as EDict;
+        for (let key in edict) {
+          if (key in _specialProps) {
+            // Specials are copied, not eval'd.
+            result[key] = edict[key];
+          } else {
+            dictDef(result, $(key), _eval(env, edict[key]));
+          }
+        }
+        return result;
       }
 
       // Native dict.
@@ -75,20 +85,31 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
   return expr;
 }
 
-export function _apply(env: Dict, list: EList): EExpr {
+export function _apply(env: Dict, expr: EList): EExpr {
+  // Copy so we can see expr in the debugger after modification.
+  let list = expr;
+
   // Special forms.
   let [result, found] = applySpecial(env, list);
   if (found) {
     return result;
   }
 
-  // [arg-env expr] => expr
+  // Transform application of positional arguments to block.
   // TODO: [{env} expr expr*] for mixed env + positional args
   let elem0 = _eval(env, list[0]);
-  let argEnv = isDict(elem0);
-  if (argEnv && list.length > 1) {
-    assertNoExtra(env, list, 2);
+  let block = isBlock(elem0);
+  if (block) {
+    // [block expr*] => [env :block]
+    let frame = rewriteArgs(env, block, list.slice(1));
+    list = [frame, block];
+    elem0 = _eval(env, list[0]);
+  }
 
+  // Evaluate the expression in the context of the given environment.
+  let argEnv = isDict(elem0);
+  if (argEnv && list.length == 2) {
+    // [arg-env expr] => expr
     let overrideEnv = isDict(dictParent(argEnv));
     if (dictRef(argEnv, _parentTag) === nil) {
       argEnv = new TeeEnv(argEnv, env);
@@ -140,62 +161,43 @@ export function _apply(env: Dict, list: EList): EExpr {
     }
   }
 
-  // Transform application of positional arguments to block.
-  // [block expr*] => [env :block]
-  let block = isBlock(elem0);
-  if (block) {
-    let params = blockParams(block);
-    let frame = envNew(nil, env, blockName(block));
-    let args = list.slice(1)
-
-    let consumedAll = false;
-    for (let i = 0; i < params.length; i++) {
-      // Don't eval args; they'll get evaluated after the env transform.
-      let sym = isSym(params[i]);
-      if (!sym) {
-        chuck(env, `expected sym at param ${i}, but got ${params[i]}`);
-      }
-      if (isRestParam(sym)) {
-        // A ...rest param consumes all remaining arguments as a list.
-        // They need to be eval'd in place, because the subsequent application won't do so.
-        sym = $(symName(sym).slice(3)); // Remove the ...
-        dictDef(frame, sym, _(evalListElems(env, args.slice(i))));
-        consumedAll = true;
-      } else {
-        // Normal argument.
-        dictDef(frame, sym, args[i]);
-      }
-    }
-    if (!consumedAll) {
-      assertNoExtra(env, list, params.length + 1);
-    }
-
-    return _eval(env, [frame, block]);
-  }
-
   // [expr]
   assertNoExtra(env, list, 1);
   return elem0;
+}
+
+function rewriteArgs(env: Dict, block: EBlock, args: EList): Dict {
+  let params = blockParams(block);
+  let frame = envNew(nil, env, blockName(block));
+
+  let consumedAll = false;
+  for (let i = 0; i < params.length; i++) {
+    // Don't eval args; they'll get evaluated after the env transform.
+    let sym = isSym(params[i]);
+    if (!sym) {
+      chuck(env, `expected sym at param ${i}, but got ${params[i]}`);
+    }
+    if (isRestParam(sym)) {
+      // A ...rest param consumes all remaining arguments as a list.
+      // They need to be eval'd in place, because the subsequent application won't do so.
+      sym = $(symName(sym).slice(3)); // Remove the ...
+      dictDef(frame, sym, _(evalListElems(env, args.slice(i))));
+      consumedAll = true;
+    } else {
+      // Normal argument.
+      dictDef(frame, sym, args[i]);
+    }
+  }
+  if (!consumedAll) {
+    assertNoExtra(env, args, params.length);
+  }
+  return frame;
 }
 
 function evalListElems(env: Dict, list: EList): EList {
   let result: EList = [];
   for (var i = 0; i < list.length; i++) {
     result[i] = _eval(env, list[i]);
-  }
-  return result;
-}
-
-function evalDict(env: Dict, dict: EDict): EDict {
-  // Copy the dict to a new expression, so we're not mutating the original.
-  let result = {} as EDict;
-  for (let key in dict) {
-    if (key in _specialProps) {
-      // Specials are copied, not eval'd.
-      result[key] = dict[key];
-    } else {
-      dictDef(result, $(key), _eval(env, dict[key]));
-    }
   }
   return result;
 }

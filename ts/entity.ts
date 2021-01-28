@@ -41,8 +41,8 @@ export class Entity implements IDict {
 
   private _chunk: Chunk;
   private _id: number;
-  private _comps: EDict = {};
   private _parent: EExpr;
+  private _comps: EDict = {};
 
   constructor(env: Dict) {
     this._parent = lookupSym(env, $('Entity'));
