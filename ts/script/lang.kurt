@@ -13,7 +13,6 @@ Principles:
 
 
 TODO:
-- [? thing:field] => [? thing :field]
 - {foo = 42 bar} => {foo = 42 bar = bar}
 - [foo bar]:baz => [[foo bar] :baz]
 - Affordance to resolve resolution ambiguity with parent/child envs.

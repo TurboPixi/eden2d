@@ -30,9 +30,7 @@
         [Loc:make ent]
         [Render:make ent "object-sword"]
         [Portable:make ent]
-        [Usable:make ent [user | do
-          [ent:programmed:block user]
-        ]]
+        [Usable:make ent [user | ent:programmed:block user]]
         [Programmed:make ent]
         [Container:make ent ent:programmed:program]
         ent

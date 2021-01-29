@@ -53,6 +53,7 @@ export class WorldPanel implements Panel {
     this.eval([$('Stairs'), $$('make')], chunk0, 1, 5, chunk1, 0, 5, false);
     this.eval([$('Stairs'), $$('make')], chunk1, 1, 5, chunk0, 2, 5, true);
     this.eval([chunk0, $$('add')], [[$('Wand'), $$('make')]]);
+    this.eval([chunk0, $$('add')], [[$('Key'), $$('make')]]);
     return chunk0;
   }
 

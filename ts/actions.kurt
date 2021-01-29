@@ -10,7 +10,7 @@
   }]
 
   action-open = [opener target | {
-    action = :open opener = opener target = target
+    action = :open opener = opener target = target cancel = false
     ents = [list opener target]
   }]
 

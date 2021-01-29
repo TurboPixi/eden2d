@@ -33,8 +33,8 @@ export class Entity implements IDict {
 
     'prepare': parse(`[action |
       for-each-entry @:comps [name comp |
-        if [? comp :prepare] [|
-          comp:prepare @ action
+        if [? comp :prepare] [| do
+          [comp:prepare @ action]
         ]
      ]]`),
 
