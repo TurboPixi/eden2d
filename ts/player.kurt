@@ -2,13 +2,14 @@
   -- Player component.
   Player = {
     -- Quick utility to make a player entity.
-    make-ent = [chunk |
+    make-player = [chunk |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
         [Render:make ent "player-0"]
         [Player:make ent]
         [chunk:add ent]
+        ent
       ]
     ]
 

@@ -26,7 +26,7 @@ export class WorldPanel implements Panel {
     this._world = this._owner.world;
 
     let chunk = this.createChunk();
-    this._player = isEntity(this.eval([$('Player'), $$('make-ent')], chunk));
+    this._player = isEntity(this.eval([$('Player'), $$('make-player')], chunk));
     this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')], this._player]));
 
     let bg = new Graphics();

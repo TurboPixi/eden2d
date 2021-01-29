@@ -60,12 +60,13 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
       if (edict) {
         // Copy the dict to a new expression, so we're not mutating the original.
         let result = {} as EDict;
+        let dictEnv = new TeeEnv(result, env);
         for (let key in edict) {
           if (key in _specialProps) {
             // Specials are copied, not eval'd.
             result[key] = edict[key];
           } else {
-            dictDef(result, $(key), _eval(env, edict[key]));
+            dictDef(result, $(key), _eval(dictEnv, edict[key]));
           }
         }
         return result;

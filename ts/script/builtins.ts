@@ -2,7 +2,7 @@ import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictNames, dictRef, isDict, _root } from "./dict";
 import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
-import { envNew, expectNum, locBool, locNum } from "./env";
+import { envNew, expectNum, locBool, locList, locNum } from "./env";
 
 export const _debug = $('debug');
 export const _and = $('and');
@@ -100,9 +100,13 @@ export let builtinDefs = [_def, {
     return nil;
   }],
 
-  'log': [$('msg'), _blk, (env: Dict) => {
-    let msg = dictRef(env, $('msg'));
-    console.log(_print(msg));
+  'log': [$('...msgs'), _blk, (env: Dict) => {
+    let msgs = locList(env, $('msgs'));
+    let pmsgs: string[] = [];
+    for (let msg of msgs) {
+      pmsgs.push(_print(msg));
+    }
+    console.log(...pmsgs);
     return nil;
   }],
 

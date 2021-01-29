@@ -11,20 +11,20 @@
       move = [dx dy | @:player:perform [action-move dx dy]]
 
       enter = [|
-        {loc = @:player:loc} [
-          {portal = [@:player:chunk:top-with loc:x loc:y :portal]}
-          [if ?:portal [|
-            portal:perform [action-enter @:player]
-          ]]
-        ]
+        {
+          loc = @:player:loc
+          portal = [@:player:chunk:top-with loc:x loc:y :portal]
+        }
+        [if ?:portal [|
+          portal:perform [action-enter @:player]
+        ]]
       ]
 
       open = [|
-        {door = [@:player:top-with :door]} [
-          if ?:door [|
-            door:perform [action-open @:player]
-          ]
-        ]
+        {door = [@:player:top-with :door]}
+        [if ?:door [|
+          door:perform [action-open @:player]
+        ]]
       ]
 
       select-inv = [slot |
@@ -47,8 +47,8 @@
 
       take = [|
         {target = [@:player:top-with :portable]}
-        [if ?:target [| do
-          [def {player = @:player:player}]
+        [if ?:target [|
+          {player = @:player:player}
           [[[target:jump player:contents]:move-to] player:slot 0]
         ]]
       ]

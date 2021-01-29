@@ -13,6 +13,7 @@ Principles:
 
 
 TODO:
+- Something about resolving resolution ambiguity with parent/child envs.
 - Allow dict entries without ' = ' spacing.
 - Single-symbol dict initialization.
 - Splats...

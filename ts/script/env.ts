@@ -1,6 +1,6 @@
 import { Dict, dictDef, dictFind, dictNames, dictRef, IDict, isEDict } from "./dict";
 import { _eval } from "./eval";
-import { chuck, EExpr, ESym, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
+import { chuck, EExpr, EList, ESym, isList, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
 
 export class TeeEnv implements IDict {
   constructor(private first: Dict, private second: Dict) {}
@@ -109,4 +109,16 @@ export function expectDict(env: Dict, value: EExpr): Dict {
     chuck(env, `${value} is not a dictionary`);
   }
   return venv;
+}
+
+export function locList(env: Dict, sym: ESym): EList {
+  return expectList(env, lookupSym(env, sym));
+}
+
+export function expectList(env: Dict, value: EExpr): EList {
+  let list = isList(value);
+  if (!list) {
+    chuck(env, `${value} is not a list`);
+  }
+  return list;
 }
