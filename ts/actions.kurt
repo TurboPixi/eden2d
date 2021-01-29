@@ -1,6 +1,33 @@
 [def {
-  action-move  = [dx dy | {action = :move dx = dx dy = dy}]
-  action-use   = [user | {action = :use user = user}]
-  action-enter = [ent | {action = :enter ent = ent}]
-  action-open  = [ent | {action = :open ent = ent}]
+  action-move  = [target dx dy | {^ = -move-impl action = :move target = target dx = dx dy = dy}]
+  action-use   = [user target | {^ = -use-impl action = :use user = user target = target}]
+  action-enter = [portal ent | {^ = -enter-impl action = :enter portal = portal ent = ent}]
+  action-open  = [opener target | {^ = -open-impl action = :open opener = opener target = target}]
+
+  -move-impl = {
+    perform = [| do
+      [@:target:perform @]
+    ]
+  }
+
+  -use-impl = {
+    perform = [| do
+      [@:user:perform @]
+      [@:target:perform @]
+    ]
+  }
+
+  -enter-impl = {
+    perform = [| do
+      [@:portal:perform @]
+      [@:ent:perform @]
+    ]
+  }
+
+  -open-impl = {
+    perform = [| do
+      [@:opener:perform @]
+      [@:target:perform @]
+    ]
+  }
 }]

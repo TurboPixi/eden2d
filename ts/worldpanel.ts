@@ -4,7 +4,7 @@ import { ContainerPanel } from "./containerpanel";
 import { Panel, PanelOwner } from "./eden";
 import { Entity, isEntity } from "./entity";
 import { Key } from "./key";
-import { Dict, isDict } from "./script/dict";
+import { Dict, dictDef, isDict } from "./script/dict";
 import { _eval } from "./script/eval";
 import { parse } from "./script/kurt";
 import { $, $$, EExpr, nil } from "./script/script";
@@ -105,6 +105,7 @@ export class WorldPanel implements Panel {
       this._container.removeChild(this._chunk.container);
     }
     this._chunk = chunk;
+    dictDef(this._impl, $('chunk'), chunk as Dict); // copy into impl
     this._container.addChildAt(this._chunk.container, 0);
   }
 

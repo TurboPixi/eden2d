@@ -46,10 +46,7 @@
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Render:make ent [if up?
-          "tile-stair-up"
-          "tile-stair-down"
-        ]]
+        [Render:make ent [if up? "tile-stair-up" "tile-stair-down"]]
         [Portal:make ent target-chunk target-x target-y]
         [ent:move-to x y]
         [chunk:add ent]

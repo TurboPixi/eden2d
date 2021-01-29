@@ -4,11 +4,12 @@
       {
         ^ = WorldPanel:impl
         player = player 
+        chunk = nil
       }
     ]
 
     impl = {
-      move = [dx dy | @:player:perform [action-move dx dy]]
+      move = [dx dy | @:chunk:perform [action-move @:player dx dy]]
 
       enter = [|
         {
@@ -16,14 +17,14 @@
           portal = [@:player:chunk:top-with loc:x loc:y :portal]
         }
         [if ?:portal [|
-          portal:perform [action-enter @:player]
+          @:chunk:perform [action-enter portal @:player]
         ]]
       ]
 
       open = [|
         {door = [@:player:top-with :door]}
         [if ?:door [|
-          door:perform [action-open @:player]
+          @:chunk:perform [action-open @:player door]
         ]]
       ]
 
@@ -34,7 +35,7 @@
       use-selected = [|
         {selected = [@:player:player:selected-item]}
         [if ?:selected [|
-          selected:perform [action-use @:player]
+          [@:chunk:perform [action-use @:player selected]]
         ]]
       ]
 

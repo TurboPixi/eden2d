@@ -5,6 +5,7 @@ import { IDict, Dict, dictParent, dictRef, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parentTagName, _self, _set } from "./script/script";
 import { World } from "./world";
 import { locNum, locSym, envEval } from "./script/env";
+import { parse } from "./script/kurt";
 
 export type ChunkId = number;
 
@@ -46,6 +47,10 @@ export class Chunk implements IDict {
       return nil;
     }],
 
+    'perform': [$('action'), _blk, parse(`[action |
+      -- TODO: Give the chunk a crack at it.
+      [action:perform]
+    ]`)],
   };
 
   private _entities: { [id: number]: Entity } = {};
