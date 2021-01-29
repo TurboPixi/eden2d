@@ -23,14 +23,15 @@ export class Render extends NativeComp {
 
   set 'image-key'(key: string) {
     this.imageKey = key;
-    this.sprite = Resources.sprite(this['image-key']);
+    this.sprite.texture = Resources.tex(key);
   }
 
   sprite: Sprite;
 
   constructor(ent: Entity, imageKey: string) {
     super();
-    this['image-key'] = imageKey;
+    this.imageKey = imageKey;
+    this.sprite = Resources.sprite(imageKey);
     ent.def($('render'), this);
   }
 }
