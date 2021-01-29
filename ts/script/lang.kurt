@@ -13,13 +13,15 @@ Principles:
 
 
 TODO:
-- Something about resolving resolution ambiguity with parent/child envs.
+- [? thing:field] => [? thing :field]
+- {foo = 42 bar} => {foo = 42 bar = bar}
+- [foo bar]:baz => [[foo bar] :baz]
+- Affordance to resolve resolution ambiguity with parent/child envs.
 - Allow dict entries without ' = ' spacing.
 - Single-symbol dict initialization.
 - Splats...
 - single-quote symbols.
-- Resolve def/set ambiguity. nil === missing?
-- Drop def altogether, in favor of [{local = 42} [+ local 1]] pattern
+- Resolve def/set ambiguity. nil =?= missing?
 - Something about accessor functions? [ent :value] vs [[ent :value]]
   Also consider something like [obj:set :foo 42] or [obj:set-foo 42] or [obj:set {foo = 42}]
 - Mixed env + positional args

@@ -47,9 +47,12 @@ export class Chunk implements IDict {
       return nil;
     }],
 
-    'perform': [$('action'), _blk, parse(`[action |
+    'perform': [$('action'), _blk, parse(`[action | do
+      -- Let each entity prepare the action (possibly mutating it),
+      -- then perform it once all of them have had a crack.
       -- TODO: Give the chunk a crack at it.
-      [action:perform]
+      [for-each action:ents [ent | ent:prepare action]]
+      [for-each action:ents [ent | ent:perform action]]
     ]`)],
   };
 
