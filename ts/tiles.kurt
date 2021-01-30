@@ -62,19 +62,17 @@
         door = {
           ^ = Door:impl
           open = false
-          code = code
-          closed-img = closed-img
-          open-img = open-img
+          code closed-img open-img
         }
       }
-      [set ent {door = door}]
+      [set ent {door}]
     ]
 
     impl = {
       prepare = [ent action | if [= action:action :open] [| do
         [if [or [| ![? action:opener :player]]
                 [| ![? [action:opener:player:selected-item] :key]]
-                [| != [[[action:opener:player:selected-item] :key] :code] @:code]] [|
+                [| != [[action:opener:player:selected-item] :key]:code @:code]] [|
           set action {cancel = true}
         ]]
       ]]
@@ -94,9 +92,7 @@
       set ent {
         portal = {
           ^ = Portal:impl
-          target-chunk = target-chunk
-          target-x = target-x
-          target-y = target-y
+          target-chunk target-x target-y
         }
       }
     ]

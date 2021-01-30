@@ -359,6 +359,19 @@
       [expect "mutated" comps:0:foo]
     ]]
 
+    [run "list accessors" [|
+      {thing = {foo = {bar = 42}}}
+      [expect 42 [thing :foo]:bar]
+    ]]
+
+    [run "short keys" [|
+      {
+        val = 42
+        thing = {val}
+      }
+      [expect 42 thing:val]
+    ]]
+
     -- Wrap up.
     [log "--[ complete ]--"]
     [if [= 0 failures]

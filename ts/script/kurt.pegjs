@@ -8,6 +8,7 @@ start = _ expr:expr _ { return expr }
 expr
   = prim
   / pipe
+  / listaccess
   / access
   / sym
   / quote
@@ -47,6 +48,11 @@ sym
 quote
   = ":" expr:expr { return _quote(expr) }
 
+listaccess
+  = l:list ":" + q:sym {
+  	return [l, _quote(q)]
+  }
+  
 access
   = s:(sym ":")+ q:sym {
   	let result = [s[0][0]];
@@ -74,3 +80,4 @@ dict
 
 dict_entry
   = _ key:sym _ "=" _ val:expr { return [key, val] }
+  / _ key:sym { return [key, key] }

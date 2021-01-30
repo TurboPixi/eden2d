@@ -32,7 +32,7 @@
       ]
 
       select-inv = [slot | do
-        [set @ {slot = slot}]
+        [set @ {slot}]
         [@:cursor-ent:move-to slot 0]
       ]
 

@@ -14,10 +14,9 @@ Principles:
 
 TODO:
 - {foo = 42 bar} => {foo = 42 bar = bar}
-- [foo bar]:baz => [[foo bar] :baz]
+- Implement [? foo:bar] == [? foo :bar]
 - Affordance to resolve resolution ambiguity with parent/child envs.
 - Allow dict entries without ' = ' spacing.
-- Single-symbol dict initialization.
 - Splats...
 - single-quote symbols.
 - Resolve def/set ambiguity. nil =?= missing?

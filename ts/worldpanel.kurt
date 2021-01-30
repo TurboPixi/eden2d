@@ -15,8 +15,8 @@
         [Stairs:make chunk0 1 5 chunk1 0 5 false]
         [Stairs:make chunk1 1 5 chunk0 2 5 true]
         [chunk0:add [Wand:make]]
-        [[[chunk0:add [Key:make 123]] :move-to] 1 0]
-        [[[chunk0:add [Key:make 456]] :move-to] 2 0]
+        [[chunk0:add [Key:make 123]]:move-to 1 0]
+        [[chunk0:add [Key:make 456]]:move-to 2 0]
       ]
 
       enter = [|
@@ -58,7 +58,7 @@
         {target = [@:player:top-with :portable]}
         [if ?:target [|
           {player = @:player:player}
-          [[[target:jump player:contents]:move-to] player:slot 0]
+          [[target:jump player:contents]:move-to player:slot 0]
         ]]
       ]
 
@@ -68,7 +68,7 @@
           target = [@:player:player:inv-target :portable]
         }
         [if ?:target [|
-          [[target:jump @:player:chunk]:move-to] loc:x loc:y
+          [target:jump @:player:chunk]:move-to loc:x loc:y
         ]]
       ]
     }

@@ -50,7 +50,7 @@
     make = [ent fn |
       def ent {usable = {
         ^ = Usable:impl
-        fn = fn
+        fn
       }}
     ]
 
@@ -63,17 +63,13 @@
 
   KeyComp = {
     make = [ent code |
-      def ent {key = {
-        code = code
-      }}
+      def ent {key = {code}}
     ]
   }
 
   Container = {
     make = [ent chunk |
-      def ent {container = {
-        chunk = chunk
-      }}
+      def ent {container = {chunk}}
     ]
   }
 

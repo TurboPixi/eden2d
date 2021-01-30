@@ -1,21 +1,21 @@
 [def {
   action-move = [target dx dy | {
-    action = :move target = target dx = dx dy = dy
+    action = :move target = target dx dy
     ents = [list target]
   }]
 
   action-use = [user target | {
-    action = :use user = user target = target
+    action = :use user target
     ents = [list user target]
   }]
 
   action-open = [opener target | {
-    action = :open opener = opener target = target cancel = false
+    action = :open opener target cancel = false
     ents = [list opener target]
   }]
 
   action-enter = [portal ent | {
-    action = :enter portal = portal ent = ent
+    action = :enter portal ent
     ents = [list portal ent]
   }]
 }]

@@ -1,12 +1,10 @@
 [def {
   ContainerPanel = {
-    make = [chunk w h |
+    make = [chunk width height |
       {
         ^ = ContainerPanel:impl
-        chunk = chunk
+        chunk width height
         cursor = [UI:Cursor:make chunk]
-        width = w
-        height = h
       }
     ]
 
@@ -27,7 +25,7 @@
         {key = [@:cursor:top-with :portable]}
         [if ?:key
           [| @:chunk:remove key]
-          [| [[@:chunk:add [Key:make]] :move]
+          [| [[@:chunk:add [Key:make 0]] :move]
               @:cursor:loc:x @:cursor:loc:y
           ]
         ]
