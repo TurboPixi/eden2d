@@ -35,7 +35,7 @@
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Door:make ent "tile-door-ew" "tile-door-ns"]
+        [Door:make ent 123 "tile-door-ew" "tile-door-ns"]
         [chunk:add ent]
       ]
     ]
@@ -56,12 +56,13 @@
 
   -- Door component.
   Door = {
-    make = [ent closed-img open-img |
+    make = [ent code closed-img open-img |
       {
         render = [Render:make ent closed-img]
         door = {
           ^ = Door:impl
           open = false
+          code = code
           closed-img = closed-img
           open-img = open-img
         }
@@ -70,10 +71,12 @@
     ]
 
     impl = {
-      prepare = [ent action | if [= action:action :open] [|
-        if [? action:opener :player] [|
+      prepare = [ent action | if [= action:action :open] [| do
+        [if [or [| ![? action:opener :player]]
+                [| ![? [action:opener:player:selected-item] :key]]
+                [| != [[[action:opener:player:selected-item] :key] :code] @:code]] [|
           set action {cancel = true}
-        ]
+        ]]
       ]]
 
       perform = [ent action |

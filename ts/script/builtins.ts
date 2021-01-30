@@ -2,7 +2,8 @@ import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictNames, dictRef, isDict, _root } from "./dict";
 import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
-import { envNew, expectNum, locBool, locList, locNum } from "./env";
+import { envNew, expectBool, expectNum, locBool, locList, locNum } from "./env";
+import { parse } from "./kurt";
 
 export const _debug = $('debug');
 export const _and = $('and');
@@ -30,34 +31,27 @@ export let builtinDefs = [_def, {
   }],
 
   'list': [$('...elems'), _blk, (env: Dict) => {
-    let elemsExpr = dictRef(env, $('elems'));
-    let elems = isList(elemsExpr);
-    if (!elems) {
-      chuck(env, `expected list; got ${_print(elemsExpr)}`);
-    }
-    return elems;
+    return locList(env, $('elems'));
   }],
 
-  // TODO: Use rest params once implemented.
   'and': [$('...vals'), _blk, (env: Dict) => {
-    let valsExpr = dictRef(env, $('vals'));
-    let vals = isList(valsExpr);
-    if (!vals) {
-      chuck(env, `expected list; got ${_print(valsExpr)}`);
-    }
+    let vals = locList(env, $('vals'));
     for (let val of vals) {
-      let block = isBlock(val);
-      if (block !== nil) {
-        val = _apply(env, [{}, block]);
-      }
-      if (typeof val != 'boolean') {
-        chuck(env, `${val} must be boolean; got ${_print(val)}`);
-      }
-      if (!val) {
+      if (!expectBool(env, _eval(env, [{}, val]))) {
         return false;
       }
     }
     return true;
+  }],
+
+  'or': [$('...vals'), _blk, (env: Dict) => {
+    let vals = locList(env, $('vals'));
+    for (let val of vals) {
+      if (expectBool(env, _eval(env, [{}, val]))) {
+        return true;
+      }
+    }
+    return false;
   }],
 
   'if': [$('expr'), $('then'), $('else'), _blk, (env: Dict) => {
@@ -144,6 +138,8 @@ export let builtinDefs = [_def, {
     let b = dictRef(env, $('b'));
     return eq(a, b);
   }],
+
+  '!=': parse(`[a b | ![= a b]]`),
 
   '!': [$('x'), _blk, (env: Dict) => {
     return !locBool(env, $('x'));

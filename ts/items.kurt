@@ -1,11 +1,12 @@
 [def {
   Key = {
-    make = [|
+    make = [code |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
         [Render:make ent "object-key"]
         [Portable:make ent]
+        [KeyComp:make ent code]
         ent
       ]
     ]
@@ -58,6 +59,14 @@
         [| @:fn action:user]
       ]
     }
+  }
+
+  KeyComp = {
+    make = [ent code |
+      def ent {key = {
+        code = code
+      }}
+    ]
   }
 
   Container = {
