@@ -58,8 +58,10 @@ export class WorldPanel implements Panel {
       this.showChunk(chunk);
     }
 
+    this._invChunk.tick();
     this._invChunk.render(0, 0, 4);
 
+    this._chunk.tick();
     let px = this._player.loc.x;
     let py = this._player.loc.y;
     let x = (px - 4) * 16;

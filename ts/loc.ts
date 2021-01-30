@@ -13,16 +13,17 @@ export class Loc extends NativeComp {
     'impl': parse(`{
       perform = [ent action |
         [if [= action:action :move] [| do
-          [def {loc = ent:loc}]
-          [ent:move-to [+ loc:x action:dx] [+ loc:y action:dy]]
+          [set @ {dx = action:dx dy = action:dy}]
         ]]
       ]
     }`),
   };
 
+  '[parent]': EExpr;
+  dx = 0;
+  dy = 0;
   x = 0;
   y = 0;
-  '[parent]': EExpr;
 
   constructor(env: Dict, ent: Entity) {
     super();

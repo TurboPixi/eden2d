@@ -24,6 +24,7 @@
       {ent = [make-ent]}
       [do
         [Loc:make ent]
+        [Solid:make ent 1]
         [Render:make ent "tile-blue-wall"]
         [chunk:add ent]
       ]
@@ -54,6 +55,12 @@
     ]
   }
 
+  Solid = {
+    make = [ent mass |
+      set ent {solid = {mass}}
+    ]
+  }
+
   -- Door component.
   Door = {
     make = [ent code closed-img open-img |
@@ -69,10 +76,13 @@
     ]
 
     impl = {
-      prepare = [ent action | if [= action:action :open] [| do
-        [if [or [| ![? action:opener :player]]
-                [| ![? [action:opener:player:selected-item] :key]]
-                [| != [[action:opener:player:selected-item] :key]:code @:code]] [|
+      prepare = [ent action | if [= action:action :open] [|
+        {
+          opener = action:opener
+          player = [if [? action:opener :player] [| action:opener:player]]
+          item   = [if [? :player] [| [player:selected-item]]]
+        }
+        [if [or [| = player nil] [![? :item]] [| ! [? item :key]] [| != item:key:code @:code]] [|
           set action {cancel = true}
         ]]
       ]]

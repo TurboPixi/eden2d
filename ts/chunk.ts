@@ -117,6 +117,20 @@ export class Chunk implements IDict {
     }
   }
 
+  tick() {
+    // TODO: Something with collision.
+    for (let id in this._entities) {
+      let ent = this._entities[id];
+      let loc = ent.loc;
+      if (loc) {
+        loc.x += loc.dx;
+        loc.y += loc.dy;
+        loc.dx = 0;
+        loc.dy = 0;
+      }
+    }
+  }
+
   render(x: number, y: number, z: number) {
     this._container.setTransform(-x * z, -y * z, z, z);
 

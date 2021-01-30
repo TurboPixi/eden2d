@@ -6,6 +6,7 @@
       {ent = [make-ent]}
       [do
         [Loc:make ent]
+        [Solid:make ent 1]
         [Render:make ent "player-0"]
         [Player:make ent]
         [chunk:add ent]
