@@ -152,6 +152,7 @@ export let builtinDefs = [_def, {
         return nil;
       }
 
+      // :sym -- find in the current scope.
       let sym = isSym(expr);
       if (sym !== nil) {
         let target = dictFind(cur, sym);
@@ -163,17 +164,28 @@ export let builtinDefs = [_def, {
         continue;
       }
 
+      // {dict} -- becomes both val and current env.
       let dict = isDict(expr);
       if (dict) {
         val = cur = dict;
         continue;
       }
 
+      // [| block]
       let block = isBlock(expr);
       if (block !== nil) {
+        // Eval block in the current env, so that the block can reference
+        // the result of the last expression as 'env'.
         val = _eval(env, [cur, expr]);
         cur = isDict(val);
+        continue;
       }
+
+      // TODO: list?
+
+      // Other values
+      cur = nil;
+      val = expr;
     }
     return val;
   }],
