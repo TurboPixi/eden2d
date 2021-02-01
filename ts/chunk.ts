@@ -71,6 +71,7 @@ export class Chunk implements IDict {
   get container(): Container { return this._container }
 
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
+  exists(sym: ESym): boolean { return symName(sym) in this._defs }
   ref(name: ESym): EExpr { return this._defs && this._defs[symName(name)] }
   def(name: ESym, value: EExpr): void { (this._defs || (this._defs = {}))[symName(name)] = value }
 

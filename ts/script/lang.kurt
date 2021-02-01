@@ -13,12 +13,10 @@ Principles:
 
 
 TODO:
-- {foo = 42 bar} => {foo = 42 bar = bar}
-- Implement [? foo:bar] == [? foo :bar]
 - Affordance to resolve resolution ambiguity with parent/child envs.
 - Allow dict entries without ' = ' spacing.
 - Splats...
-- single-quote symbols.
+- single-quote symbols
 - Resolve def/set ambiguity. nil =?= missing?
 - Something about accessor functions? [ent :value] vs [[ent :value]]
   Also consider something like [obj:set :foo 42] or [obj:set-foo 42] or [obj:set {foo = 42}]
@@ -26,7 +24,7 @@ TODO:
 - Explore macros, quasi-quoting
   Making this work will require dynamic dict keys
 - Backquote string literals?
-- Read caller?
+- Read caller? (?= native impl uses this right now)
 ]-
 
 -[ Primitive values ]-

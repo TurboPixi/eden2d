@@ -19,7 +19,7 @@
   }
 
   [do
-    [run "number" [|expect 42 42]]
+    -[run "number" [|expect 42 42]]
     [run "string" [|expect "foo" "foo"]]
     [run "boolean" [|expect true true]]
     [run "quoted number" [|expect :42 :42]]
@@ -168,10 +168,7 @@
 
     [run "default parameters" [|
       {bump = [a val |
-        {amt = [if [? :val]
-          [| val]
-          [| 1]
-        ]}
+        {amt = [if [? :val] [| val] [| 1]]}
         [+ a amt]
       ]}
       [do
@@ -370,6 +367,30 @@
         thing = {val}
       }
       [expect 42 thing:val]
+    ]]-
+
+    [run "if chain" [| do
+      [def {
+        foo = {
+          bar = {
+            baz = 42
+          }
+          quux = nil
+          block = [p |
+            if p {shazbot = @:bar:baz} nil
+          ]
+        }
+      }]
+      -[expect nil [?= :quux]]
+      [expect nil [?= :foo :quux]]
+      [expect nil [?= :foo :bar :quux]]
+      [expect nil [?= :foo [foo:block false] :shazbot]]
+      [expect 42 [?= :foo :bar :baz]]
+      [expect nil [?= :foo :bar :baz :quux]]
+      [expect 42 [?= :foo {shazbot = 42} :shazbot]]
+      [expect 42 [?= :foo [foo:block true] :shazbot]]
+      [expect 42 [?= :foo [| foo:block true] :shazbot]]-
+      [expect 42 [?= :foo [| env:block true] :shazbot]]
     ]]
 
     -- Wrap up.

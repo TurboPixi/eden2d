@@ -59,17 +59,15 @@ export class Entity implements IDict {
   get chunk(): Chunk { return this._chunk }
   get names(): string[] { return ['id', 'chunk', symName(_parentTag)]; }
 
-  def(sym: ESym, value: EExpr): void {
+  exists(sym: ESym): boolean {
     let name = symName(sym);
     switch (name) {
       case 'chunk':
       case 'id':
       case 'comps':
-      case symName(_parentTag):
-        // TODO: Pass env to def/ref?
-        chuck(_root, `can't set ${symName(sym)} on Entity`);
+        return true;
     }
-    this._comps[name] = value;
+    return name in this._comps;
   }
 
   ref(sym: ESym): EExpr {
@@ -81,6 +79,19 @@ export class Entity implements IDict {
       case symName(_parentTag): return this._parent;
     }
     return this._comps[name];
+  }
+
+  def(sym: ESym, value: EExpr): void {
+    let name = symName(sym);
+    switch (name) {
+      case 'chunk':
+      case 'id':
+      case 'comps':
+      case symName(_parentTag):
+        // TODO: Pass env to def/ref?
+        chuck(_root, `can't set ${symName(sym)} on Entity`);
+    }
+    this._comps[name] = value;
   }
 
   hasComp(key: ESym): boolean { return symName(key) in this._comps; }
@@ -101,6 +112,10 @@ export class NativeComp implements IDict {
 
   get names(): string[] {
     return Object.getOwnPropertyNames(this);
+  }
+
+  exists(sym: ESym): boolean {
+    return symName(sym) in this;
   }
 
   ref(sym: ESym): EExpr {

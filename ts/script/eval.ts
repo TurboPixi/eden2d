@@ -40,11 +40,15 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
       // foo ({[sym]: 'foo'} at runtime) is an identifier.
       let sym = isSym(expr);
       if (sym) {
-        let result = lookupSym(env, sym);
-        if (result === nil) {
+        if (symName(sym) == 'env') {
+          return env;
+        }
+
+        let target = dictFind(env, sym);
+        if (target === nil) {
           chuck(env, 'unbound identifier ' + symName(expr as ESym));
         }
-        return result;
+        return dictRef(target, sym);
       }
 
       // [a b c ...] is a list.
@@ -200,7 +204,7 @@ function rewriteArgs(env: Dict, block: EBlock, args: EList): Dict {
       sym = $(symName(sym).slice(3)); // Remove the ...
       dictDef(frame, sym, _(evalListElems(env, args.slice(i))));
       consumedAll = true;
-    } else {
+    } else if (i < args.length) {
       // Normal argument.
       dictDef(frame, sym, args[i]);
     }
@@ -251,6 +255,8 @@ function applySpecial(env: Dict, list: EList): [EExpr, boolean] {
         return [applySet(env, list), true];
       case '?':
         return [applyExists(env, list), true];
+      case '!?':
+        return [!applyExists(env, list), true];
     }
   }
 

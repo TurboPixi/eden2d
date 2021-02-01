@@ -1,4 +1,4 @@
-import { Dict, dictDef, dictFind, dictNames, dictRef, IDict, isEDict } from "./dict";
+import { Dict, dictDef, dictExists, dictFind, dictNames, dictRef, IDict, isEDict } from "./dict";
 import { _eval } from "./eval";
 import { chuck, EExpr, EList, ESym, isList, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
 
@@ -7,6 +7,13 @@ export class TeeEnv implements IDict {
 
   get names(): string[] {
     return dictNames(this.first);
+  }
+
+  exists(sym: ESym): boolean {
+    if (symName(sym) == _parentTagName) {
+      return true;
+    }
+    return dictExists(this.first, sym);
   }
 
   ref(sym: ESym): EExpr {
@@ -42,10 +49,6 @@ export function envCaller(env: Dict): Dict {
 }
 
 export function lookupSym(env: Dict, sym: ESym): EExpr {
-  if (symName(sym) == 'env') {
-    return env;
-  }
-
   let target = dictFind(env, sym);
   if (target !== nil) {
     return dictRef(target, sym);

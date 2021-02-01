@@ -55,8 +55,9 @@
     ]
 
     impl = {
-      perform = [ent action | if [= action:action :use]
-        [| @:fn action:user]
+      perform = [ent action |
+        if [= action:action :use]
+           [| @:fn action:user]
       ]
     }
   }
@@ -84,7 +85,7 @@
     impl = {
       block = [user |
         -- Fake placeholder code. Should come from program chunk.
-        [| [[user:chunk:add [Crate:make]] :move-to] user:loc:x user:loc:y]
+        [| [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y]
       ]
     }
   }

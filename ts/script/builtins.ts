@@ -1,7 +1,7 @@
 import { _apply, _eval } from "./eval";
 import { _print } from "./print";
-import { Dict, dictNames, dictRef, isDict, _root } from "./dict";
-import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq } from "./script";
+import { Dict, dictFind, dictNames, dictRef, isDict, _root } from "./dict";
+import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq, isSym, EExpr, _callerTagName, _callerTag } from "./script";
 import { envNew, expectBool, expectNum, locBool, locList, locNum } from "./env";
 import { parse } from "./kurt";
 
@@ -134,14 +134,47 @@ export let builtinDefs = [_def, {
   }],
 
   '=': [$('a'), $('b'), _blk, (env: Dict) => {
-    let a = dictRef(env, $('a'));
-    let b = dictRef(env, $('b'));
-    return eq(a, b);
+    return eq(dictRef(env, $('a')), dictRef(env, $('b')));
   }],
 
   '!=': parse(`[a b | ![= a b]]`),
 
   '!': [$('x'), _blk, (env: Dict) => {
     return !locBool(env, $('x'));
+  }],
+
+  '?=': [$('...exprs'), _blk, (env: Dict) => {
+    let exprs = locList(env, $('exprs'));
+    let val: EExpr = nil;
+    let cur = isDict(dictRef(env, _callerTag));
+    for (let expr of exprs) {
+      if (cur === nil) {
+        return nil;
+      }
+
+      let sym = isSym(expr);
+      if (sym !== nil) {
+        let target = dictFind(cur, sym);
+        if (target == nil) {
+          return nil;
+        }
+        val = dictRef(target, sym);
+        cur = isDict(val);
+        continue;
+      }
+
+      let dict = isDict(expr);
+      if (dict) {
+        val = cur = dict;
+        continue;
+      }
+
+      let block = isBlock(expr);
+      if (block !== nil) {
+        val = _eval(env, [cur, expr]);
+        cur = isDict(val);
+      }
+    }
+    return val;
   }],
 }];

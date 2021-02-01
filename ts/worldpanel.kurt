@@ -31,7 +31,7 @@
 
       open = [|
         {door = [@:player:top-with :door]}
-        [if ?:door [|
+        [if [!= door nil] [|
           @:chunk:perform [action-open @:player door]
         ]]
       ]

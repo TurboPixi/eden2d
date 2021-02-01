@@ -11,6 +11,7 @@ export const _specialProps = {
 
 export interface IDict {
   readonly names: string[];
+  exists(sym: ESym): boolean;
   ref(sym: ESym): EExpr;
   def(sym: ESym, value: EExpr): void;
 }
@@ -18,6 +19,7 @@ export interface IDict {
 class RootEnv implements IDict {
   private _defs: EDict = {};
   get names(): string[] { return Object.getOwnPropertyNames(this._defs); }
+  exists(sym: ESym): boolean {return symName(sym) in this._defs; }
   ref(sym: ESym): EExpr { return this._defs[symName(sym)]; }
   def(sym: ESym, value: EExpr): void { this._defs[symName(sym)] = value; }
 }
@@ -39,9 +41,6 @@ export function dictFind(dict: Dict, sym: ESym): Dict {
     if (dictExists(dict, sym)) {
       return dict;
     }
-    if (dict == dictParent(dict)) {
-      debugger;
-    }
     dict = dictParent(dict);
   }
   return nil;
@@ -54,10 +53,10 @@ export function dictParent(dict: Dict): Dict {
 export function dictExists(dict: Dict, sym: ESym): boolean {
   let idict = isIDict(dict);
   if (idict) {
-    return idict.ref(sym) !== nil;
+    return idict.exists(sym);
   }
   let edict = dict as EDict;
-  return edict[symName(sym)] !== nil;
+  return symName(sym) in edict;
 }
 
 export function isEDict(val: EExpr): EDict {

@@ -18,6 +18,7 @@ export class UI implements IDict {
   }
 
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
+  exists(sym: ESym): boolean { return symName(sym) in this._defs }
   ref(sym: ESym): EExpr { return this._defs[symName(sym)] }
   def(sym: ESym, value: EExpr): void { this._defs[symName(sym)] = value }
 }
