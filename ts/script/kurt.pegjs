@@ -31,7 +31,10 @@ prim
 
 // TODO: Floats
 integer
-  = digits:[0-9]+ { return parseInt(digits.join(""), 10) }
+  = neg:"-"? digits:[0-9]+ {
+    let num = parseInt(digits.join(""), 10)
+    return neg ? -num : num;
+  }
 
 string
   = "\"" chars:[^"]* "\"" { return chars.join("") }
