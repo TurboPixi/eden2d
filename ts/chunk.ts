@@ -4,47 +4,42 @@ import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, dictRef, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parentTagName, _self, _set } from "./script/script";
 import { World } from "./world";
-import { locNum, locSym, envEval } from "./script/env";
+import { locNum, locSym, envEval, locDict } from "./script/env";
 import { parse } from "./script/kurt";
 
 export type ChunkId = number;
 
-// TODO: Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
+// TODO:
+// - Lazy-init containers (and thus the underlying entity sprites), because most will be invisible most of the time.
+// - Implement efficient collision detection.
+// - Create efficient entity filters by component query.
 export class Chunk implements IDict {
   static Dict = {
     'add': [$('ent'), _blk, (env: Dict) => {
-      let chunk = locChunk(env, _self);
       let ent = locEnt(env, $('ent'));
-      chunk.addEntity(ent);
+      locChunk(env, _self).addEntity(ent);
       return ent;
     }],
 
     'remove': [$('ent'), _blk, (env: Dict) => {
-      let chunk = locChunk(env, _self);
       let ent = locEnt(env, $('ent'));
-      chunk.removeEntity(ent);
+      locChunk(env, _self).removeEntity(ent);
       return ent;
     }],
 
     'entities-at': [$('x'), $('y'), _blk, (env: Dict) => {
-      let chunk = locChunk(env, _self);
-      let x = locNum(env, $('x'));
-      let y = locNum(env, $('y'));
-      return chunk.entitiesAt(x, y);
+      return locChunk(env, _self).entitiesAt(
+        locNum(env, $('x')),
+        locNum(env, $('y'))
+      );
     }],
 
     'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
-      let chunk = locChunk(env, _self);
-      let x = locNum(env, $('x'));
-      let y = locNum(env, $('y'));
-      let comp = locSym(env, $('comp'));
-      let ents = chunk.entitiesAt(x, y);
-      for (var ent of ents) {
-        if (ent.ref(comp) !== nil) {
-          return ent;
-        }
-      }
-      return nil;
+      return locChunk(env, _self).topEntityWith(
+        locNum(env, $('x')),
+        locNum(env, $('y')),
+        locSym(env, $('comp'))
+      );
     }],
 
     'perform': [$('action'), _blk, parse(`[action | do
@@ -90,6 +85,16 @@ export class Chunk implements IDict {
     return ents;
   }
 
+  topEntityWith(x: number, y: number, comp: ESym): Entity {
+    let ents = this.entitiesAt(x, y);
+    for (let ent of ents) {
+      if (ent.ref(comp) !== nil) {
+        return ent;
+      }
+    }
+    return nil;
+  }
+
   addEntity(entity: Entity) {
     if (entity.chunk) {
       if (entity.chunk == this) {
@@ -119,15 +124,16 @@ export class Chunk implements IDict {
   }
 
   tick() {
-    // TODO: Something with collision.
     for (let id in this._entities) {
       let ent = this._entities[id];
       let loc = ent.loc;
-      if (loc) {
-        loc.x += loc.dx;
-        loc.y += loc.dy;
-        loc.dx = 0;
-        loc.dy = 0;
+      if (loc && (loc.dx != 0 || loc.dy != 0)) {
+        let nx = loc.x + loc.dx, ny = loc.y + loc.dy;
+        if (this.topEntityWith(nx, ny, $('solid')) !== nil) {
+          continue;
+        }
+        loc.x = nx; loc.y = ny;
+        loc.dx = 0; loc.dy = 0;
       }
     }
   }
