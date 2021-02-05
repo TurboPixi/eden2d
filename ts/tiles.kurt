@@ -9,45 +9,62 @@
   ]
 
   Floor = {
+    -img = [Render:image "images/floors.png" {x = 0 y = 16}]
+
     make = [chunk |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Render:make ent "tile-blue-tile"]
+        [Render:make ent Floor:-img]
         [chunk:add ent]
       ]
     ]
   }
 
   Wall = {
+    -img = [Render:image "images/wall-stone-blue.png" {
+      x = [* 5 16]
+      y = [* 3 16]
+    }]
+
     make = [chunk |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
         [Solid:make ent 1]
-        [Render:make ent "tile-blue-wall"]
+        [Render:make ent Wall:-img]
         [chunk:add ent]
       ]
     ]
   }
 
   WoodDoor = {
+    -img-closed = [Render:image "images/rogue/environment.png" {x = 16 y = [* 8 16]}]
+    -img-open = [Render:image "images/rogue/environment.png" {
+      x = 4 y = [+ [* 8 16] 9]
+      w = 8 h = 22
+    }]
+
     make = [chunk |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Door:make ent 123 "tile-door-ew" "tile-door-ns"]
+        [Door:make ent 123 Door:-img-closed Door:-img-open]
         [chunk:add ent]
       ]
     ]
   }
 
   Stairs = {
+    -upimg = [Render:image "images/stairs.png" {w = 16 h = 22 ay = 6}]
+    -dnimg = [Render:image "images/stairs.png" {y = 22 h = 16}]
+    -- TODO: list items eval'd in wrong env -imgs = :[Stairs:-upimg Stairs:-dnimg]
+
     make = [chunk x y target-chunk target-x target-y up? |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Render:make ent [if up? "tile-stair-up" "tile-stair-down"]]
+        [Render:make ent [if up? Stairs:-upimg Stairs:-dnimg]]
         [Portal:make ent target-chunk target-x target-y]
         [ent:move-to x y]
         [chunk:add ent]
@@ -84,7 +101,7 @@
       perform = [ent action |
         if [and [= action:action :open] [! action:cancel]] [| do
           [set @ {open = [! @:open]}]
-          [set ent:render {image-key = [if @:open @:open-img @:closed-img]}]
+          [set ent:render {image = [if @:open @:open-img @:closed-img]}]
         ]
       ]
     }

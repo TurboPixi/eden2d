@@ -10,7 +10,6 @@ import {
   Texture,
   TYPES
 } from "pixi.js";
-import { Resources, TexKey } from "./res";
 
 const vert = `
   precision mediump float;
@@ -82,7 +81,9 @@ export class Layer {
     const tileMesh = new Mesh(square, this.shader);
     container.addChild(tileMesh);
 
-    const tiles = Resources.base(TexKey.Tiles);
+    let tiles = BaseTexture.from("tiles.png");
+    tiles.scaleMode = SCALE_MODES.NEAREST;
+    tiles.mipmap = MIPMAP_MODES.OFF;
     this.shader.uniforms.tiles = tiles;
   }
 

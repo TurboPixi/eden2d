@@ -1,6 +1,6 @@
 import { _print } from "./print";
 import { Dict, dictDef, dictFind, dictNames, dictRef, _root, _specialProps, isDict, isEDict, translateSym, dictParent } from "./dict";
-import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock } from "./script";
+import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque } from "./script";
 import { lookupSym, envNew, TeeEnv } from "./env";
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.
@@ -49,6 +49,12 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
           chuck(env, 'unbound identifier ' + symName(expr as ESym));
         }
         return dictRef(target, sym);
+      }
+
+      let opaque = isOpaque(expr);
+      if (opaque) {
+        // Leave opaque values alone.
+        return opaque;
       }
 
       // [a b c ...] is a list.

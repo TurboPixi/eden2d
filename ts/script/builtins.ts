@@ -11,6 +11,7 @@ export const _if = $('if');
 export const _forEach = $('for-each');
 export const _log = $('log');
 export const _add = $('+');
+export const _mul = $('*');
 export const _gt = $('>');
 export const _lt = $('<');
 export const _gte = $('>=');
@@ -105,14 +106,19 @@ export let builtinDefs = [_def, {
   }],
 
   '+': [$('...vals'), _blk, (env: Dict) => {
-    let valsExpr = dictRef(env, $('vals'));
-    let vals = isList(valsExpr);
-    if (!vals) {
-      chuck(env, `expected list; got ${_print(valsExpr)}`);
-    }
+    let vals = locList(env, $('vals'));
     let result = 0;
     for (let val of vals) {
       result += expectNum(env, val);
+    }
+    return result;
+  }],
+
+  '*': [$('...vals'), _blk, (env: Dict) => {
+    let vals = locList(env, $('vals'));
+    let result = 1;
+    for (let val of vals) {
+      result *= expectNum(env, val);
     }
     return result;
   }],

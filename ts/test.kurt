@@ -381,6 +381,8 @@
           ]
         }
       }]
+      -- TODO: list cases?
+      -- [expect 42 [?= :[32 42 54] :1]]
       [expect 42 [?= 42]]
       [expect 42 [?= :foo 42]]
       [expect nil [?= :nope 42]]

@@ -1,11 +1,12 @@
 import { _printStack, _print } from "./print";
 import { Dict, isEDict, _specialProps } from "./dict";
 
-export type EExpr = ENil | EPrim | ESym | EQuote | EList | Dict | NativeBlock;
+export type EExpr = ENil | EPrim | ESym | EQuote | EList | Dict | NativeBlock | EOpaque;
 export type EPrim = number | boolean | string | ENil;
 export type ENil = undefined;
 export type ESym = { '[sym]': string };
 export type EQuote = { '[q]': EExpr };
+export type EOpaque = { '[opaque]': any };
 export type EBlock = { '[block]': [EList, EExpr], '[env]': Dict, '[name]'?: string, '[self]'?: EDict };
 export type NativeBlock = (env: Dict) => EExpr;
 export type EList = EExpr[];
@@ -13,6 +14,7 @@ export type EDict = { [arg: string]: EExpr };
 
 export const QuoteMarker = '[q]';
 export const SymMarker = '[sym]';
+export const OpaqueMarker = '[opaque]';
 export const BlockMarker = '[block]';
 export const EnvMarker = '[env]';
 export const NameMarker = '[name]';
@@ -158,7 +160,22 @@ export function isSym(val: EExpr): ESym {
 }
 
 export function symName(sym: ESym): string {
-  return sym['[sym]'];
+  return sym[SymMarker];
+}
+
+export function makeOpaque(val: any): EOpaque {
+  return {'[opaque]': val};
+}
+
+export function isOpaque(val: EExpr): EOpaque {
+  if (val && (typeof val == "object") && OpaqueMarker in (val as any)) {
+    return val as EOpaque;
+  }
+  return nil;
+}
+
+export function opaqueVal(opaque: EOpaque): any {
+  return opaque[OpaqueMarker];
 }
 
 export function isBlock(val: EExpr): EBlock {

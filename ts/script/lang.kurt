@@ -13,6 +13,7 @@ Principles:
 
 
 TODO:
+- Try/catch?
 - Affordance to resolve resolution ambiguity with parent/child envs.
 - Allow dict entries without ' = ' spacing.
 - Splats...

@@ -1,10 +1,32 @@
 [def {
+  Brazier = {
+    -img = [Render:image "images/tf/tiles/animated/torch.png" {
+      x = 19 y = 2
+      w = 11 h = 18
+      ay = 4
+    }]
+
+    make = [|
+      {ent = [make-ent]}
+      [do
+        [Loc:make ent]
+        [Render:make ent Brazier:-img]
+        ent
+      ]
+    ]
+  }
+
   Key = {
+    -img = [Render:image "images/tf/icons/fullcolor/icons_full_16.png" {
+      x = [* 5 16]
+      y = [* 22 16]
+    }]
+
     make = [code |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Render:make ent "object-key"]
+        [Render:make ent Key:-img]
         [Portable:make ent]
         [KeyComp:make ent code]
         ent
@@ -13,11 +35,13 @@
   }
 
   Crate = {
+    -img = [Render:image "images/crate.png" {x = 0 y = 0}]
+
     make = [|
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Render:make ent "object-crate"]
+        [Render:make ent Crate:-img]
         [Portable:make ent]
         ent
       ]
@@ -25,11 +49,16 @@
   }
 
   Wand = {
+    -img = [Render:image "images/tf/icons/fullcolor/icons_full_16.png" {
+      x = [* 3 16]
+      y = [* 30 16]
+    }]
+
     make = [|
       {ent = [make-ent]}
       [do
         [Loc:make ent]
-        [Render:make ent "object-sword"]
+        [Render:make ent Wand:-img]
         [Portable:make ent]
         [Usable:make ent [user | ent:programmed:block user]]
         [Programmed:make ent]

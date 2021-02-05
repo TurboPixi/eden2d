@@ -19,6 +19,8 @@ export class World implements IDict {
   private _defs: EDict = {};
 
   constructor() {
+    _eval(_root, [_set, this, {'^': _root}]);
+
     // TODO: It's kind of gross to have to initialize all the scripts this way.
     // May need some more generalized mechanism for importing.
     _eval(this, [_def, {'Chunk': Chunk.Dict}]);
@@ -30,7 +32,6 @@ export class World implements IDict {
     _eval(this, parse(tiles_kurt));
     _eval(this, parse(items_kurt));
 
-    _eval(_root, [_set, this, {'^': _root}]);
     _eval(this, [_def, {
       'make-chunk': [_blk,
         function (env: Dict): EExpr {

@@ -1,6 +1,6 @@
 import { Dict, dictDef, dictExists, dictFind, dictNames, dictRef, IDict, isEDict } from "./dict";
 import { _eval } from "./eval";
-import { chuck, EExpr, EList, ESym, isList, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
+import { chuck, EExpr, EList, EOpaque, ESym, isList, isOpaque, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
 
 export class TeeEnv implements IDict {
   constructor(private first: Dict, private second: Dict) {}
@@ -100,6 +100,18 @@ export function expectSym(env: Dict, value: EExpr): ESym {
     chuck(env, `${value} is not a symbol`);
   }
   return vsym;
+}
+
+export function locOpaque(env: Dict, sym: ESym): EOpaque {
+  return expectOpaque(env, lookupSym(env, sym));
+}
+
+export function expectOpaque(env: Dict, value: EExpr): EOpaque {
+  let opaque = isOpaque(value);
+  if (!opaque) {
+    chuck(env, `${value} is not an opaque value`);
+  }
+  return opaque;
 }
 
 export function locDict(env: Dict, sym: ESym): Dict {

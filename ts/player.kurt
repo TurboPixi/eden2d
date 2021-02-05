@@ -1,13 +1,19 @@
 [def {
   -- Player component.
   Player = {
+    -img = [Render:image "images/tf/characters/chara3.png" {
+      x = 4 y = 7
+      w = 17 h = 32
+      ax = 0 ay = 16
+    }]
+
     -- Quick utility to make a player entity.
     make-player = [chunk |
       {ent = [make-ent]}
       [do
         [Loc:make ent]
         [Solid:make ent 1]
-        [Render:make ent "player-0"]
+        [Render:make ent Player:-img]
         [Player:make ent]
         [chunk:add ent]
         ent

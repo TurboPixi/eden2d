@@ -23,7 +23,7 @@
 
       toggle = [|
         {key = [@:cursor:top-with :portable]}
-        [if ?:key
+        [if [!= key nil]
           [| @:chunk:remove key]
           [| [[@:chunk:add [Key:make 0]] :move]
               @:cursor:loc:x @:cursor:loc:y
