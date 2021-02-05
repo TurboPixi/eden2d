@@ -33,7 +33,7 @@ export class ContainerPanel implements Panel {
     return this._container;
   }
 
-  tick(): void {
+  tick(deltaMillis: number): void {
     this._contChunk.render(0, 0, 4);
   }
 

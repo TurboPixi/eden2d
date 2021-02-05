@@ -51,17 +51,17 @@ export class WorldPanel implements Panel {
     return chunk0;
   }
 
-  tick(): void {
+  tick(deltaMillis: number): void {
     // Follow the player across chunks.
     let chunk = this._player.chunk;
     if (chunk != this._chunk) {
       this.showChunk(chunk);
     }
 
-    this._invChunk.tick();
+    this._invChunk.tick(deltaMillis);
     this._invChunk.render(0, 0, 4);
 
-    this._chunk.tick();
+    this._chunk.tick(deltaMillis);
     let px = this._player.loc.x;
     let py = this._player.loc.y;
     let x = (px - 4) * 16;

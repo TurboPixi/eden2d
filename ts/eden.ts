@@ -19,7 +19,7 @@ export interface PanelOwner {
 }
 
 export interface Panel { 
-  tick(): void;
+  tick(deltaMillis: number): void;
   keyDown(evt: KeyboardEvent): void;
   readonly container: Container;
 }
@@ -66,13 +66,13 @@ class Eden implements PanelOwner {
 
     this.showPanel(new WorldPanel(this));
     this._app.stage.interactive = true;
-    this._app.ticker.add(() => this.tick())
+    this._app.ticker.add(() => this.tick(this._app.ticker.deltaMS))
     this._app.start();
   }
 
-  private tick(): void {
+  private tick(deltaMillis: number): void {
     for (let panel of this._panels) {
-      panel.tick();
+      panel.tick(deltaMillis);
     }
   }
 }

@@ -55,6 +55,8 @@ export class Chunk implements IDict {
   private _nextId = 1;
   private _container: Container;
   private _defs: EDict;
+  private _millis = 0;
+  private _lastTickMillis = 0;
 
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
@@ -123,9 +125,18 @@ export class Chunk implements IDict {
     }
   }
 
-  tick() {
+  tick(deltaMillis: number) {
+    // Ticker handling.
+    // TODO: Simple 4Hz for now; use ticker freq.
+    let tickMillis = 250;
+    this._millis += deltaMillis;
+    let ticks = Math.floor((this._millis - this._lastTickMillis) / tickMillis);
+    this._lastTickMillis += ticks * tickMillis;
+
     for (let id in this._entities) {
       let ent = this._entities[id];
+
+      // Movement & collision.
       let loc = ent.loc;
       if (loc && (loc.dx != 0 || loc.dy != 0)) {
         let nx = loc.x + loc.dx, ny = loc.y + loc.dy;
@@ -134,6 +145,15 @@ export class Chunk implements IDict {
         }
         loc.x = nx; loc.y = ny;
         loc.dx = 0; loc.dy = 0;
+      }
+
+      // Ticks.
+      for (let i = 0; i < ticks; i++) {
+        let ticker = isDict(ent.ref($('ticker')));
+        if (ticker !== nil) {
+          let block = dictRef(ticker, $('block'));
+          _eval(this, [block]);
+        }
       }
     }
   }
