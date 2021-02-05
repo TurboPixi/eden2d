@@ -1,0 +1,14 @@
+[def {
+  Cursor = {
+    -img = [RenderComp:image "images/floors.png" {x = 0 y = 16}]
+
+    make = [chunk |
+      {ent = [make-ent]}
+      [do
+        [LocComp:make ent]
+        [RenderComp:make ent Cursor:-img]
+        [chunk:add ent]
+      ]
+    ]
+  }
+}]

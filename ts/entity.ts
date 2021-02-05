@@ -1,6 +1,6 @@
 import { Chunk, locChunk } from "./chunk";
-import { Loc } from "./loc";
-import { Render } from "./render";
+import { LocComp } from "./components/loc";
+import { RenderComp } from "./components/render";
 import { parse } from "./script/kurt";
 import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
@@ -97,8 +97,8 @@ export class Entity implements IDict {
   hasComp(key: ESym): boolean { return symName(key) in this._comps; }
 
   // Accessors for common component types.
-  get loc(): Loc { return this.ref($('loc')) as Loc }
-  get render(): Render { return this.ref($('render')) as Render }
+  get loc(): LocComp { return this.ref($('loc')) as LocComp }
+  get render(): RenderComp { return this.ref($('render')) as RenderComp }
 
   setChunkAndId(chunk: Chunk, id: number) {
     this._chunk = chunk;

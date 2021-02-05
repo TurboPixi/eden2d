@@ -1,0 +1,115 @@
+[def {
+  -- Entities with the Portable component can be moved.
+  PortableComp = {
+    make = [ent |
+      def ent {portable = true}
+    ]
+  }
+
+  TickerComp = {
+    make = [ent freq block |
+      def ent {ticker = {freq block}}
+    ]
+  }
+
+  UsableComp = {
+    make = [ent fn |
+      def ent {usable = {
+        ^ = UsableComp:impl
+        fn
+      }}
+    ]
+
+    impl = {
+      perform = [ent action |
+        if [= action:action :use]
+           [| @:fn action:user]
+      ]
+    }
+  }
+
+  KeyComp = {
+    make = [ent code |
+      def ent {key = {code}}
+    ]
+  }
+
+  ContainerComp = {
+    make = [ent chunk |
+      def ent {container = {chunk}}
+    ]
+  }
+
+  ProgrammedComp = {
+    make = [ent |
+      def ent {programmed = {
+        ^ = ProgrammedComp:impl
+        program = [make-chunk]
+      }}
+    ]
+
+    impl = {
+      block = [user |
+        -- Fake placeholder code. Should come from program chunk.
+        [| [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y]
+      ]
+    }
+  }
+
+  -- Entities with the portal component transport an entity to another location/chunk.
+  PortalComp = {
+    make = [ent target-chunk target-x target-y |
+      set ent {
+        portal = {
+          ^ = PortalComp:impl
+          target-chunk target-x target-y
+        }
+      }
+    ]
+
+    impl = {
+      perform = [ent action |
+        if [= action:action :enter]
+        [| do
+          [action:ent:jump @:target-chunk]
+          [action:ent:move-to @:target-x @:target-y]
+        ]
+      ]
+    }
+  }
+
+  SolidComp = {
+    make = [ent mass |
+      set ent {solid = {mass}}
+    ]
+  }
+
+  -- Door component.
+  DoorComp = {
+    make = [ent code closed-img open-img |
+      {
+        render = [RenderComp:make ent closed-img]
+        door = {
+          ^ = DoorComp:impl
+          open = false
+          code closed-img open-img
+        }
+      }
+      [set ent {door}]
+    ]
+
+    impl = {
+      prepare = [ent action | if [= action:action :open] [|
+        if [!= [?= action :opener :player [|env:selected-item] :key :code] @:code]
+          [| set action {cancel = true}]
+      ]]
+
+      perform = [ent action |
+        if [and [= action:action :open] [! action:cancel]] [| do
+          [set @ {open = [! @:open]}]
+          [set ent:render {image = [if @:open @:open-img @:closed-img]}]
+        ]
+      ]
+    }
+  }
+}]

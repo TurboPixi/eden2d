@@ -1,8 +1,8 @@
-import { _eval } from "./script/eval";
-import { parse } from "./script/kurt";
-import { IDict, dictDef, _root } from "./script/dict";
-import { $, $$, EDict, EExpr, ESym, symName, _def, _parentTag } from "./script/script";
-import { World } from "./world";
+import { _eval } from "../script/eval";
+import { parse } from "../script/kurt";
+import { IDict, dictDef, _root } from "../script/dict";
+import { EDict, EExpr, ESym, symName, _def, _parentTag } from "../script/script";
+import { World } from "../world";
 
 import ui_kurt from "./ui.kurt";
 

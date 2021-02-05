@@ -1,0 +1,74 @@
+[def {
+  -- `kind`: function with a single 'chunk' param that produces an entity.
+  make-at = [kind chunk x y | 
+    {ent = [kind chunk]}
+    [do
+      [ent:move-to x y]
+      ent
+    ]
+  ]
+
+  Floor = {
+    -img = [RenderComp:image "images/floors.png" {x = 0 y = 16}]
+
+    make = [chunk |
+      {ent = [make-ent]}
+      [do
+        [LocComp:make ent]
+        [RenderComp:make ent Floor:-img]
+        [chunk:add ent]
+      ]
+    ]
+  }
+
+  Wall = {
+    -img = [RenderComp:image "images/wall-stone-blue.png" {
+      x = [* 5 16]
+      y = [* 3 16]
+    }]
+
+    make = [chunk |
+      {ent = [make-ent]}
+      [do
+        [LocComp:make ent]
+        [SolidComp:make ent 1]
+        [RenderComp:make ent Wall:-img]
+        [chunk:add ent]
+      ]
+    ]
+  }
+
+  WoodDoor = {
+    -img-closed = [RenderComp:image "images/rogue/environment.png" {x = 16 y = [* 8 16]}]
+    -img-open = [RenderComp:image "images/rogue/environment.png" {
+      x = 4 y = [+ [* 8 16] 9]
+      w = 8 h = 22
+    }]
+
+    make = [chunk |
+      {ent = [make-ent]}
+      [do
+        [LocComp:make ent]
+        [DoorComp:make ent 123 WoodDoor:-img-closed WoodDoor:-img-open]
+        [chunk:add ent]
+      ]
+    ]
+  }
+
+  Stairs = {
+    -upimg = [RenderComp:image "images/stairs.png" {w = 16 h = 22 ay = 6}]
+    -dnimg = [RenderComp:image "images/stairs.png" {y = 22 h = 16}]
+    -- TODO: list items eval'd in wrong env -imgs = :[Stairs:-upimg Stairs:-dnimg]
+
+    make = [chunk x y target-chunk target-x target-y up? |
+      {ent = [make-ent]}
+      [do
+        [LocComp:make ent]
+        [RenderComp:make ent [if up? Stairs:-upimg Stairs:-dnimg]]
+        [PortalComp:make ent target-chunk target-x target-y]
+        [ent:move-to x y]
+        [chunk:add ent]
+      ]
+    ]
+  }
+}]

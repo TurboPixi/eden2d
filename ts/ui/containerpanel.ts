@@ -1,11 +1,11 @@
 import { Container, Graphics } from "pixi.js";
-import { Chunk } from "./chunk";
-import { Panel, PanelOwner } from "./eden";
+import { Chunk } from "../chunk";
+import { Panel, PanelOwner } from "../eden";
 import { Key } from "./key";
-import { _eval } from "./script/eval";
-import { $, $$, EExpr } from "./script/script";
-import { Dict, isDict } from "./script/dict";
-import { parse } from "./script/kurt";
+import { _eval } from "../script/eval";
+import { $, $$, EExpr } from "../script/script";
+import { Dict, isDict } from "../script/dict";
+import { parse } from "../script/kurt";
 
 import containerpanel_kurt from "./containerpanel.kurt";
 

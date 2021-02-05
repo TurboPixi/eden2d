@@ -1,9 +1,9 @@
 import { Rectangle, Sprite, Texture } from "pixi.js";
-import { Entity, locEnt, NativeComp } from "./entity";
-import { Resources } from "./res";
-import { Dict, dictRef } from "./script/dict";
-import { locDict, locOpaque, locStr } from "./script/env";
-import { $, EOpaque, makeOpaque, opaqueVal, _blk } from "./script/script";
+import { Entity, locEnt, NativeComp } from "../entity";
+import { Resources } from "../res";
+import { Dict } from "../script/dict";
+import { locDict, locOpaque, locStr } from "../script/env";
+import { $, EOpaque, makeOpaque, opaqueVal, _blk } from "../script/script";
 
 interface ImageFrame {
   x: number;
@@ -14,10 +14,10 @@ interface ImageFrame {
   ay?: number;
 }
 
-export class Render extends NativeComp {
+export class RenderComp extends NativeComp {
   static Dict = {
     make: [$('ent'), $('image'), _blk, (env: Dict) => {
-      let r = new Render(
+      let r = new RenderComp(
         locEnt(env, $('ent')),
       );
       r.sprite.texture = opaqueVal(locOpaque(env, $('image'))) as Texture;

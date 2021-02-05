@@ -1,7 +1,7 @@
 [def {
   -- Player component.
-  Player = {
-    -img = [Render:image "images/tf/characters/chara3.png" {
+  PlayerComp = {
+    -img = [RenderComp:image "images/tf/characters/chara3.png" {
       x = 4 y = 7
       w = 17 h = 32
       ax = 0 ay = 16
@@ -11,10 +11,10 @@
     make-player = [chunk |
       {ent = [make-ent]}
       [do
-        [Loc:make ent]
-        [Solid:make ent 1]
-        [Render:make ent Player:-img]
-        [Player:make ent]
+        [LocComp:make ent]
+        [SolidComp:make ent 1]
+        [RenderComp:make ent PlayerComp:-img]
+        [PlayerComp:make ent]
         [chunk:add ent]
         ent
       ]
@@ -24,7 +24,7 @@
       {inv-chunk = [make-chunk]}
       [do
         [set ent {player = {
-          ^ = Player:impl
+          ^ = PlayerComp:impl
           slot = 0
           contents = inv-chunk
           cursor-ent = [UI:Cursor:make inv-chunk]

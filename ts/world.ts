@@ -4,13 +4,14 @@ import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, _root } from "./script/dict";
 import { Entity } from "./entity";
 import { parse } from "./script/kurt";
-import { Loc } from "./loc";
-import { Render } from "./render";
+import { LocComp } from "./components/loc";
+import { RenderComp } from "./components/render";
 
-import actions_kurt from "./actions.kurt";
-import player_kurt from "./player.kurt";
-import tiles_kurt from "./tiles.kurt";
-import items_kurt from "./items.kurt";
+import components_kurt from "./components/components.kurt";
+import actions_kurt from "./actions/actions.kurt";
+import player_kurt from "./actors/player.kurt";
+import tiles_kurt from "./blocks/blocks.kurt";
+import items_kurt from "./items/items.kurt";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World implements IDict {
@@ -25,8 +26,9 @@ export class World implements IDict {
     // May need some more generalized mechanism for importing.
     _eval(this, [_def, {'Chunk': Chunk.Dict}]);
     _eval(this, [_def, {'Entity': Entity.Dict}]);
-    _eval(this, [_def, {'Loc': Loc.Dict}]);
-    _eval(this, [_def, {'Render': Render.Dict}]);
+    _eval(this, [_def, {'LocComp': LocComp.Dict}]);
+    _eval(this, [_def, {'RenderComp': RenderComp.Dict}]);
+    _eval(this, parse(components_kurt));
     _eval(this, parse(actions_kurt));
     _eval(this, parse(player_kurt));
     _eval(this, parse(tiles_kurt));

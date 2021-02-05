@@ -1,13 +1,13 @@
 import { Container, Graphics } from "pixi.js";
-import { Chunk, isChunk } from "./chunk";
+import { Chunk, isChunk } from "../chunk";
 import { ContainerPanel } from "./containerpanel";
-import { Panel, PanelOwner } from "./eden";
-import { Entity, isEntity } from "./entity";
+import { Panel, PanelOwner } from "../eden";
+import { Entity, isEntity } from "../entity";
 import { Key } from "./key";
-import { Dict, dictDef, isDict } from "./script/dict";
-import { _eval } from "./script/eval";
-import { parse } from "./script/kurt";
-import { $, $$, EExpr, nil } from "./script/script";
+import { Dict, dictDef, isDict } from "../script/dict";
+import { _eval } from "../script/eval";
+import { parse } from "../script/kurt";
+import { $, $$, EExpr } from "../script/script";
 
 import worldpanel_kurt from "./worldpanel.kurt";
 
@@ -23,7 +23,7 @@ export class WorldPanel implements Panel {
     this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')]]));
 
     let chunk = this.createChunk();
-    this._player = isEntity(this.eval([$('Player'), $$('make-player')], chunk));
+    this._player = isEntity(this.eval([$('PlayerComp'), $$('make-player')], chunk));
     dictDef(this._impl, $('player'), this._player as Dict); // copy into impl
 
     let bg = new Graphics();

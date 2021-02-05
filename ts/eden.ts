@@ -6,8 +6,8 @@ import { _root } from "./script/dict";
 import { _blk, _def, _do } from "./script/script";
 import { World } from "./world";
 import { builtinDefs } from "./script/builtins";
-import { UI } from "./ui";
-import { WorldPanel } from "./worldpanel";
+import { UI } from "./ui/ui";
+import { WorldPanel } from "./ui/worldpanel";
 
 import test_kurt from "./test.kurt";
 import { parse } from "./script/kurt";
