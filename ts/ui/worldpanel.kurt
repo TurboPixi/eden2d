@@ -12,6 +12,7 @@
       move: [dx dy | @:chunk:perform [action-move @:player dx dy]]
 
       toy-chunk: (
+        -- Ew. This woudl be so much less foul with simple Clojure-esque ranges & stuff.
         {x:0 y:0 chunk:[make-chunk]}
         [do
           [while (< x 10) (do
@@ -68,16 +69,13 @@
 
       use-selected: (
         {selected: [@:player:player:selected-item]}
-        [if ?:selected (
+        [if [!= selected nil] (
           [@:chunk:perform [action-use @:player selected]]
         )]
       )
 
       selected-container: (
-        {target: [@:player:player:inv-target :container]}
-        [if ?:target (
-          target:container:chunk
-        )]
+        [?= [@:player:player:inv-target :container] :container :chunk]
       )
 
       take: (

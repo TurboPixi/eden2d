@@ -22,8 +22,8 @@
   }
 
   WoodDoor: {
-    -img-closed: [RenderComp:image "images/rogue/environment.png" {x: 16 y: [* 8 16]}]
-    -img-open: [RenderComp:image "images/rogue/environment.png" {
+    -img-closed: [RenderComp:image "images/environment.png" {x: 16 y: [* 8 16]}]
+    -img-open: [RenderComp:image "images/environment.png" {
       x: 4 y: [+ [* 8 16] 9]
       w: 8 h: 22
     }]
