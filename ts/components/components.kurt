@@ -1,33 +1,33 @@
 [def {
   -- Entities with the Portable component can be picked up.
-  PortableComp = {
-    make = ({portable = true})
+  PortableComp: {
+    make: ({portable: true})
   }
 
-  TickerComp = {
-    make = [freq block | {ticker = {freq block}}]
+  TickerComp: {
+    make: [freq block | {ticker: {freq block}}]
   }
 
-  UsableComp = {
-    make = [use | {usable = {^ = UsableComp:impl use}}]
+  UsableComp: {
+    make: [use | {usable: {^: UsableComp:impl use}}]
 
-    impl = {
-      perform = [ent action |
+    impl: {
+      perform: [ent action |
         if [= action:action :use]
            (@:use action:user action:target)
       ]
     }
   }
 
-  ContainerComp = {
-    make = [chunk | {container = {chunk}}]
+  ContainerComp: {
+    make: [chunk | {container: {chunk}}]
   }
 
-  ProgrammedComp = {
-    make = [program-chunk | {programmed = {^ = ProgrammedComp:impl program = program-chunk}}]
+  ProgrammedComp: {
+    make: [program-chunk | {programmed: {^: ProgrammedComp:impl program: program-chunk}}]
 
-    impl = {
-      block = [user |
+    impl: {
+      block: [user |
         -- Fake placeholder code. Should come from program chunk.
         [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y
       ]
@@ -35,14 +35,14 @@
   }
 
   -- Entities with the portal component transport an entity to another location/chunk.
-  PortalComp = {
-    make = [target-chunk target-x target-y | {portal = {
-      ^ = PortalComp:impl
+  PortalComp: {
+    make: [target-chunk target-x target-y | {portal: {
+      ^: PortalComp:impl
       target-chunk target-x target-y
     }}]
 
-    impl = {
-      perform = [ent action |
+    impl: {
+      perform: [ent action |
         if [= action:action :enter]
         (do
           [action:ent:jump @:target-chunk]
@@ -52,32 +52,32 @@
     }
   }
 
-  SolidComp = {
-    make = [mass | {solid = {mass}}]
+  SolidComp: {
+    make: [mass | {solid: {mass}}]
   }
 
-  KeyComp = {
-    make = [code | {key = {code}}]
+  KeyComp: {
+    make: [code | {key: {code}}]
   }
 
   -- Door component.
-  DoorComp = {
-    make = [code closed-img open-img | {door = {
-      ^ = DoorComp:impl
-      open = false
+  DoorComp: {
+    make: [code closed-img open-img | {door: {
+      ^: DoorComp:impl
+      open: false
       code closed-img open-img
     }}]
 
-    impl = {
-      prepare = [ent action | if [= action:action :open] (
+    impl: {
+      prepare: [ent action | if [= action:action :open] (
         if [!= [?= action :opener :player (env:selected-item) :key :code] @:code]
-          (set action {cancel = true})
+          (set action {cancel: true})
       )]
 
-      perform = [ent action |
+      perform: [ent action |
         if [and [= action:action :open] [! action:cancel]] (do
-          [set @ {open = [! @:open]}]
-          [set ent:render {image = [if @:open @:open-img @:closed-img]}]
+          [set @ {open: [! @:open]}]
+          [set ent:render {image: [if @:open @:open-img @:closed-img]}]
         )
       ]
     }

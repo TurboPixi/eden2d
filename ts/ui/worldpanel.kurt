@@ -1,42 +1,42 @@
 [def {
-  WorldPanel = {
-    make = (
+  WorldPanel: {
+    make: (
       {
-        ^ = WorldPanel:impl
-        player = nil
-        chunk = nil
+        ^: WorldPanel:impl
+        player: nil
+        chunk: nil
       }
     )
 
-    impl = {
-      move = [dx dy | @:chunk:perform [action-move @:player dx dy]]
+    impl: {
+      move: [dx dy | @:chunk:perform [action-move @:player dx dy]]
 
-      toy-chunk = (
-        {x = 0 y = 0 chunk = [make-chunk]}
+      toy-chunk: (
+        {x:0 y:0 chunk:[make-chunk]}
         [do
           [while (< x 10) (do
-            [set {y = 0}]
+            [set {y:0}]
             [while (< y 10) (do
               [chunk:add-at [Floor:make] x y]
-              [set {y = [+ y 1]}]
+              [set {y: [+ y 1]}]
             )]
-            [set {x = [+ x 1]}]
+            [set {x: [+ x 1]}]
           )]
 
-          [set {x = 1}]
+          [set {x: 1}]
           [while (< x 9) (do
             [if (= x 5)
               (chunk:add-at [WoodDoor:make] x 1)
               (chunk:add-at [Wall:make] x 1)
             ]
-            [set {x = [+ x 1]}]
+            [set {x: [+ x 1]}]
           )]
 
           chunk
         ]
       )
 
-      make-items = [chunk0 chunk1 | do
+      make-items: [chunk0 chunk1 | do
         [chunk0:add-at [Stairs:make chunk1 0 5 false] 1 5]
         [chunk1:add-at [Stairs:make chunk0 2 5 true] 1 5]
         [chunk0:add-at [Wand:make] 0 2]
@@ -45,52 +45,52 @@
         [chunk0:add-at [Brazier:make] 4 4]
       ]
 
-      enter = (
+      enter: (
         {
-          loc = @:player:loc
-          portal = [@:player:chunk:top-with loc:x loc:y :portal]
+          loc: @:player:loc
+          portal: [@:player:chunk:top-with loc:x loc:y :portal]
         }
         [if ?:portal (
           @:chunk:perform [action-enter portal @:player]
         )]
       )
 
-      open = (
-        {door = [@:player:top-with :door]}
+      open: (
+        {door: [@:player:top-with :door]}
         [if [!= door nil] (
           @:chunk:perform [action-open @:player door]
         )]
       )
 
-      select-inv = [slot |
+      select-inv: [slot |
         @:player:player:select-inv slot
       ]
 
-      use-selected = (
-        {selected = [@:player:player:selected-item]}
+      use-selected: (
+        {selected: [@:player:player:selected-item]}
         [if ?:selected (
           [@:chunk:perform [action-use @:player selected]]
         )]
       )
 
-      selected-container = (
-        {target = [@:player:player:inv-target :container]}
+      selected-container: (
+        {target: [@:player:player:inv-target :container]}
         [if ?:target (
           target:container:chunk
         )]
       )
 
-      take = (
-        {target = [@:player:top-with :portable]}
+      take: (
+        {target: [@:player:top-with :portable]}
         [if [!= target nil] (
-          {player = @:player:player}
+          {player: @:player:player}
           [[target:jump player:contents]:move-to player:slot 0]
         )]
       )
 
-      put = (
-        {loc = @:player:loc
-         target = [@:player:player:inv-target :portable]}
+      put: (
+        {loc: @:player:loc
+         target: [@:player:player:inv-target :portable]}
         [if [!= target nil] (
           [target:jump @:player:chunk]:move-to loc:x loc:y
         )]

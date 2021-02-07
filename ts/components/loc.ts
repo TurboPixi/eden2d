@@ -11,9 +11,9 @@ export class LocComp extends NativeComp {
     }],
 
     'impl': _parse('Loc:impl', `{
-      perform = [ent action |
+      perform: [ent action |
         [if [= action:action :move] (do
-          [set @ {dx = action:dx dy = action:dy}]
+          [set @ {dx: action:dx dy: action:dy}]
         )]
       ]
     }`),

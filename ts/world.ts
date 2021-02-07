@@ -54,7 +54,7 @@ export class World implements IDict {
       // ]]
       //
       'new-ent': _parse('World:new-ent', `[comp-sets |
-        {ent = [make-ent]}
+        {ent: [make-ent]}
         [do
           [for-each comp-sets [setter | def ent setter]]
           ent

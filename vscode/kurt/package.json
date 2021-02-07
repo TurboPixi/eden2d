@@ -4,6 +4,7 @@
     "description": "mftl",
     "version": "0.0.1",
     "publisher": "j15r",
+    "repository": "none",
     "engines": {
         "vscode": "^1.52.0"
     },

@@ -86,5 +86,5 @@ dict
   }
 
 dict_entry
-  = _ key:sym _ "=" _ val:expr { return [key, val] }
+  = _ key:sym _ ":" _ val:expr { return [key, val] }
   / _ key:sym { return [key, key] }
