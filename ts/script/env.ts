@@ -3,28 +3,28 @@ import { _eval } from "./eval";
 import { chuck, EExpr, EList, EOpaque, ESym, isList, isOpaque, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
 
 export class TeeEnv implements IDict {
-  constructor(private first: Dict, private second: Dict) {}
+  constructor(private env: Dict, private parent: Dict) {}
 
   get names(): string[] {
-    return dictNames(this.first);
+    return dictNames(this.env);
   }
 
   exists(sym: ESym): boolean {
     if (symName(sym) == _parentTagName) {
       return true;
     }
-    return dictExists(this.first, sym);
+    return dictExists(this.env, sym);
   }
 
   ref(sym: ESym): EExpr {
     if (symName(sym) == _parentTagName) {
-      return this.second;
+      return this.parent;
     }
-    return dictRef(this.first, sym);
+    return dictRef(this.env, sym);
   }
 
   def(sym: ESym, value: EExpr): void {
-    dictDef(this.first, sym, value);
+    dictDef(this.env, sym, value);
   }
 }
 

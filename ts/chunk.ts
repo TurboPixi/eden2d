@@ -46,6 +46,14 @@ export class Chunk implements IDict {
       );
     }],
 
+    'near-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
+      return locChunk(env, _self).nearEntityWith(
+        locNum(env, $('x')),
+        locNum(env, $('y')),
+        locSym(env, $('comp'))
+      );
+    }],
+
     'perform': [$('action'), _blk, _parse('Chunk:perform', `[action | do
       -- Let each entity prepare the action (possibly mutating it),
       -- then perform it once all of them have had a crack.
@@ -91,10 +99,23 @@ export class Chunk implements IDict {
     return ents;
   }
 
+  // Finds the top-most entity at an exact location, with the given component.
   topEntityWith(x: number, y: number, comp: ESym): Entity {
     let ents = this.entitiesAt(x, y);
     for (let ent of ents) {
       if (ent.ref(comp) !== nil) {
+        return ent;
+      }
+    }
+    return nil;
+  }
+
+  // Finds the top-most entity near a location (within one unit), with the given component.
+  nearEntityWith(x: number, y: number, comp: ESym): Entity {
+    let deltas = [[0, 0], [-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+    for (let delta of deltas) {
+      let ent = this.topEntityWith(x + delta[0], y + delta[1], comp);
+      if (ent) {
         return ent;
       }
     }
@@ -144,8 +165,12 @@ export class Chunk implements IDict {
       let loc = ent.loc;
       if (loc && (loc.dx != 0 || loc.dy != 0)) {
         let nx = loc.x + loc.dx, ny = loc.y + loc.dy;
-        if (this.topEntityWith(nx, ny, $('solid')) !== nil) {
-          continue;
+        let ent = this.topEntityWith(nx, ny, $('solid'));
+        if (ent !== nil) {
+          let solid = ent.ref($('solid')) as Dict;
+          if (dictRef(solid, $('solid'))) {
+            continue;
+          }
         }
         loc.x = nx; loc.y = ny;
         loc.dx = 0; loc.dy = 0;

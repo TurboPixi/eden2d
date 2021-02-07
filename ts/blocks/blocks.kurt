@@ -31,6 +31,7 @@
     make: (new-ent [list
       [LocComp:make]
       [RenderComp:make -img-closed]
+      [SolidComp:make 1]
       [DoorComp:make 123 WoodDoor:-img-closed WoodDoor:-img-open]
     ])
   }

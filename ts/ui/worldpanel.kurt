@@ -56,7 +56,7 @@
       )
 
       open: (
-        {door: [@:player:top-with :door]}
+        {door: [@:player:near-with :door]}
         [if [!= door nil] (
           @:chunk:perform [action-open @:player door]
         )]

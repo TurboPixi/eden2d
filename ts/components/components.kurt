@@ -53,7 +53,7 @@
   }
 
   SolidComp: {
-    make: [mass | {solid: {mass}}]
+    make: [mass | {solid: {solid: true mass}}]
   }
 
   KeyComp: {
@@ -78,6 +78,9 @@
         if [and [= action:action :open] [! action:cancel]] (do
           [set @ {open: [! @:open]}]
           [set ent:render {image: [if @:open @:open-img @:closed-img]}]
+          [if [? ent :solid] (
+            set ent:solid {solid: [! ent:solid:solid]}
+          )]
         )
       ]
     }

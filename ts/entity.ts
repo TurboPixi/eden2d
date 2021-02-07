@@ -27,6 +27,10 @@ export class Entity implements IDict {
       @:chunk:top-with @:loc:x @:loc:y comp
     ]`),
 
+    'near-with': _parse('Entity:near-with', `[comp |
+      @:chunk:near-with @:loc:x @:loc:y comp
+    ]`),
+
     'prepare': _parse('Entity:prepare', `[action |
       for-each-entry @:comps [name comp |
         if [? comp :prepare] (
