@@ -61,6 +61,7 @@ TODO:
   [x y | + x y]           -- block with two params
   [x | + x 1]             -- block with one param
   [| + 1 2]               -- block with no params
+  (+ 1 2)                 -- (shorthand) block with no params
   [x y | {env} | + x y]   -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-

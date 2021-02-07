@@ -2,10 +2,10 @@
   Floor = {
     -img = [RenderComp:image "images/floors.png" {x = 0 y = 16}]
 
-    make = [| new-ent [list
+    make = (new-ent [list
       [LocComp:make]
       [RenderComp:make Floor:-img]
-    ]]
+    ])
   }
 
   Wall = {
@@ -14,11 +14,11 @@
       y = [* 3 16]
     }]
 
-    make = [| new-ent [list
+    make = (new-ent [list
       [LocComp:make]
       [SolidComp:make 1]
       [RenderComp:make Wall:-img]
-    ]]
+    ])
   }
 
   WoodDoor = {
@@ -28,11 +28,11 @@
       w = 8 h = 22
     }]
 
-    make = [| new-ent [list
+    make = (new-ent [list
       [LocComp:make]
       [RenderComp:make -img-closed]
       [DoorComp:make 123 WoodDoor:-img-closed WoodDoor:-img-open]
-    ]]
+    ])
   }
 
   Stairs = {

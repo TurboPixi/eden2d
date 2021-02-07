@@ -9,14 +9,14 @@
       }]
 
       -- Quick utility to make a player entity.
-      make-player = [| new-ent [list
+      make-player = (new-ent [list
         [LocComp:make]
         [SolidComp:make 1]
         [RenderComp:make PlayerComp:-img]
         [PlayerComp:make]
-      ]]
+      ])
 
-      make = [|
+      make = (
         {inv-chunk = [make-chunk]}
         {player = {
           ^ = PlayerComp:impl
@@ -24,12 +24,12 @@
           contents = inv-chunk
           cursor-ent = [inv-chunk:add [UI:Cursor:make]]
         }}
-      ]
+      )
 
       impl = {
-        selected-item = [|
+        selected-item = (
           @:contents:top-with @:slot 0 :portable
-        ]
+        )
 
         select-inv = [slot | do
           [set @ {slot}]

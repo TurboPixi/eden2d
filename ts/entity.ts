@@ -29,17 +29,17 @@ export class Entity implements IDict {
 
     'prepare': _parse('Entity:prepare', `[action |
       for-each-entry @:comps [name comp |
-        if [? comp :prepare] [|
+        if [? comp :prepare] (
           comp:prepare @ action
-        ]
+        )
       ]
     ]`),
 
     'perform': _parse('Entity:perform', `[action |
       for-each-entry @:comps [name comp |
-        if [? comp :perform] [|
+        if [? comp :perform] (
           comp:perform @ action
-        ]
+        )
       ]
     ]`)
   };

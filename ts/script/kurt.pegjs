@@ -13,6 +13,7 @@ expr
   / sym
   / quote
   / list
+  / short_block
   / dict
 
 _ = (ws comment)* ws / ws
@@ -46,7 +47,7 @@ boolean
 nil = "nil" { return undefined }
 
 sym
-  = chars:[^ \t\r\n\[\]{}:|]+ { return _sym(chars.join("")) }
+  = chars:[^ \t\r\n\[\]{}():|]+ { return _sym(chars.join("")) }
 
 quote
   = ":" expr:expr { return _quote(expr) }
@@ -55,7 +56,7 @@ listaccess
   = l:list ":" + q:sym {
   	return [l, _quote(q)]
   }
-  
+
 access
   = s:(sym ":")+ q:sym {
   	let result = [s[0][0]];
@@ -69,6 +70,9 @@ access
 
 list
   = "[" items:list_item* _ "]" { return items }
+
+short_block
+  = '(' items:list_item* _ ")" { items.unshift(_sym('|')); return items }
 
 list_item = _ expr:expr { return expr }
 

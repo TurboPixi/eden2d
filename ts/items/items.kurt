@@ -8,27 +8,27 @@
       [RenderComp:image -src {x = 19 y = 62 w = 11 h = 18 ax = -3 ay = 4}]
     ]
 
-    make = [|
+    make = (
       {ent = [new-ent [list
         [LocComp:make]
         [SolidComp:make 1]
         [RenderComp:make Brazier:-imgs:0]
-        [TickerComp:make 1 [|
+        [TickerComp:make 1 (
           -- TODO: Way too bespoke for a simple animation. Generalize this.
           {brazier = ent:brazier
            frame = [+ 1 brazier:frame]}
           [do
-            [if [> frame 3] [| set {frame = 0}]]
+            [if [> frame 3] (set {frame = 0})]
             [set ent:render {image = [Brazier:-imgs frame]}]
             [set brazier {frame = frame}]
           ]
-        ]]
+        )]
       ]]}
       [do
         [def ent {brazier = {frame = 0}}]
         ent
       ]
-    ]
+    )
   }
 
   Key = {
@@ -48,11 +48,11 @@
   Crate = {
     -img = [RenderComp:image "images/crate.png" {x = 0 y = 0}]
 
-    make = [| new-ent [list
+    make = (new-ent [list
       [LocComp:make]
       [RenderComp:make Crate:-img]
       [PortableComp:make]
-    ]]
+    ])
   }
 
   Wand = {
@@ -61,7 +61,7 @@
       y = [* 30 16]
     }]
 
-    make = [|
+    make = (
       {program-chunk = [make-chunk]}
       [new-ent [list
         [LocComp:make]
@@ -71,6 +71,6 @@
         [ContainerComp:make program-chunk]
         [UsableComp:make [user target | target:programmed:block user]]
       ]]
-    ]
+    )
   }
 }]
