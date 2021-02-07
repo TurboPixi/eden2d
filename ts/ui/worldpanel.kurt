@@ -11,13 +11,38 @@
     impl = {
       move = [dx dy | @:chunk:perform [action-move @:player dx dy]]
 
+      toy-chunk = [|
+        {x = 0 y = 0 chunk = [make-chunk]}
+        [do
+          [while [| < x 10] [| do
+            [set {y = 0}]
+            [while [| < y 10] [| do
+              [chunk:add-at [Floor:make] x y]
+              [set {y = [+ y 1]}]
+            ]]
+            [set {x = [+ x 1]}]
+          ]]
+
+          [set {x = 1}]
+          [while [| < x 9] [| do
+            [if [| = x 5]
+              [|chunk:add-at [WoodDoor:make] x 1]
+              [|chunk:add-at [Wall:make] x 1]
+            ]
+            [set {x = [+ x 1]}]
+          ]]
+
+          chunk
+        ]
+      ]
+
       make-items = [chunk0 chunk1 | do
-        [Stairs:make chunk0 1 5 chunk1 0 5 false]
-        [Stairs:make chunk1 1 5 chunk0 2 5 true]
-        [chunk0:add [Wand:make]]
-        [[chunk0:add [Key:make 123]]:move-to 1 0]
-        [[chunk0:add [Key:make 456]]:move-to 2 0]
-        [[chunk0:add [Brazier:make]]:move-to 4 4]
+        [chunk0:add-at [Stairs:make chunk1 0 5 false] 1 5]
+        [chunk1:add-at [Stairs:make chunk0 2 5 true] 1 5]
+        [chunk0:add-at [Wand:make] 0 2]
+        [chunk0:add-at [Key:make 123] 1 0]
+        [chunk0:add-at [Key:make 456] 2 0]
+        [chunk0:add-at [Brazier:make] 4 4]
       ]
 
       enter = [|

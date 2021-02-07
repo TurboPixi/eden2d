@@ -6,10 +6,10 @@ import { Entity, isEntity } from "../entity";
 import { Key } from "./key";
 import { Dict, dictDef, isDict } from "../script/dict";
 import { _eval } from "../script/eval";
-import { parse } from "../script/kurt";
 import { $, $$, EExpr } from "../script/script";
 
 import worldpanel_kurt from "./worldpanel.kurt";
+import { _parse } from "../script/parse";
 
 export class WorldPanel implements Panel {
   private _container: Container;
@@ -19,11 +19,11 @@ export class WorldPanel implements Panel {
   private _impl: Dict;
 
   constructor(private _owner: PanelOwner) {
-    _eval(_owner.world, parse(worldpanel_kurt)); // TODO: Do this only once.
+    _eval(_owner.world, _parse('worldpanel.kurt', worldpanel_kurt)); // TODO: Do this only once.
     this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')]]));
 
     let chunk = this.createChunk();
-    this._player = isEntity(this.eval([$('PlayerComp'), $$('make-player')], chunk));
+    this._player = isEntity(this.eval([[chunk, $$('add')], [[$('PlayerComp'), $$('make-player')]]]));
     dictDef(this._impl, $('player'), this._player as Dict); // copy into impl
 
     let bg = new Graphics();
@@ -45,8 +45,8 @@ export class WorldPanel implements Panel {
   }
 
   private createChunk(): Chunk {
-    let chunk0 = this._owner.world.toyChunk();
-    let chunk1 = this._owner.world.toyChunk();
+    let chunk0 = this.call('toy-chunk') as Chunk;
+    let chunk1 = this.call('toy-chunk') as Chunk;
     this.call('make-items', chunk0, chunk1);
     return chunk0;
   }

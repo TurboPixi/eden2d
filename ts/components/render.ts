@@ -16,13 +16,11 @@ interface ImageFrame {
 
 export class RenderComp extends NativeComp {
   static Dict = {
-    make: [$('ent'), $('image'), _blk, (env: Dict) => {
-      let r = new RenderComp(
-        locEnt(env, $('ent')),
-      );
-      r.sprite.texture = opaqueVal(locOpaque(env, $('image'))) as Texture;
+    make: [$('img'), _blk, (env: Dict) => {
+      let r = new RenderComp();
+      r.sprite.texture = opaqueVal(locOpaque(env, $('img'))) as Texture;
       r.sprite.anchor = r.sprite.texture.defaultAnchor;
-      return r;
+      return {'render': r};
     }],
 
     image: [$('file'), $('frame'), _blk, (env: Dict) => {
@@ -47,9 +45,8 @@ export class RenderComp extends NativeComp {
 
   sprite: Sprite;
 
-  constructor(ent: Entity) {
+  constructor() {
     super();
     this.sprite = new Sprite();
-    ent.def($('render'), this);
   }
 }

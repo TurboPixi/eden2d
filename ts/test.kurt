@@ -68,6 +68,14 @@
       [expect false [? :bar]]
     ]]
 
+    [run "simple def/set" [|do
+      [def env :bag {}]
+      [def bag :foo 42]
+      [expect 42 bag:foo]
+      [set bag :foo 54]
+      [expect 54 bag:foo]
+    ]]
+
     [run "basic blocks" [|
       {fn = [| 37]}
       [do
@@ -154,7 +162,7 @@
         [def env {
           fn = [x | do
             [def {vals = [list x val]}]
-            [{vals = vals} +]
+            [{vals} +]
           ]
         }]
         [expect 96 [{x = 54} fn]]
@@ -396,6 +404,41 @@
       [expect 42 [?= :foo [foo:block true] :shazbot]]
       [expect 42 [?= :foo [| foo:block true] :shazbot]]
       [expect 42 [?= :foo [| env:block true] :shazbot]]
+    ]]
+
+    [run "todo" [|do
+      [def {
+        make-thing = [|do
+          [def {thing = 42}]
+          [foo | do
+            [set {thing = [+ 1 thing]}]
+            thing
+          ]
+        ]
+      }]
+      [def {thang = [make-thing]}]
+      [thang]
+      [thang]
+      [thang]
+      [expect 46 [thang]]
+    ]]
+
+    [run "todo2" [|do
+      [def {
+        thing = {
+          foo = 42
+          bar = [|foo]
+        }
+      }]
+      [expect 42 [thing:bar]]
+    ]]
+
+    [run "indirect symbol ref" [|
+      {
+        bag = {foo = 42}
+        bar = :foo
+      }
+      [expect 42 [bag bar]]
     ]]
 
     -- Wrap up.

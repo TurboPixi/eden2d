@@ -10,7 +10,7 @@ import { UI } from "./ui/ui";
 import { WorldPanel } from "./ui/worldpanel";
 
 import test_kurt from "./test.kurt";
-import { parse } from "./script/kurt";
+import { _parse } from "./script/parse";
 
 export interface PanelOwner {
   readonly world: World;
@@ -77,6 +77,6 @@ class Eden implements PanelOwner {
   }
 }
 
-_eval(_root, builtinDefs);      // built-ins
-_eval(_root, parse(test_kurt)); // language tests
-new Eden();                     // start the game
+_eval(_root, builtinDefs);                    // built-ins
+_eval(_root, _parse('test.kurt', test_kurt)); // language tests
+new Eden();                                   // start the game

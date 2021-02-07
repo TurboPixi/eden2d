@@ -2,8 +2,8 @@ import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictFind, dictNames, dictRef, isDict, _root } from "./dict";
 import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq, isSym, EExpr, _callerTagName, _callerTag } from "./script";
-import { envNew, expectBool, expectNum, locBool, locList, locNum } from "./env";
-import { parse } from "./kurt";
+import { expectBool, expectNum, locBool, locList, locNum } from "./env";
+import { _parse } from "./parse";
 
 export const _debug = $('debug');
 export const _and = $('and');
@@ -57,7 +57,8 @@ export let builtinDefs = [_def, {
 
   'if': [$('expr'), $('then'), $('else'), _blk, (env: Dict) => {
     // if:
-    let b = dictRef(env, $('expr'));
+    let expr = dictRef(env, $('expr'));
+    let b = _eval(env, [{}, expr]);
     if (typeof b != 'boolean') {
       chuck(env, `${b} must be boolean`);
     }
@@ -74,6 +75,16 @@ export let builtinDefs = [_def, {
       }
     }
     return nil;
+  }],
+
+  'while': [$('cond'), $('expr'), _blk, (env: Dict) => {
+    let cond = dictRef(env, $('cond'));
+    let expr = dictRef(env, $('expr'));
+    let last: EExpr;
+    while (expectBool(env, _eval(env, [{}, cond]))) {
+      last = _eval(env, [{}, expr]);
+    }
+    return last;
   }],
 
   'for-each': [$('list'), $('expr'), _blk, (env: Dict) => {
@@ -143,7 +154,7 @@ export let builtinDefs = [_def, {
     return eq(dictRef(env, $('a')), dictRef(env, $('b')));
   }],
 
-  '!=': parse(`[a b | ![= a b]]`),
+  '!=': _parse('!=', `[a b | ![= a b]]`),
 
   '!': [$('x'), _blk, (env: Dict) => {
     return !locBool(env, $('x'));

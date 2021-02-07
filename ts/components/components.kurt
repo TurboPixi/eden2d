@@ -1,71 +1,45 @@
 [def {
-  -- Entities with the Portable component can be moved.
+  -- Entities with the Portable component can be picked up.
   PortableComp = {
-    make = [ent |
-      def ent {portable = true}
-    ]
+    make = [| {portable = true}]
   }
 
   TickerComp = {
-    make = [ent freq block |
-      def ent {ticker = {freq block}}
-    ]
+    make = [freq block | {ticker = {freq block}}]
   }
 
   UsableComp = {
-    make = [ent fn |
-      def ent {usable = {
-        ^ = UsableComp:impl
-        fn
-      }}
-    ]
+    make = [use | {usable = {^ = UsableComp:impl use}}]
 
     impl = {
       perform = [ent action |
         if [= action:action :use]
-           [| @:fn action:user]
+           [| @:use action:user action:target]
       ]
     }
   }
 
-  KeyComp = {
-    make = [ent code |
-      def ent {key = {code}}
-    ]
-  }
-
   ContainerComp = {
-    make = [ent chunk |
-      def ent {container = {chunk}}
-    ]
+    make = [chunk | {container = {chunk}}]
   }
 
   ProgrammedComp = {
-    make = [ent |
-      def ent {programmed = {
-        ^ = ProgrammedComp:impl
-        program = [make-chunk]
-      }}
-    ]
+    make = [program-chunk | {programmed = {^ = ProgrammedComp:impl program = program-chunk}}]
 
     impl = {
       block = [user |
         -- Fake placeholder code. Should come from program chunk.
-        [| [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y]
+        [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y
       ]
     }
   }
 
   -- Entities with the portal component transport an entity to another location/chunk.
   PortalComp = {
-    make = [ent target-chunk target-x target-y |
-      set ent {
-        portal = {
-          ^ = PortalComp:impl
-          target-chunk target-x target-y
-        }
-      }
-    ]
+    make = [target-chunk target-x target-y | {portal = {
+      ^ = PortalComp:impl
+      target-chunk target-x target-y
+    }}]
 
     impl = {
       perform = [ent action |
@@ -79,24 +53,20 @@
   }
 
   SolidComp = {
-    make = [ent mass |
-      set ent {solid = {mass}}
-    ]
+    make = [mass | {solid = {mass}}]
+  }
+
+  KeyComp = {
+    make = [code | {key = {code}}]
   }
 
   -- Door component.
   DoorComp = {
-    make = [ent code closed-img open-img |
-      {
-        render = [RenderComp:make ent closed-img]
-        door = {
-          ^ = DoorComp:impl
-          open = false
-          code closed-img open-img
-        }
-      }
-      [set ent {door}]
-    ]
+    make = [code closed-img open-img | {door = {
+      ^ = DoorComp:impl
+      open = false
+      code closed-img open-img
+    }}]
 
     impl = {
       prepare = [ent action | if [= action:action :open] [|

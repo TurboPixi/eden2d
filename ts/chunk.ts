@@ -4,8 +4,8 @@ import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, dictRef, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parentTagName, _self, _set } from "./script/script";
 import { World } from "./world";
-import { locNum, locSym, envEval, locDict } from "./script/env";
-import { parse } from "./script/kurt";
+import { locNum, locSym, envEval } from "./script/env";
+import { _parse } from "./script/parse";
 
 export type ChunkId = number;
 
@@ -20,6 +20,10 @@ export class Chunk implements IDict {
       locChunk(env, _self).addEntity(ent);
       return ent;
     }],
+
+    'add-at': _parse('Chunk:add-at', `[ent x y |
+      [@:add ent]:move-to x y
+    ]`),
 
     'remove': [$('ent'), _blk, (env: Dict) => {
       let ent = locEnt(env, $('ent'));
@@ -42,7 +46,7 @@ export class Chunk implements IDict {
       );
     }],
 
-    'perform': [$('action'), _blk, parse(`[action | do
+    'perform': [$('action'), _blk, _parse('Chunk:perform', `[action | do
       -- Let each entity prepare the action (possibly mutating it),
       -- then perform it once all of them have had a crack.
       -- TODO: Give the chunk a crack at it.

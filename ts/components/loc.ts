@@ -1,16 +1,16 @@
-import { Entity, locEnt, NativeComp } from "../entity";
+import { NativeComp } from "../entity";
 import { Dict, _root } from "../script/dict";
 import { _eval } from "../script/eval";
-import { parse } from "../script/kurt";
+import { _parse } from "../script/parse";
 import { $, $$, EExpr, _blk, _def, _do } from "../script/script";
 
 export class LocComp extends NativeComp {
   static Dict = {
-    'make': [$('ent'), _blk, (env: Dict) => {
-      return new LocComp(env, locEnt(env, $('ent')))
+    'make': [_blk, (env: Dict) => {
+      return {'loc': new LocComp(env)};
     }],
 
-    'impl': parse(`{
+    'impl': _parse('Loc:impl', `{
       perform = [ent action |
         [if [= action:action :move] [| do
           [set @ {dx = action:dx dy = action:dy}]
@@ -25,9 +25,8 @@ export class LocComp extends NativeComp {
   x = 0;
   y = 0;
 
-  constructor(env: Dict, ent: Entity) {
+  constructor(env: Dict) {
     super();
     this['[parent]'] = _eval(env, [$('LocComp'), $$('impl')]);
-    ent.def($('loc'), this);
   }
 }

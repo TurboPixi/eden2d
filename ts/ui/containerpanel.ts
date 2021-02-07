@@ -5,16 +5,16 @@ import { Key } from "./key";
 import { _eval } from "../script/eval";
 import { $, $$, EExpr } from "../script/script";
 import { Dict, isDict } from "../script/dict";
-import { parse } from "../script/kurt";
 
 import containerpanel_kurt from "./containerpanel.kurt";
+import { _parse } from "../script/parse";
 
 export class ContainerPanel implements Panel {
   private _container: Container;
   private _impl: Dict;
 
   constructor(private _contChunk: Chunk, private _owner: PanelOwner) {
-    _eval(_owner.world, parse(containerpanel_kurt)); // TODO: Do this only once.
+    _eval(_owner.world, _parse('containerpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
 
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);

@@ -1,7 +1,7 @@
 import { _print } from "./print";
 import { Dict, dictDef, dictFind, dictNames, dictRef, _root, _specialProps, isDict, isEDict, translateSym, dictParent } from "./dict";
-import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque } from "./script";
-import { lookupSym, envNew, TeeEnv } from "./env";
+import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque, isString } from "./script";
+import { envNew, TeeEnv } from "./env";
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.
 export function _eval(env: Dict, expr: EExpr): EExpr {
@@ -302,34 +302,48 @@ function applyDo(env: Dict, list: EList): EExpr {
 
 function applyDef(env: Dict, list: EList): EExpr {
   let target = env;
-  let values: EDict;
+  let values: EExpr;
   switch (list.length) {
     case 2:
-      values = isEDict(list[1]);
+      values = list[1];
       break;
     case 3:
-      target = isDict(_eval(env, list[1]))
-      values = isEDict(list[2]);
+      target = isDict(_eval(env, list[1]));
+      values = list[2];
+      break;
+    case 4:
+      target = isDict(_eval(env, list[1]));
+      let sym = isSym(_eval(env, list[2]));
+      if (sym === nil) {
+        chuck(env, `expected a symbol key`);
+      }
+      values = {};
+      values[symName(sym)] = _eval(env, list[3]);
       break;
     default:
       chuck(env, `expected either 1 or 2 args for def, but got ${_print(list)}`);
   }
 
+  let valuesDict = isDict(values);
   if (target === nil) {
     chuck(env, `no env found at ${_print(list[1])}`);
-  } else if (values === nil) {
-    chuck(env, `expected dict definition at ${_print(list[2])}`);
+  } else if (valuesDict === nil) {
+    valuesDict = isDict(_eval(env, values));
+    if (valuesDict === nil) {
+      chuck(env, `expected dict definition at ${_print(list[2])}`);
+    }
   }
 
-  for (let name in values) {
+  for (let name in valuesDict) {
     if (!(name in _specialProps)) {
-      dictDef(target, translateSym($(name)), _eval(env, values[name]));
+      dictDef(target, translateSym($(name)), _eval(env, dictRef(valuesDict, $(name))));
     }
   }
   return nil;
 }
 
 function applySet(env: Dict, list: EList): EExpr {
+  // TODO: Make it possible to [set target sym-holding-dict], like it is for [def] above.
   switch (list.length) {
     case 2: {
       // If env is unspecified, set the value at the nearest env where it's defined.
@@ -364,6 +378,20 @@ function applySet(env: Dict, list: EList): EExpr {
           dictDef(ctx, translateSym($(name)), _eval(env, values[name]));
         }
       }
+      break;
+    }
+
+    case 4: {
+      let ctx = isDict(_eval(env, list[1]));
+      if (!ctx) {
+        chuck(env, `first of two set args must be a dict`);
+      }
+      let name = isSym(_eval(env, list[2]));
+      if (name === nil) {
+        chuck(env, `expected a symbol key`);
+      }
+      let value = list[3];
+      dictDef(ctx, translateSym(name), _eval(env, value));
       break;
     }
 

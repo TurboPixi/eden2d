@@ -4,7 +4,7 @@
       {
         ^ = ContainerPanel:impl
         chunk width height
-        cursor = [UI:Cursor:make chunk]
+        cursor = [chunk:add [UI:Cursor:make]]
       }
     ]
 

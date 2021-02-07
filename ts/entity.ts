@@ -1,10 +1,10 @@
 import { Chunk, locChunk } from "./chunk";
 import { LocComp } from "./components/loc";
 import { RenderComp } from "./components/render";
-import { parse } from "./script/kurt";
 import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
-import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
+import { $, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
 import { lookupSym, envEval } from "./script/env";
+import { _parse } from "./script/parse";
 
 export class Entity implements IDict {
   static Dict = {
@@ -15,35 +15,33 @@ export class Entity implements IDict {
       return self;
     }],
 
-    'move': parse(`[dx dy | do
-      [def {loc = @:loc}]
-      [@:move-to [+ loc:x dx] [+ loc:y dy]]
+    'move': _parse('Entity:move', `[dx dy |
+      @:move-to [+ @:loc:x dx] [+ @:loc:y dy]
     ]`),
 
-    'move-to': parse(`[x y | do
-      [def {loc = @:loc}]
-      [set loc {x = x}]
-      [set loc {y = y}]
+    'move-to': _parse('Entity:move-to', `[x y |
+      set @:loc {x y}
     ]`),
 
-    'top-with': parse(`[comp | do
-      [def {loc = @:loc}]
-      [@:chunk:top-with loc:x loc:y comp]
+    'top-with': _parse('Entity:top-with', `[comp |
+      @:chunk:top-with @:loc:x @:loc:y comp
     ]`),
 
-    'prepare': parse(`[action |
+    'prepare': _parse('Entity:prepare', `[action |
       for-each-entry @:comps [name comp |
-        if [? comp :prepare] [| do
-          [comp:prepare @ action]
+        if [? comp :prepare] [|
+          comp:prepare @ action
         ]
-     ]]`),
+      ]
+    ]`),
 
-    'perform': parse(`[action |
+    'perform': _parse('Entity:perform', `[action |
       for-each-entry @:comps [name comp |
         if [? comp :perform] [|
           comp:perform @ action
         ]
-     ]]`)
+      ]
+    ]`)
   };
 
   private _chunk: Chunk;

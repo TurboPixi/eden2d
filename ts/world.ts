@@ -3,15 +3,15 @@ import { Chunk, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, _root } from "./script/dict";
 import { Entity } from "./entity";
-import { parse } from "./script/kurt";
 import { LocComp } from "./components/loc";
 import { RenderComp } from "./components/render";
 
 import components_kurt from "./components/components.kurt";
 import actions_kurt from "./actions/actions.kurt";
 import player_kurt from "./actors/player.kurt";
-import tiles_kurt from "./blocks/blocks.kurt";
+import blocks_kurt from "./blocks/blocks.kurt";
 import items_kurt from "./items/items.kurt";
+import { _parse } from "./script/parse";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World implements IDict {
@@ -26,26 +26,40 @@ export class World implements IDict {
     // May need some more generalized mechanism for importing.
     _eval(this, [_def, {'Chunk': Chunk.Dict}]);
     _eval(this, [_def, {'Entity': Entity.Dict}]);
+    _eval(this, _parse('components.kurt', components_kurt));
     _eval(this, [_def, {'LocComp': LocComp.Dict}]);
     _eval(this, [_def, {'RenderComp': RenderComp.Dict}]);
-    _eval(this, parse(components_kurt));
-    _eval(this, parse(actions_kurt));
-    _eval(this, parse(player_kurt));
-    _eval(this, parse(tiles_kurt));
-    _eval(this, parse(items_kurt));
+    _eval(this, _parse('actions.kurt', actions_kurt));
+    _eval(this, _parse('player.kurt', player_kurt));
+    _eval(this, _parse('blocks.kurt', blocks_kurt));
+    _eval(this, _parse('items.kurt', items_kurt));
 
     _eval(this, [_def, {
-      'make-chunk': [_blk,
-        function (env: Dict): EExpr {
-          return worldFrom(env).makeChunk();
-        }
-      ],
+      // Makes a new, empty chunk.
+      'make-chunk': [_blk, function (env: Dict): EExpr {
+        return worldFrom(env).makeChunk();
+      }],
 
-      'make-ent': [_blk,
-        function (env: Dict): EExpr {
-          return new Entity(env);
-        }
-      ],
+      // Makes a new entity with no components.
+      'make-ent': [_blk, function (env: Dict): EExpr {
+        return new Entity(env);
+      }],
+
+      // [new-ent] accepts a list of component setters, of the form {name = {comp}}, which allows it to be used
+      // with component make expressions, like so:
+      //
+      // [new-ent [
+      //   [SomeComp:make 123]
+      //   [OtherComp:make :whatever 456]
+      // ]]
+      //
+      'new-ent': _parse('World:new-ent', `[comp-sets |
+        {ent = [make-ent]}
+        [do
+          [for-each comp-sets [setter | def ent setter]]
+          ent
+        ]
+      ]`)
     }]);
   }
 
@@ -62,27 +76,6 @@ export class World implements IDict {
 
   chunk(id: ChunkId): Chunk {
     return this._chunks[id];
-  }
-
-  toyChunk(): Chunk {
-    let chunk = this.makeChunk();
-
-    for (let y = 0; y < 10; y++) {
-      for (let x = 0; x < 10; x++) {
-        _eval(this, [$('make-at'), [$('Floor'), $$('make')], chunk, x, y]);
-      }
-    }
-
-    for (let x = 1; x < 9; x++) {
-      if (x == 5) {
-        _eval(this, [$('make-at'), [$('WoodDoor'), $$('make')], chunk, x, 1]);
-      } else {
-        _eval(this, [$('make-at'), [$('Wall'), $$('make')], chunk, x, 1]);
-      }
-    }
-
-
-    return chunk;
   }
 }
 
