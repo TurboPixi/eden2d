@@ -18,4 +18,9 @@
     action: :enter portal ent
     ents: [list portal ent]
   }]
+
+  action-ignite: [igniter target | {
+    action: :ignite igniter target
+    ents: [list igniter target]
+  }]
 }]

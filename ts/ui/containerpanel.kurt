@@ -11,7 +11,7 @@
     impl: {
       close: (@:chunk:remove @:cursor)
 
-      move-cursor: [dx dy|
+      move-cursor: [dx dy |
         {
           nx: [+ @:cursor:loc:x dx]
           ny: [+ @:cursor:loc:y dy]

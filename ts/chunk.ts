@@ -181,7 +181,7 @@ export class Chunk implements IDict {
         let ticker = isDict(ent.ref($('ticker')));
         if (ticker !== nil) {
           let block = dictRef(ticker, $('block'));
-          _eval(this, [block]);
+          _eval(this, [block, ent]);
         }
       }
     }

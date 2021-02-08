@@ -403,7 +403,7 @@
       [expect 42 [?= :foo {shazbot: 42} :shazbot]]
       [expect 42 [?= :foo [foo:block true] :shazbot]]
       [expect 42 [?= :foo (foo:block true) :shazbot]]
-      [expect 42 [?= :foo (env:block true) :shazbot]]
+      [expect 42 [?= :foo (prev:block true) :shazbot]]
     )]
 
     [run "todo" (do

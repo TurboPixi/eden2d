@@ -10,6 +10,10 @@ module.exports = {
   mode: 'development',
   devtool: 'inline-source-map',
 
+  optimization: {
+    minimize: false
+  },
+
   resolve: {
     extensions: ['.js', '.ts', '.kurt'],
   },
@@ -32,7 +36,6 @@ module.exports = {
 
   plugins: [
     new webpack.IgnorePlugin(/(fs)/),
-    // new webpack.optimize.UglifyJsPlugin({}),
     // new CopyPlugin({patterns:[
     //   { from: 'src', to: webDir },
     // ]})

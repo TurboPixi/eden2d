@@ -14,7 +14,7 @@
     impl: {
       perform: [ent action |
         if [= action:action :use]
-           (@:use action:user action:target)
+           (@:use ent action:user action:target)
       ]
     }
   }
@@ -24,12 +24,20 @@
   }
 
   ProgrammedComp: {
-    make: [program-chunk | {programmed: {^: ProgrammedComp:impl program: program-chunk}}]
+    make: [program-chunk | {
+      programmed: {
+        ^: ProgrammedComp:impl
+        program: program-chunk
+      }
+    }]
 
     impl: {
-      block: [user |
+      block: [ent user |
         -- Fake placeholder code. Should come from program chunk.
-        [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y
+        -- [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y
+        [?= [user:near-with :brazier] (
+          user:chunk:perform [action-ignite ent prev]
+        )]
       ]
     }
   }
@@ -70,7 +78,7 @@
 
     impl: {
       prepare: [ent action | if [= action:action :open] (
-        if [!= [?= action :opener :player (env:selected-item) :key :code] @:code]
+        if [!= [?= action :opener :player (prev:selected-item) :key :code] @:code]
           (set action {cancel: true})
       )]
 
