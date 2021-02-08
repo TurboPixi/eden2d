@@ -14,10 +14,10 @@ interface ImageFrame {
   ay?: number;
 }
 
-export class RenderComp extends NativeComp {
+export class Rendered extends NativeComp {
   static Dict = {
     make: [$('img'), _blk, (env: Dict) => {
-      let r = new RenderComp();
+      let r = new Rendered();
       r.sprite.texture = opaqueVal(locOpaque(env, $('img'))) as Texture;
       r.sprite.anchor = r.sprite.texture.defaultAnchor;
       return {'render': r};

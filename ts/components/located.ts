@@ -4,13 +4,13 @@ import { _eval } from "../script/eval";
 import { _parse } from "../script/parse";
 import { $, $$, EExpr, _blk, _def, _do } from "../script/script";
 
-export class LocComp extends NativeComp {
+export class Located extends NativeComp {
   static Dict = {
     'make': [_blk, (env: Dict) => {
-      return {'loc': new LocComp(env)};
+      return {'loc': new Located(env)};
     }],
 
-    'impl': _parse('Loc:impl', `{
+    'impl': _parse('Located:impl', `{
       perform: [ent action |
         [if [= action:action :move] (do
           [set @ {dx: action:dx dy: action:dy}]
@@ -27,6 +27,6 @@ export class LocComp extends NativeComp {
 
   constructor(env: Dict) {
     super();
-    this['[parent]'] = _eval(env, [$('LocComp'), $$('impl')]);
+    this['[parent]'] = _eval(env, [$('Located'), $$('impl')]);
   }
 }

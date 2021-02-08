@@ -23,7 +23,7 @@ export class WorldPanel implements Panel {
     this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')]]));
 
     let chunk = this.createChunk();
-    this._player = isEntity(this.eval([[chunk, $$('add')], [[$('PlayerComp'), $$('make-player')]]]));
+    this._player = isEntity(this.eval([[chunk, $$('add')], [[$('Player'), $$('make')]]]));
     dictDef(this._impl, $('player'), this._player as Dict); // copy into impl
 
     let bg = new Graphics();

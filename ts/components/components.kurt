@@ -1,15 +1,19 @@
 [def {
+  Solid: {
+    make: [mass | {solid: {solid: true mass}}]
+  }
+
   -- Entities with the Portable component can be picked up.
-  PortableComp: {
+  Portable: {
     make: ({portable: true})
   }
 
-  TickerComp: {
+  Ticks: {
     make: [freq block | {ticker: {freq block}}]
   }
 
-  UsableComp: {
-    make: [use | {usable: {^: UsableComp:impl use}}]
+  Usable: {
+    make: [use | {usable: {^: Usable:impl use}}]
 
     impl: {
       perform: [ent action |
@@ -19,14 +23,14 @@
     }
   }
 
-  ContainerComp: {
+  Contains: {
     make: [chunk | {container: {chunk}}]
   }
 
-  ProgrammedComp: {
+  Programmable: {
     make: [program-chunk | {
       programmed: {
-        ^: ProgrammedComp:impl
+        ^: Programmable:impl
         program: program-chunk
       }
     }]
@@ -43,9 +47,9 @@
   }
 
   -- Entities with the portal component transport an entity to another location/chunk.
-  PortalComp: {
+  IsPortal: {
     make: [target-chunk target-x target-y | {portal: {
-      ^: PortalComp:impl
+      ^: IsPortal:impl
       target-chunk target-x target-y
     }}]
 
@@ -55,40 +59,6 @@
         (do
           [action:ent:jump @:target-chunk]
           [action:ent:move-to @:target-x @:target-y]
-        )
-      ]
-    }
-  }
-
-  SolidComp: {
-    make: [mass | {solid: {solid: true mass}}]
-  }
-
-  KeyComp: {
-    make: [code | {key: {code}}]
-  }
-
-  -- Door component.
-  DoorComp: {
-    make: [code closed-img open-img | {door: {
-      ^: DoorComp:impl
-      open: false
-      code closed-img open-img
-    }}]
-
-    impl: {
-      prepare: [ent action | if [= action:action :open] (
-        if [!= [?= action :opener :player (prev:selected-item) :key :code] @:code]
-          (set action {cancel: true})
-      )]
-
-      perform: [ent action |
-        if [and [= action:action :open] [! action:cancel]] (do
-          [set @ {open: [! @:open]}]
-          [set ent:render {image: [if @:open @:open-img @:closed-img]}]
-          [if [? ent :solid] (
-            set ent:solid {solid: [! ent:solid:solid]}
-          )]
         )
       ]
     }

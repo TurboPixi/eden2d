@@ -1,49 +1,34 @@
 [def {
   Floor: {
-    -img: [RenderComp:image "images/floors.png" {x: 0 y: 16}]
+    -img: [Rendered:image "images/floors.png" {x: 0 y: 16}]
 
     make: (new-ent [list
-      [LocComp:make]
-      [RenderComp:make Floor:-img]
+      [Located:make]
+      [Rendered:make Floor:-img]
     ])
   }
 
   Wall: {
-    -img: [RenderComp:image "images/wall-stone-blue.png" {
+    -img: [Rendered:image "images/wall-stone-blue.png" {
       x: [* 5 16]
       y: [* 3 16]
     }]
 
     make: (new-ent [list
-      [LocComp:make]
-      [SolidComp:make 1]
-      [RenderComp:make Wall:-img]
-    ])
-  }
-
-  WoodDoor: {
-    -img-closed: [RenderComp:image "images/environment.png" {x: 16 y: [* 8 16]}]
-    -img-open: [RenderComp:image "images/environment.png" {
-      x: 4 y: [+ [* 8 16] 9]
-      w: 8 h: 22
-    }]
-
-    make: (new-ent [list
-      [LocComp:make]
-      [RenderComp:make -img-closed]
-      [SolidComp:make 1]
-      [DoorComp:make 123 WoodDoor:-img-closed WoodDoor:-img-open]
+      [Located:make]
+      [Solid:make 1]
+      [Rendered:make Wall:-img]
     ])
   }
 
   Stairs: {
-    -upimg: [RenderComp:image "images/stairs.png" {w: 16 h: 22 ay: 6}]
-    -dnimg: [RenderComp:image "images/stairs.png" {y: 22 h: 16}]
+    -upimg: [Rendered:image "images/stairs.png" {w: 16 h: 22 ay: 6}]
+    -dnimg: [Rendered:image "images/stairs.png" {y: 22 h: 16}]
 
     make: [target-chunk target-x target-y up? | new-ent [list
-      [LocComp:make]
-      [RenderComp:make [if up? Stairs:-upimg Stairs:-dnimg]]
-      [PortalComp:make target-chunk target-x target-y]
+      [Located:make]
+      [Rendered:make [if up? Stairs:-upimg Stairs:-dnimg]]
+      [IsPortal:make target-chunk target-x target-y]
     ]]
   }
 }]

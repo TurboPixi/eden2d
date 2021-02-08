@@ -3,13 +3,14 @@ import { Chunk, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, _root } from "./script/dict";
 import { Entity } from "./entity";
-import { LocComp } from "./components/loc";
-import { RenderComp } from "./components/render";
+import { Located } from "./components/located";
+import { Rendered } from "./components/rendered";
 
 import components_kurt from "./components/components.kurt";
 import actions_kurt from "./actions/actions.kurt";
 import player_kurt from "./actors/player.kurt";
 import blocks_kurt from "./blocks/blocks.kurt";
+import door_key_kurt from "./blocks/door-key.kurt";
 import items_kurt from "./items/items.kurt";
 import { _parse } from "./script/parse";
 
@@ -27,11 +28,12 @@ export class World implements IDict {
     _eval(this, [_def, {'Chunk': Chunk.Dict}]);
     _eval(this, [_def, {'Entity': Entity.Dict}]);
     _eval(this, _parse('components.kurt', components_kurt));
-    _eval(this, [_def, {'LocComp': LocComp.Dict}]);
-    _eval(this, [_def, {'RenderComp': RenderComp.Dict}]);
+    _eval(this, [_def, {'Located': Located.Dict}]);
+    _eval(this, [_def, {'Rendered': Rendered.Dict}]);
     _eval(this, _parse('actions.kurt', actions_kurt));
     _eval(this, _parse('player.kurt', player_kurt));
     _eval(this, _parse('blocks.kurt', blocks_kurt));
+    _eval(this, _parse('door-key.kurt', door_key_kurt));
     _eval(this, _parse('items.kurt', items_kurt));
 
     _eval(this, [_def, {

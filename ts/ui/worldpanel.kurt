@@ -47,12 +47,8 @@
       ]
 
       enter: (
-        {
-          loc: @:player:loc
-          portal: [@:player:chunk:top-with loc:x loc:y :portal]
-        }
-        [if ?:portal (
-          @:chunk:perform [action-enter portal @:player]
+        [?= [@:player:chunk:top-with @:player:loc:x @:player:loc:y :portal] (
+          @:chunk:perform [action-enter prev @:player]
         )]
       )
 

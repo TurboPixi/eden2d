@@ -2,23 +2,23 @@
   Brazier: {
     -src: "images/tf/tiles/animated/torch.png" 
     -imgs-off: [list
-      [RenderComp:image -src {x: 35 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
-      [RenderComp:image -src {x: 35 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
-      [RenderComp:image -src {x: 35 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
-      [RenderComp:image -src {x: 35 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 35 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 35 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 35 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 35 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
     ]
     -imgs-on: [list
-      [RenderComp:image -src {x: 19 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
-      [RenderComp:image -src {x: 19 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
-      [RenderComp:image -src {x: 19 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
-      [RenderComp:image -src {x: 19 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 19 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 19 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 19 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 19 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
     ]
 
     make: (
       [new-ent [list
-        [LocComp:make]
-        [SolidComp:make 1]
-        [RenderComp:make Brazier:-imgs-off:0]
+        [Located:make]
+        [Solid:make 1]
+        [Rendered:make Brazier:-imgs-off:0]
         {brazier: {
           on: false
           frame: 0
@@ -28,7 +28,7 @@
             )
           ]
         }}
-        [TickerComp:make 1 [ent |
+        [Ticks:make 1 [ent |
           -- TODO: Way too bespoke for a simple animation. Generalize this.
           {frame: [+ 1 ent:brazier:frame]}
           [do
@@ -41,32 +41,18 @@
     )
   }
 
-  Key: {
-    -img: [RenderComp:image "images/tf/icons/fullcolor/icons_full_16.png" {
-      x: [* 5 16]
-      y: [* 22 16]
-    }]
-
-    make: [code | new-ent [list
-      [LocComp:make]
-      [RenderComp:make Key:-img]
-      [PortableComp:make]
-      [KeyComp:make code]
-    ]]
-  }
-
   Crate: {
-    -img: [RenderComp:image "images/crate.png" {x: 0 y: 0}]
+    -img: [Rendered:image "images/crate.png" {x: 0 y: 0}]
 
     make: (new-ent [list
-      [LocComp:make]
-      [RenderComp:make Crate:-img]
-      [PortableComp:make]
+      [Located:make]
+      [Rendered:make Crate:-img]
+      [Portable:make]
     ])
   }
 
   Wand: {
-    -img: [RenderComp:image "images/tf/icons/fullcolor/icons_full_16.png" {
+    -img: [Rendered:image "images/tf/icons/fullcolor/icons_full_16.png" {
       x: [* 3 16]
       y: [* 30 16]
     }]
@@ -74,12 +60,12 @@
     make: (
       {program-chunk: [make-chunk]}
       [new-ent [list
-        [LocComp:make]
-        [RenderComp:make Wand:-img]
-        [PortableComp:make]
-        [ProgrammableComp:make program-chunk]
-        [ContainerComp:make program-chunk]
-        [UsableComp:make [ent user target | target:programmed:block ent user]]
+        [Located:make]
+        [Rendered:make Wand:-img]
+        [Portable:make]
+        [Programmable:make program-chunk]
+        [Contains:make program-chunk]
+        [Usable:make [ent user target | target:programmed:block ent user]]
       ]]
     )
   }
