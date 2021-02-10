@@ -10,10 +10,8 @@
       close: (@:chunk:remove @:cursor)
 
       move-cursor: [dx dy |
-        {
-          nx: [+ @:cursor:loc:x dx]
-          ny: [+ @:cursor:loc:y dy]
-        }
+        {nx: [+ @:cursor:loc:x dx]
+         ny: [+ @:cursor:loc:y dy]}
         [if [and [>= nx 0] [>= ny 0] [< nx @:width] [< ny @:height]]
           (@:cursor:move-to nx ny)
         ]
@@ -23,59 +21,42 @@
         ?= [@:cursor:top-with :glyph] (@:chunk:remove prev)
       )
 
-      write: (
-        @:chunk:add-at [Bracket:make :square :open :horz] @:cursor:loc:x @:cursor:loc:y
-      )
+      write: [type |
+        @:chunk:add-at [Glyph:make type] @:cursor:loc:x @:cursor:loc:y
+      ]
     }
   }
 
-  Bracket: {
+  Glyph: {
     -src: "images/script.png"
     -imgs: {
-      square: {
-        open: {
-          horz: [Rendered:image -src {x:  0 y:  0}]
-          vert: [Rendered:image -src {x: 32 y:  0}]
-        }
-        close: {
-          horz: [Rendered:image -src {x: 16 y:  0}]
-          vert: [Rendered:image -src {x: 48 y:  0}]
-        }
-      }
-      round: {
-        open: {
-          horz: [Rendered:image -src {x:  0 y: 16}]
-          vert: [Rendered:image -src {x: 32 y: 16}]
-        }
-        close: {
-          horz: [Rendered:image -src {x: 16 y: 16}]
-          vert: [Rendered:image -src {x: 48 y: 16}]
-        }
-      }
-      curly: {
-        open: {
-          horz: [Rendered:image -src {x:  0 y: 32}]
-          vert: [Rendered:image -src {x: 32 y: 32}]
-        }
-        close: {
-          horz: [Rendered:image -src {x: 16 y: 32}]
-          vert: [Rendered:image -src {x: 48 y: 32}]
-        }
-      }
+      square-open-horz:  [Rendered:image -src {x:  0 y:  0}]
+      square-open-vert:  [Rendered:image -src {x: 32 y:  0}]
+      square-close-horz: [Rendered:image -src {x: 16 y:  0}]
+      square-close-vert: [Rendered:image -src {x: 48 y:  0}]
+      round-open-horz:   [Rendered:image -src {x:  0 y: 16}]
+      round-open-vert:   [Rendered:image -src {x: 32 y: 16}]
+      round-close-horz:  [Rendered:image -src {x: 16 y: 16}]
+      round-close-vert:  [Rendered:image -src {x: 48 y: 16}]
+      curly-open-horz:   [Rendered:image -src {x:  0 y: 32}]
+      curly-open-vert:   [Rendered:image -src {x: 32 y: 32}]
+      curly-close-horz:  [Rendered:image -src {x: 16 y: 32}]
+      curly-close-vert:  [Rendered:image -src {x: 48 y: 32}]
+
+      block-horz:        [Rendered:image -src {x:  0 y: 48}]
+      block-vert:        [Rendered:image -src {x: 16 y: 48}]
+      quote-horz:        [Rendered:image -src {x: 32 y: 48}]
+      quote-vert:        [Rendered:image -src {x: 48 y: 48}]
+
+      squiggle:          [Rendered:image -src {x: 64 y:  0}]
     }
 
-    make: [kind open dir |
+    make: [type |
       [new-ent [list
         [Located:make]
-        [Rendered:make [-img-from kind open dir]]
-        {bracket: {
-          kind open dir
-        }}
+        [Rendered:make [-imgs type]]
+        {glyph: {type}}
       ]]
-    ]
-
-    -img-from: [kind state dir | do
-      [[[-imgs kind] state] dir]
     ]
   }
 }]

@@ -3,7 +3,7 @@ import { Chunk } from "../chunk";
 import { Panel, PanelOwner } from "../eden";
 import { Key } from "./key";
 import { _eval } from "../script/eval";
-import { $, $$, EExpr } from "../script/script";
+import { $, $$, EExpr, nil } from "../script/script";
 import { Dict, isDict } from "../script/dict";
 
 import containerpanel_kurt from "./progpanel.kurt";
@@ -38,19 +38,73 @@ export class ProgPanel implements Panel {
   }
 
   keyDown(evt: KeyboardEvent): void {
+    let writeType: EExpr = nil;
+
     switch (evt.keyCode) {
       case Key.W:     this.call('move-cursor', 0, -1); break;
       case Key.S:     this.call('move-cursor', 0, 1); break;
       case Key.A:     this.call('move-cursor', -1, 0); break;
       case Key.D:     this.call('move-cursor', 1, 0); break;
       case Key.SPACE: this.call('erase'); break;
+      case Key.Q:     writeType = $$('squiggle'); break;
 
-      case Key.ENTER: this.call('write'); break;
+      case Key.BACK_SLASH:
+        if (evt.shiftKey) {
+          if (evt.ctrlKey) writeType = $$('block-vert');
+          else             writeType = $$('block-horz');
+        }
+        break;
+
+      case Key.SEMI_COLON:
+        if (evt.shiftKey) {
+          if (evt.ctrlKey) writeType = $$('quote-vert');
+          else             writeType = $$('quote-horz');
+        }
+        break;
+
+      case Key._9:
+        if (evt.shiftKey) {
+          if (evt.ctrlKey) writeType = $$('round-open-vert');
+          else             writeType = $$('round-open-horz');
+        }
+        break;
+
+      case Key._0:
+        if (evt.shiftKey) {
+          if (evt.ctrlKey) writeType = $$('round-close-vert');
+          else             writeType = $$('round-close-horz');
+        }
+        break;
+
+      case Key.OPEN_BRACKET:
+        if (evt.shiftKey) {
+          if (evt.ctrlKey) writeType = $$('curly-open-vert');
+          else             writeType = $$('curly-open-horz');
+        } else {
+          if (evt.ctrlKey) writeType = $$('square-open-vert');
+          else             writeType = $$('square-open-horz');
+        }
+        break;
+
+      case Key.CLOSE_BRACKET:
+        if (evt.shiftKey) {
+          if (evt.ctrlKey) writeType = $$('curly-close-vert');
+          else             writeType = $$('curly-close-horz');
+        } else {
+          if (evt.ctrlKey) writeType = $$('square-close-vert');
+          else             writeType = $$('square-close-horz');
+        }
+        break;
 
       case Key.ESCAPE:
         this.call('close');
         this._owner.popPanel();
         break;
+    }
+
+    if (writeType !== nil) {
+      console.log(writeType);
+      this.call('write', writeType);
     }
   }
 
