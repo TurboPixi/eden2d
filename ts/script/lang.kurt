@@ -13,6 +13,12 @@ Principles:
 
 
 TODO:
+- Some kind of keyword-like "full quote" (that self-evals, like Clojure keywords)
+  E.g., {foo: /[+ 1 2]] => full quoted list. 
+        foo             => /[+ 1 2]
+        [foo]           => /[+ 1 2]
+        \foo            =>  [+ 1 2]
+        [\foo]          =>  3
 - Try/catch?
 - Affordance to resolve resolution ambiguity with parent/child envs.
 - Allow dict entries without ' = ' spacing.

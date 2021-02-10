@@ -1,11 +1,12 @@
 import { _printStack, _print } from "./print";
 import { Dict, isEDict, _specialProps } from "./dict";
 
-export type EExpr = ENil | EPrim | ESym | EQuote | EList | Dict | NativeBlock | EOpaque;
+export type EExpr = ENil | EPrim | ESym | EQuote | EFullQuote | EList | Dict | NativeBlock | EOpaque;
 export type EPrim = number | boolean | string | ENil;
 export type ENil = undefined;
 export type ESym = { '[sym]': string };
 export type EQuote = { '[q]': EExpr };
+export type EFullQuote = { '[fq]': EExpr };
 export type EOpaque = { '[opaque]': any };
 export type EBlock = { '[block]': [EList, EExpr], '[env]': Dict, '[name]'?: string, '[self]'?: EDict };
 export type NativeBlock = (env: Dict) => EExpr;
@@ -13,6 +14,7 @@ export type EList = EExpr[];
 export type EDict = { [arg: string]: EExpr };
 
 export const QuoteMarker = '[q]';
+export const FullQuoteMarker = '[fq]';
 export const SymMarker = '[sym]';
 export const OpaqueMarker = '[opaque]';
 export const BlockMarker = '[block]';
@@ -134,6 +136,13 @@ export function chuck(env: Dict, msg: string) {
 export function isQuote(val: EExpr): EQuote {
   if (val && typeof val == 'object' && (QuoteMarker in val)) {
     return val as EQuote;
+  }
+  return nil;
+}
+
+export function isFullQuote(val: EExpr): EFullQuote {
+  if (val && typeof val == 'object' && (FullQuoteMarker in val)) {
+    return val as EFullQuote;
   }
   return nil;
 }

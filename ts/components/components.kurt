@@ -24,24 +24,25 @@
   }
 
   Contains: {
-    make: [chunk | {container: {chunk}}]
+    make: [| {container: {
+      chunk: [make-chunk]
+    }}]
   }
 
-  Programmable: {
-    make: [program-chunk | {
+  Programmed: {
+    make: ({
       programmed: {
-        ^: Programmable:impl
-        program: program-chunk
+        ^: Programmed:impl
+        program: [make-chunk]
       }
-    }]
+    })
 
     impl: {
       block: [ent user |
         -- Fake placeholder code. Should come from program chunk.
-        -- [user:chunk:add [Crate:make]]:move-to user:loc:x user:loc:y
-        [?= [user:near-with :brazier] (
-          user:chunk:perform [action-ignite ent prev]
-        )]
+        [?= [user:near-with :brazier]
+          (user:chunk:perform [action-ignite ent prev])
+        ]
       ]
     }
   }

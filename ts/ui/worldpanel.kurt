@@ -44,6 +44,7 @@
         [chunk0:add-at [Key:make 123] 1 0]
         [chunk0:add-at [Key:make 456] 2 0]
         [chunk0:add-at [Brazier:make] 4 4]
+        [chunk0:add-at [Crate:make] 5 5]
       ]
 
       enter: (
@@ -59,9 +60,7 @@
         )]
       )
 
-      select-inv: [slot |
-        @:player:player:select-inv slot
-      ]
+      select-inv: [slot | @:player:player:select-inv slot]
 
       use-selected: (
         {selected: [@:player:player:selected-item]}
@@ -70,9 +69,8 @@
         )]
       )
 
-      selected-container: (
-        [?= [@:player:player:inv-target :container] :container :chunk]
-      )
+      selected-container: (?= [@:player:player:inv-target :container] :container :chunk)
+      selected-program: (?= [@:player:player:inv-target :programmed] :programmed :program)
 
       take: (
         {target: [@:player:top-with :portable]}

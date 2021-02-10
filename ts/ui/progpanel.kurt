@@ -1,0 +1,81 @@
+[def {
+  ProgPanel: {
+    make: [chunk width height | {
+      ^: ProgPanel:-impl
+      chunk width height
+      cursor: [chunk:add [UI:Cursor:make]]
+    }]
+
+    -impl: {
+      close: (@:chunk:remove @:cursor)
+
+      move-cursor: [dx dy |
+        {
+          nx: [+ @:cursor:loc:x dx]
+          ny: [+ @:cursor:loc:y dy]
+        }
+        [if [and [>= nx 0] [>= ny 0] [< nx @:width] [< ny @:height]]
+          (@:cursor:move-to nx ny)
+        ]
+      ]
+
+      erase: (
+        ?= [@:cursor:top-with :glyph] (@:chunk:remove prev)
+      )
+
+      write: (
+        @:chunk:add-at [Bracket:make :square :open :horz] @:cursor:loc:x @:cursor:loc:y
+      )
+    }
+  }
+
+  Bracket: {
+    -src: "images/script.png"
+    -imgs: {
+      square: {
+        open: {
+          horz: [Rendered:image -src {x:  0 y:  0}]
+          vert: [Rendered:image -src {x: 32 y:  0}]
+        }
+        close: {
+          horz: [Rendered:image -src {x: 16 y:  0}]
+          vert: [Rendered:image -src {x: 48 y:  0}]
+        }
+      }
+      round: {
+        open: {
+          horz: [Rendered:image -src {x:  0 y: 16}]
+          vert: [Rendered:image -src {x: 32 y: 16}]
+        }
+        close: {
+          horz: [Rendered:image -src {x: 16 y: 16}]
+          vert: [Rendered:image -src {x: 48 y: 16}]
+        }
+      }
+      curly: {
+        open: {
+          horz: [Rendered:image -src {x:  0 y: 32}]
+          vert: [Rendered:image -src {x: 32 y: 32}]
+        }
+        close: {
+          horz: [Rendered:image -src {x: 16 y: 32}]
+          vert: [Rendered:image -src {x: 48 y: 32}]
+        }
+      }
+    }
+
+    make: [kind open dir |
+      [new-ent [list
+        [Located:make]
+        [Rendered:make [-img-from kind open dir]]
+        {bracket: {
+          kind open dir
+        }}
+      ]]
+    ]
+
+    -img-from: [kind state dir | do
+      [[[-imgs kind] state] dir]
+    ]
+  }
+}]

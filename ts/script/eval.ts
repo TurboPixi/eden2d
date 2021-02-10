@@ -1,6 +1,6 @@
 import { _print } from "./print";
 import { Dict, dictDef, dictFind, dictNames, dictRef, _root, _specialProps, isDict, isEDict, translateSym, dictParent } from "./dict";
-import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque, isString } from "./script";
+import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque, isString, isFullQuote } from "./script";
 import { envNew, TeeEnv } from "./env";
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.
@@ -29,6 +29,12 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
       let quote = isQuote(expr);
       if (quote) {
         return quote[QuoteMarker];
+      }
+
+      // /thing is fully quoted, and evals to itself.
+      let fquote = isFullQuote(expr);
+      if (fquote) {
+        return fquote;
       }
 
       // [f[x] [...]] evaluates to itself.
@@ -300,16 +306,17 @@ function applyDo(env: Dict, list: EList): EExpr {
   return last;
 }
 
+// TODO: def/set are broken if you use an IDict for the values dict.
 function applyDef(env: Dict, list: EList): EExpr {
   let target = env;
-  let values: EExpr;
+  let values: Dict;
   switch (list.length) {
     case 2:
-      values = list[1];
+      values = isDict(_eval(env, list[1]));
       break;
     case 3:
       target = isDict(_eval(env, list[1]));
-      values = list[2];
+      values = isDict(_eval(env, list[2]));
       break;
     case 4:
       target = isDict(_eval(env, list[1]));
@@ -324,20 +331,15 @@ function applyDef(env: Dict, list: EList): EExpr {
       chuck(env, `expected either 1 or 2 args for def, but got ${_print(list)}`);
   }
 
-  let valuesDict = isDict(values);
   if (target === nil) {
     chuck(env, `no env found at ${_print(list[1])}`);
-  } else if (valuesDict === nil) {
-    valuesDict = isDict(_eval(env, values));
-    if (valuesDict === nil) {
-      chuck(env, `expected dict definition at ${_print(list[2])}`);
-    }
+  }
+  if (values === nil) {
+    chuck(env, `expected dict definition at ${_print(list[2])}`);
   }
 
-  for (let name in valuesDict) {
-    if (!(name in _specialProps)) {
-      dictDef(target, translateSym($(name)), _eval(env, dictRef(valuesDict, $(name))));
-    }
+  for (let name in values) {
+    dictDef(target, translateSym($(name)), dictRef(values, $(name)));
   }
   return nil;
 }
@@ -347,18 +349,16 @@ function applySet(env: Dict, list: EList): EExpr {
   switch (list.length) {
     case 2: {
       // If env is unspecified, set the value at the nearest env where it's defined.
-      let values = isEDict(list[1]);
+      let values = isDict(_eval(env, list[1]));
       if (values === nil) {
         chuck(env, `single argument to set must be dict`);
       }
       for (let name in values) {
-        if (!(name in _specialProps)) {
-          let target = dictFind(env, $(name));
-          if (!target) {
-            chuck(env, `${name} undefined`);
-          }
-          dictDef(target, translateSym($(name)), _eval(env, values[name]));
+        let target = dictFind(env, $(name));
+        if (!target) {
+          chuck(env, `${name} undefined`);
         }
+        dictDef(target, translateSym($(name)), dictRef(values, $(name)));
       }
       break;
     }
@@ -369,14 +369,12 @@ function applySet(env: Dict, list: EList): EExpr {
       if (!ctx) {
         chuck(env, `first of two set args must be a dict`);
       }
-      let values = isEDict(list[2]);
+      let values = isDict(_eval(env, list[2]));
       if (values === nil) {
         chuck(env, `second of two set args must be dict`);
       }
       for (let name in values) {
-        if (!(name in _specialProps)) {
-          dictDef(ctx, translateSym($(name)), _eval(env, values[name]));
-        }
+        dictDef(ctx, translateSym($(name)), dictRef(values, $(name)));
       }
       break;
     }

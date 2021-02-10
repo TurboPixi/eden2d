@@ -1,6 +1,7 @@
 {
   function _sym(name) { return { '[sym]': name }}
   function _quote(expr) { return { '[q]': expr }}
+  function _fquote(expr) { return { '[fq]': expr }}
 }
 
 start = _ expr:expr _ { return expr }
@@ -10,8 +11,10 @@ expr
   / pipe
   / listaccess
   / access
-  / sym
   / quote
+  / fquote
+  / unquote
+  / sym
   / list
   / short_block
   / dict
@@ -51,6 +54,12 @@ sym
 
 quote
   = ":" expr:expr { return _quote(expr) }
+
+fquote
+  = "\\" expr:expr { return _fquote(expr) }
+
+unquote
+  = "/" expr:expr { return [_sym("/"), expr] }
 
 listaccess
   = l:list ":" + q:sym {

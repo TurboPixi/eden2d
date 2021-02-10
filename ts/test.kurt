@@ -126,6 +126,17 @@
       [expect :[1 2 [+ 3 4]] :[1 2 [+ 3 4]]]
     )]
 
+    [run "full quoting" (do
+      [def {foo: \42}]
+      [expect 42 /foo]
+      [def {
+        bag: {contents: 42}
+        foo: \contents
+      }]
+      [expect :contents /foo]
+      [expect 42 [bag /foo]]
+    )]
+
     [run "basic do" (
       expect "w00t"
       [do

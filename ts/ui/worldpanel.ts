@@ -1,6 +1,6 @@
 import { Container, Graphics } from "pixi.js";
 import { Chunk, isChunk } from "../chunk";
-import { ContainerPanel } from "./containerpanel";
+import { ProgPanel } from "./progpanel";
 import { Panel, PanelOwner } from "../eden";
 import { Entity, isEntity } from "../entity";
 import { Key } from "./key";
@@ -80,7 +80,7 @@ export class WorldPanel implements Panel {
       case Key.Q:     this.call('use-selected'); break;
       case Key.SPACE: this.call('take');         break;
       case Key.R:     this.call('put');          break;
-      case Key.E:     this.openSelected();       break;
+      case Key.E:     this.progSelected();       break;
       case Key.O:     this.call('open');         break;
 
       case Key._1: case Key._2: case Key._3:
@@ -90,10 +90,10 @@ export class WorldPanel implements Panel {
     }
   }
 
-  private openSelected() {
-    let chunk = isChunk(this.call('selected-container'));
+  private progSelected() {
+    let chunk = isChunk(this.call('selected-program'));
     if (chunk) {
-      this._owner.showPanel(new ContainerPanel(chunk, this._owner));
+      this._owner.showPanel(new ProgPanel(chunk, this._owner));
     }
   }
 

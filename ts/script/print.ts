@@ -61,7 +61,7 @@ export function _print(expr: EExpr, short = false): string {
             let entry = "";
             entry += key;
             if (obj[key] !== nil) {
-              entry += ` = ${_print(obj[key])}`
+              entry += `: ${_print(obj[key])}`
             }
             entries.push(entry);
           }

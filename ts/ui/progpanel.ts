@@ -6,20 +6,20 @@ import { _eval } from "../script/eval";
 import { $, $$, EExpr } from "../script/script";
 import { Dict, isDict } from "../script/dict";
 
-import containerpanel_kurt from "./containerpanel.kurt";
+import containerpanel_kurt from "./progpanel.kurt";
 import { _parse } from "../script/parse";
 
-export class ContainerPanel implements Panel {
+export class ProgPanel implements Panel {
   private _container: Container;
   private _impl: Dict;
 
   constructor(private _contChunk: Chunk, private _owner: PanelOwner) {
-    _eval(_owner.world, _parse('containerpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
+    _eval(_owner.world, _parse('progpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
 
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._impl = isDict(_eval(_owner.world, [[$('ContainerPanel'), $$('make')], _contChunk, 10, 10]));
+    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], _contChunk, 10, 10]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);
@@ -43,7 +43,9 @@ export class ContainerPanel implements Panel {
       case Key.S:     this.call('move-cursor', 0, 1); break;
       case Key.A:     this.call('move-cursor', -1, 0); break;
       case Key.D:     this.call('move-cursor', 1, 0); break;
-      case Key.SPACE: this.call('toggle'); break;
+      case Key.SPACE: this.call('erase'); break;
+
+      case Key.ENTER: this.call('write'); break;
 
       case Key.ESCAPE:
         this.call('close');
