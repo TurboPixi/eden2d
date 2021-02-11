@@ -11,22 +11,25 @@ import { _parse } from "../script/parse";
 
 export class ProgPanel implements Panel {
   private _container: Container;
+  private _progChunk: Chunk;
   private _impl: Dict;
 
-  constructor(private _contChunk: Chunk, private _owner: PanelOwner) {
+  constructor(programmed: EExpr, private _owner: PanelOwner) {
     _eval(_owner.world, _parse('progpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
+
+    this._progChunk = _eval(_owner.world, [programmed, $$('program')]) as Chunk;
 
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], _contChunk, 10, 10]));
+    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], this._progChunk, 10, 10]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);
     bg.drawRect(0, 0, 16 * 10 * 4, 16 * 10 * 4);
     bg.endFill();
     this._container.addChild(bg);
-    this._container.addChild(_contChunk.container);
+    this._container.addChild(this._progChunk.container);
   }
 
   get container(): Container {
@@ -34,7 +37,7 @@ export class ProgPanel implements Panel {
   }
 
   tick(deltaMillis: number): void {
-    this._contChunk.render(0, 0, 4);
+    this._progChunk.render(0, 0, 4);
   }
 
   keyDown(evt: KeyboardEvent): void {
@@ -103,7 +106,6 @@ export class ProgPanel implements Panel {
     }
 
     if (writeType !== nil) {
-      console.log(writeType);
       this.call('write', writeType);
     }
   }

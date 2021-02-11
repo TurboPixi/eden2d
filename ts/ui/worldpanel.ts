@@ -91,9 +91,9 @@ export class WorldPanel implements Panel {
   }
 
   private progSelected() {
-    let chunk = isChunk(this.call('selected-program'));
-    if (chunk) {
-      this._owner.showPanel(new ProgPanel(chunk, this._owner));
+    let programmed = isChunk(this.call('selected-programmed'));
+    if (programmed) {
+      this._owner.showPanel(new ProgPanel(programmed, this._owner));
     }
   }
 
