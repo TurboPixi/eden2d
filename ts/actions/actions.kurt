@@ -4,9 +4,9 @@
     ents: [list target]
   }]
 
-  action-use: [user target | {
-    action: :use user target
-    ents: [list user target]
+  action-use: [user object target | {
+    action: :use user object target
+    ents: [list user object target]
   }]
 
   action-open: [opener target | {

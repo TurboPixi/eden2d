@@ -6,10 +6,15 @@ import { Entity, isEntity } from "../entity";
 import { Key } from "./key";
 import { Dict, dictDef, isDict } from "../script/dict";
 import { _eval } from "../script/eval";
-import { $, $$, EExpr } from "../script/script";
+import { $, $$, EExpr, _ } from "../script/script";
 
 import worldpanel_kurt from "./worldpanel.kurt";
 import { _parse } from "../script/parse";
+
+enum InputState {
+  default = 0,
+  use = 1,
+}
 
 export class WorldPanel implements Panel {
   private _container: Container;
@@ -17,13 +22,14 @@ export class WorldPanel implements Panel {
   private _invChunk: Chunk;
   private _player: Entity;
   private _impl: Dict;
+  private _inputState: InputState = InputState.default;
 
   constructor(private _owner: PanelOwner) {
     _eval(_owner.world, _parse('worldpanel.kurt', worldpanel_kurt)); // TODO: Do this only once.
     this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')]]));
 
     let chunk = this.createChunk();
-    this._player = isEntity(this.eval([[chunk, $$('add')], [[$('Player'), $$('make')]]]));
+    this._player = isEntity(this.eval([[_(chunk), $$('add')], [[$('Player'), $$('make')]]]));
     dictDef(this._impl, $('player'), this._player as Dict); // copy into impl
 
     let bg = new Graphics();
@@ -34,7 +40,7 @@ export class WorldPanel implements Panel {
     this._container = new Container();
     this._container.addChild(bg);
 
-    this._invChunk = this.eval([this._player, $$('player')], $$('contents')) as Chunk;
+    this._invChunk = this.eval([_(this._player), $$('player')], $$('contents')) as Chunk;
     this._container.addChild(this._invChunk.container);
 
     this.showChunk(chunk);
@@ -70,18 +76,31 @@ export class WorldPanel implements Panel {
   }
 
   keyDown(evt: KeyboardEvent) {
+    switch (this._inputState) {
+      case InputState.default:
+        this.defaultKey(evt);
+        break;
+
+      case InputState.use:
+        this.useKey(evt);
+        break;
+    }
+  }
+
+  private defaultKey(evt: KeyboardEvent) {
     switch (evt.keyCode) {
       case Key.UP:    case Key.W: this.call('move',  0, -1); break;
       case Key.DOWN:  case Key.S: this.call('move',  0,  1); break;
       case Key.LEFT:  case Key.A: this.call('move', -1,  0); break;
       case Key.RIGHT: case Key.D: this.call('move',  1,  0); break;
 
-      case Key.ENTER: this.call('enter');        break;
-      case Key.Q:     this.call('use-selected'); break;
-      case Key.SPACE: this.call('take');         break;
-      case Key.R:     this.call('put');          break;
-      case Key.E:     this.progSelected();       break;
-      case Key.O:     this.call('open');         break;
+      case Key.ENTER: this.call('enter');   break;
+      case Key.SPACE: this.call('take');    break;
+      case Key.R:     this.call('put');     break;
+      case Key.O:     this.call('open');    break;
+
+      case Key.E:     this.progSelected();               break;
+      case Key.Q:     this._inputState = InputState.use; break;
 
       case Key._1: case Key._2: case Key._3:
       case Key._4: case Key._5: case Key._6:
@@ -90,8 +109,17 @@ export class WorldPanel implements Panel {
     }
   }
 
+  private useKey(evt: KeyboardEvent) {
+    switch (evt.keyCode) {
+      case Key.UP:    case Key.W: this.call('use-selected',  0, -1); this._inputState = InputState.default; break;
+      case Key.DOWN:  case Key.S: this.call('use-selected',  0,  1); this._inputState = InputState.default; break;
+      case Key.LEFT:  case Key.A: this.call('use-selected', -1,  0); this._inputState = InputState.default; break;
+      case Key.RIGHT: case Key.D: this.call('use-selected',  1,  0); this._inputState = InputState.default; break;
+    }
+  }
+
   private progSelected() {
-    let programmed = isChunk(this.call('selected-programmed'));
+    let programmed = this.call('selected-programmed');
     if (programmed) {
       this._owner.showPanel(new ProgPanel(programmed, this._owner));
     }
@@ -107,7 +135,7 @@ export class WorldPanel implements Panel {
   }
 
   private call(blockName: string, ...expr: EExpr[]): EExpr {
-    return this.eval([this._impl, $$(blockName)], ...expr);
+    return this.eval([_(this._impl), $$(blockName)], ...expr);
   }
 
   private eval(...expr: EExpr[]): EExpr {

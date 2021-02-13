@@ -35,7 +35,7 @@
       perform: [ent action |
         if [and [= action:action :open] [! action:cancel]] (do
           [set @ {open: [! @:open]}]
-          [set ent:render {image: [if @:open @:open-img @:closed-img]}]
+          [set ent:rendered {image: [if @:open @:open-img @:closed-img]}]
           [if [? ent :solid] (
             set ent:solid {solid: [! ent:solid:solid]}
           )]

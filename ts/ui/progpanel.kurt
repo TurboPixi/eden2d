@@ -1,8 +1,9 @@
 [def {
   ProgPanel: {
-    make: [chunk width height | {
+    make: [programmed width height | {
       ^: ProgPanel:-impl
-      chunk width height
+      programmed width height
+      chunk: programmed:program-chunk
       cursor: [chunk:add [UI:Cursor:make]]
     }]
 
@@ -23,9 +24,12 @@
         @:chunk:add-at [Glyph:make type] @:cursor:loc:x @:cursor:loc:y
       ]
 
-      close: [|
-        @:chunk:remove @:cursor
-      ]
+      close: (do
+        [@:chunk:remove @:cursor]
+        [set @:programmed {
+          program: [user target | user:chunk:perform [action-ignite user target]]
+        }]
+      )
     }
   }
 

@@ -38,6 +38,13 @@ export class Chunk implements IDict {
       );
     }],
 
+    'top-at': [$('x'), $('y'), _blk, (env: Dict) => {
+      return locChunk(env, _self).topEntity(
+        locNum(env, $('x')),
+        locNum(env, $('y')),
+      );
+    }],
+
     'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
       return locChunk(env, _self).topEntityWith(
         locNum(env, $('x')),
@@ -99,10 +106,20 @@ export class Chunk implements IDict {
     return ents;
   }
 
+  // Finds the top-most entity at an exact location.
+  topEntity(x: number, y: number): Entity {
+    let ents = this.entitiesAt(x, y);
+    if (ents.length == 0) {
+      return nil;
+    }
+    return ents[ents.length - 1];
+  }
+
   // Finds the top-most entity at an exact location, with the given component.
   topEntityWith(x: number, y: number, comp: ESym): Entity {
     let ents = this.entitiesAt(x, y);
-    for (let ent of ents) {
+    for (let i = ents.length-1; i >= 0; i--) {
+      let ent = ents[i];
       if (ent.ref(comp) !== nil) {
         return ent;
       }
@@ -133,8 +150,8 @@ export class Chunk implements IDict {
     let idx = this._nextId++;
     entity.setChunkAndId(this, idx);
     this._entities[idx] = entity;
-    if (entity.render) {
-      this._container.addChild(entity.render.sprite);
+    if (entity.rendered) {
+      this._container.addChild(entity.rendered.sprite);
     }
   }
 
@@ -145,8 +162,8 @@ export class Chunk implements IDict {
 
     delete this._entities[entity.id];
     entity.setChunkAndId(null, 0);
-    if (entity.render) {
-      this._container.removeChild(entity.render.sprite);
+    if (entity.rendered) {
+      this._container.removeChild(entity.rendered.sprite);
     }
   }
 
@@ -195,7 +212,7 @@ export class Chunk implements IDict {
     for (let id in this._entities) {
       let ent = this._entities[id];
       let loc = ent.loc;
-      let render = ent.render;
+      let render = ent.rendered;
       if (loc && render) {
         render.sprite.position.x = loc.x * 16;
         render.sprite.position.y = loc.y * 16;

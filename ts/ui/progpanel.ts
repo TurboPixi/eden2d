@@ -3,11 +3,12 @@ import { Chunk } from "../chunk";
 import { Panel, PanelOwner } from "../eden";
 import { Key } from "./key";
 import { _eval } from "../script/eval";
-import { $, $$, EExpr, nil } from "../script/script";
+import { $, $$, EExpr, nil, _ } from "../script/script";
 import { Dict, isDict } from "../script/dict";
 
 import containerpanel_kurt from "./progpanel.kurt";
 import { _parse } from "../script/parse";
+import { expectDict } from "../script/env";
 
 export class ProgPanel implements Panel {
   private _container: Container;
@@ -17,12 +18,12 @@ export class ProgPanel implements Panel {
   constructor(programmed: EExpr, private _owner: PanelOwner) {
     _eval(_owner.world, _parse('progpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
 
-    this._progChunk = _eval(_owner.world, [programmed, $$('program')]) as Chunk;
+    this._progChunk = _eval(_owner.world, [_(programmed), $$('program-chunk')]) as Chunk;
 
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], this._progChunk, 10, 10]));
+    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], _(programmed), 10, 10]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);
@@ -111,6 +112,6 @@ export class ProgPanel implements Panel {
   }
 
   private call(blockName: string, ...expr: EExpr[]): EExpr {
-    return _eval(this._owner.world, [[this._impl, $$(blockName)], ...expr]);
+    return _eval(this._owner.world, [[_(this._impl), $$(blockName)], ...expr]);
   }
 }

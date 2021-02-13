@@ -33,7 +33,7 @@
           {frame: [+ 1 ent:brazier:frame]}
           [do
             [if [> frame 3] (set {frame: 0})]
-            [set ent:render {image: [[if ent:brazier:on (Brazier:-imgs-on) (Brazier:-imgs-off)] frame]}]
+            [set ent:rendered {image: [[if ent:brazier:on (Brazier:-imgs-on) (Brazier:-imgs-off)] frame]}]
             [set ent:brazier {frame: frame}]
           ]
         ]]
@@ -44,15 +44,12 @@
   Crate: {
     -img: [Rendered:image "images/crate.png" {x: 0 y: 0}]
 
-    make: (
-      {chunk: [make-chunk]}
-      [new-ent [list
-        [Located:make]
-        [Rendered:make Crate:-img]
-        [Portable:make]
-        [Contains:make]
-        [Solid:make 1]
-      ]
+    make: (new-ent [list
+      [Located:make]
+      [Rendered:make Crate:-img]
+      [Portable:make]
+      [Contains:make]
+      [Solid:make 1]
     ])
   }
 
@@ -62,15 +59,12 @@
       y: [* 30 16]
     }]
 
-    make: (
-      {program-chunk: [make-chunk]}
-      [new-ent [list
-        [Located:make]
-        [Rendered:make Wand:-img]
-        [Portable:make]
-        [Programmed:make]
-        [Usable:make [ent user target | target:programmed:block ent user]]
-      ]]
-    )
+    make: (new-ent [list
+      [Located:make]
+      [Rendered:make Wand:-img]
+      [Portable:make]
+      [Programmed:make]
+      [Usable:make [user object target | object:programmed:run user target]]
+    ])
   }
 }]

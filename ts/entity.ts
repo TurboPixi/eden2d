@@ -100,7 +100,7 @@ export class Entity implements IDict {
 
   // Accessors for common component types.
   get loc(): Located { return this.ref($('loc')) as Located }
-  get render(): Rendered { return this.ref($('render')) as Rendered }
+  get rendered(): Rendered { return this.ref($('rendered')) as Rendered }
 
   setChunkAndId(chunk: Chunk, id: number) {
     this._chunk = chunk;

@@ -13,12 +13,31 @@
   }
 
   Usable: {
-    make: [use | {usable: {^: Usable:impl use}}]
+    make: [use | {usable: {
+      ^: Usable:impl
+      use
+    }}]
 
     impl: {
       perform: [ent action |
         if [= action:action :use]
-           (@:use ent action:user action:target)
+          (@:use action:user action:object action:target)
+      ]
+    }
+  }
+
+  Programmed: {
+    make: ({
+      programmed: {
+        ^: Programmed:impl
+        program-chunk: [make-chunk]
+        program: [user target |]
+      }
+    })
+
+    impl: {
+      run: [user target |
+        @:program user target
       ]
     }
   }
@@ -27,24 +46,6 @@
     make: [| {container: {
       chunk: [make-chunk]
     }}]
-  }
-
-  Programmed: {
-    make: ({
-      programmed: {
-        ^: Programmed:impl
-        program: [make-chunk]
-      }
-    })
-
-    impl: {
-      block: [ent user |
-        -- Fake placeholder code. Should come from program chunk.
-        [?= [user:near-with :brazier]
-          (user:chunk:perform [action-ignite ent prev])
-        ]
-      ]
-    }
   }
 
   -- Entities with the portal component transport an entity to another location/chunk.

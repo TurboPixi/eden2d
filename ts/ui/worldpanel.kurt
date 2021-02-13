@@ -62,12 +62,14 @@
 
       select-inv: [slot | @:player:player:select-inv slot]
 
-      use-selected: (
-        {selected: [@:player:player:selected-item]}
+      use-selected: [dx dy |
+        {selected: [@:player:player:selected-item]
+         x: [+ @:player:loc:x dx]
+         y: [+ @:player:loc:y dy]}
         [if [!= selected nil] (
-          [@:chunk:perform [action-use @:player selected]]
+          [@:chunk:perform [action-use @:player selected [@:player:chunk:top-at x y]]]
         )]
-      )
+      ]
 
       selected-container: (?= [@:player:player:inv-target :container] :container :chunk)
       selected-programmed: (?= [@:player:player:inv-target :programmed] :programmed)

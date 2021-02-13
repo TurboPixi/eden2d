@@ -20,7 +20,7 @@ export class Rendered extends NativeComp {
       let r = new Rendered();
       r.sprite.texture = opaqueVal(locOpaque(env, $('img'))) as Texture;
       r.sprite.anchor = r.sprite.texture.defaultAnchor;
-      return {'render': r};
+      return {'rendered': r};
     }],
 
     image: [$('file'), $('frame'), _blk, (env: Dict) => {
