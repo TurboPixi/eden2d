@@ -28,7 +28,7 @@
     make: [target-chunk target-x target-y up? | new-ent [list
       [Located:make]
       [Rendered:make [if up? Stairs:-upimg Stairs:-dnimg]]
-      [IsPortal:make target-chunk target-x target-y]
+      [Transports:make target-chunk target-x target-y]
     ]]
   }
 }]

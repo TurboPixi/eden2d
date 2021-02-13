@@ -14,9 +14,9 @@
     ents: [list opener target]
   }]
 
-  action-enter: [portal ent | {
-    action: :enter portal ent
-    ents: [list portal ent]
+  action-enter: [transports ent | {
+    action: :enter transports ent
+    ents: [list transports ent]
   }]
 
   action-ignite: [igniter target | {

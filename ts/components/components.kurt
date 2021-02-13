@@ -43,15 +43,15 @@
   }
 
   Contains: {
-    make: [| {container: {
+    make: [| {contains: {
       chunk: [make-chunk]
     }}]
   }
 
-  -- Entities with the portal component transport an entity to another location/chunk.
-  IsPortal: {
-    make: [target-chunk target-x target-y | {portal: {
-      ^: IsPortal:impl
+  -- Entities with this component transport an entity to another location/chunk.
+  Transports: {
+    make: [target-chunk target-x target-y | {transports: {
+      ^: Transports:impl
       target-chunk target-x target-y
     }}]
 

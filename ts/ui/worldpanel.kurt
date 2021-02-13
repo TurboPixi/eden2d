@@ -48,7 +48,7 @@
       ]
 
       enter: (
-        [?= [@:player:chunk:top-with @:player:loc:x @:player:loc:y :portal] (
+        [?= [@:player:chunk:top-with @:player:loc:x @:player:loc:y :transports] (
           @:chunk:perform [action-enter prev @:player]
         )]
       )
@@ -71,7 +71,7 @@
         )]
       ]
 
-      selected-container: (?= [@:player:player:inv-target :container] :container :chunk)
+      selected-contains: (?= [@:player:player:inv-target :contains] :contains :chunk)
       selected-programmed: (?= [@:player:player:inv-target :programmed] :programmed)
 
       take: (
