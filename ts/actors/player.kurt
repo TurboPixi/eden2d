@@ -1,42 +1,40 @@
-[do
-  [def {
-    -- Player component.
-    Player: {
-      -img: [Rendered:image "images/tf/characters/chara3.png" {
-        x: 4 y: 7
-        w: 17 h: 32
-        ax: 0 ay: 16
-      }]
+[def {
+  -- Player component.
+  Player: {
+    -img: [Rendered:image "images/tf/characters/chara3.png" {
+      x: 4 y: 7
+      w: 17 h: 32
+      ax: 0 ay: 16
+    }]
 
-      -- Quick utility to make a player entity.
-      make: (
-        {inv-chunk: [make-chunk]}
-        [new-ent [list
-          [Located:make]
-          [Solid:make 1]
-          [Rendered:make Player:-img]
-          {player: {
-            ^: Player:impl
-            slot: 0
-            contents: inv-chunk
-            cursor-ent: [inv-chunk:add [UI:Cursor:make]]
-          }}
-      ]])
+    -- Quick utility to make a player entity.
+    make: (
+      {inv-chunk: [make-chunk]}
+      [new-ent [list
+        [Located:make]
+        [Solid:make 1]
+        [Rendered:make Player:-img]
+        {player: {
+          ^: Player:impl
+          slot: 0
+          contents: inv-chunk
+          cursor-ent: [inv-chunk:add [UI:Cursor:make]]
+        }}
+    ]])
 
-      impl: {
-        selected-item: (
-          @:contents:top-with @:slot 0 :portable
-        )
+    impl: {
+      selected-item: (
+        @:contents:top-with @:slot 0 :portable
+      )
 
-        select-inv: [slot | do
-          [set @ {slot}]
-          [@:cursor-ent:move-to slot 0]
-        ]
+      select-inv: [slot | do
+        [set @ {slot}]
+        [@:cursor-ent:move-to slot 0]
+      ]
 
-        inv-target: [comp |
-          @:contents:top-with @:slot 0 comp
-        ]
-      }
+      inv-target: [comp |
+        @:contents:top-with @:slot 0 comp
+      ]
     }
-  }]
-]
+  }
+}]

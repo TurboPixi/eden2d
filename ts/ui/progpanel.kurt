@@ -1,8 +1,8 @@
 [def {
   ProgPanel: {
-    make: [programmed width height | {
+    make: [programmed width height parser | {
       ^: ProgPanel:-impl
-      programmed width height
+      programmed width height parser
       chunk: programmed:program-chunk
       cursor: [chunk:add [UI:Cursor:make]]
     }]
@@ -27,7 +27,7 @@
       close: (do
         [@:chunk:remove @:cursor]
         [set @:programmed {
-          program: [user target | user:chunk:perform [action-ignite user target]]
+          program: [@:parser @:chunk]
         }]
       )
     }
@@ -35,26 +35,33 @@
 
   Glyph: {
     -src: "images/script.png"
+    -scr-img: [x y | Rendered:image "images/script.png" {x: x y: y}]
     -imgs: {
-      square-open-horz:  [Rendered:image -src {x:  0 y:  0}]
-      square-open-vert:  [Rendered:image -src {x: 32 y:  0}]
-      square-close-horz: [Rendered:image -src {x: 16 y:  0}]
-      square-close-vert: [Rendered:image -src {x: 48 y:  0}]
-      round-open-horz:   [Rendered:image -src {x:  0 y: 16}]
-      round-open-vert:   [Rendered:image -src {x: 32 y: 16}]
-      round-close-horz:  [Rendered:image -src {x: 16 y: 16}]
-      round-close-vert:  [Rendered:image -src {x: 48 y: 16}]
-      curly-open-horz:   [Rendered:image -src {x:  0 y: 32}]
-      curly-open-vert:   [Rendered:image -src {x: 32 y: 32}]
-      curly-close-horz:  [Rendered:image -src {x: 16 y: 32}]
-      curly-close-vert:  [Rendered:image -src {x: 48 y: 32}]
+      square-open-horz:  [-scr-img  0  0]
+      square-open-vert:  [-scr-img 32  0]
+      square-close-horz: [-scr-img 16  0]
+      square-close-vert: [-scr-img 48  0]
+      round-open-horz:   [-scr-img  0 16]
+      round-open-vert:   [-scr-img 32 16]
+      round-close-horz:  [-scr-img 16 16]
+      round-close-vert:  [-scr-img 48 16]
+      curly-open-horz:   [-scr-img  0 32]
+      curly-open-vert:   [-scr-img 32 32]
+      curly-close-horz:  [-scr-img 16 32]
+      curly-close-vert:  [-scr-img 48 32]
 
-      block-horz:        [Rendered:image -src {x:  0 y: 48}]
-      block-vert:        [Rendered:image -src {x: 16 y: 48}]
-      quote-horz:        [Rendered:image -src {x: 32 y: 48}]
-      quote-vert:        [Rendered:image -src {x: 48 y: 48}]
+      block-horz:        [-scr-img  0 48]
+      block-vert:        [-scr-img 16 48]
+      quote-horz:        [-scr-img 32 48]
+      quote-vert:        [-scr-img 48 48]
+      period-horz:       [-scr-img  0 64]
+      period-vert:       [-scr-img 16 64]
 
-      squiggle:          [Rendered:image -src {x: 64 y:  0}]
+      user:              [-scr-img 64  0]
+      chunk:             [-scr-img 64 16]
+      perform:           [-scr-img 64 32]
+      ignite:            [-scr-img 64 48]
+      target:            [-scr-img 64 64]
     }
 
     make: [type |

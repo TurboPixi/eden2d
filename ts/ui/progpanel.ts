@@ -1,14 +1,15 @@
 import { Container, Graphics } from "pixi.js";
-import { Chunk } from "../chunk";
+import { Chunk, locChunk } from "../chunk";
 import { Panel, PanelOwner } from "../eden";
 import { Key } from "./key";
 import { _eval } from "../script/eval";
-import { $, $$, EExpr, nil, _ } from "../script/script";
-import { Dict, isDict } from "../script/dict";
+import { $, $$, EExpr, ESym, nil, symName, _, _blk } from "../script/script";
+import { Dict, isDict, _root } from "../script/dict";
 
 import containerpanel_kurt from "./progpanel.kurt";
 import { _parse } from "../script/parse";
-import { expectDict } from "../script/env";
+import { parse } from "../script/kurt";
+import { expectStr, expectSym } from "../script/env";
 
 export class ProgPanel implements Panel {
   private _container: Container;
@@ -23,7 +24,9 @@ export class ProgPanel implements Panel {
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], _(programmed), 10, 10]));
+    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], _(programmed), 10, 10,
+    [$('chunk'), _blk, (env: Dict) => this.parser(env, locChunk(env, $('chunk')))]
+    ]));
 
     let bg = new Graphics();
     bg.beginFill(0, 0.5);
@@ -41,68 +44,145 @@ export class ProgPanel implements Panel {
     this._progChunk.render(0, 0, 4);
   }
 
+  // [user target | user:chunk:perform [action-ignite user target]]
+  private parser(env: Dict, chunk: Chunk): EExpr {
+    interface Cell {
+      sym?: ESym;
+      quote?: boolean;
+      open?: boolean;
+      close?: boolean;
+      period?: boolean;
+    }
+
+    let x = 0, y = 0, dir = false;
+    let stack: Cell[] = [{}];
+
+    function top(): Cell {
+      return stack[stack.length-1];
+    }
+
+    function sym(name: string) {
+      if (top().sym !== nil) {
+        throw `two syms found at ${x},${y}`;
+      }
+      top().sym = $(name);
+    }
+
+    // TODO: Define the syntax and parse it.
+    let src = "nil";
+    // while (true) {
+    //   let glyphs = chunk.entitiesWith(x, y, $('glyph'));
+    //   for (let glyph of glyphs) {
+    //     let type = symName(expectSym(env, _eval(env, [[_(glyph), $$('glyph')], $$('type')])));
+    //     switch (type) {
+    //       case 'square-open-horz': top().open = true; break;
+    //       case 'square-close-horz': top().close = true; break;
+    //       case 'quote-horz': top().quote = true; break;
+    //       case 'period-horz': top().period = true; break;
+    //       case 'block-horz': sym('|'); break;
+    //       case 'user': sym('user'); break;
+    //       case 'chunk': sym('chunk'); break;
+    //       case 'perform': sym('perform'); break;
+    //       case 'ignite': sym('action-ignite'); break;
+    //       case 'target': sym('target'); break;
+    //     }
+    //   }
+    //   // ...
+    //   if (dir) { y++; }
+    //   else { x++; }
+    // }
+
+    return _eval(env, parse(`[user target | ${src}]`));
+  }
+
   keyDown(evt: KeyboardEvent): void {
     let writeType: EExpr = nil;
 
     switch (evt.keyCode) {
-      case Key.W:     this.call('move-cursor', 0, -1); break;
-      case Key.S:     this.call('move-cursor', 0, 1); break;
-      case Key.A:     this.call('move-cursor', -1, 0); break;
-      case Key.D:     this.call('move-cursor', 1, 0); break;
-      case Key.SPACE: this.call('erase'); break;
-      case Key.Q:     writeType = $$('squiggle'); break;
+      case Key.UP: this.call('move-cursor', 0, -1); break;
+      case Key.DOWN: this.call('move-cursor', 0, 1); break;
+      case Key.LEFT: this.call('move-cursor', -1, 0); break;
+      case Key.RIGHT: this.call('move-cursor', 1, 0); break;
+      case Key.BACKSPACE: this.call('erase'); break;
+
+      case Key.U: writeType = $$('user'); break;
+      case Key.C: writeType = $$('chunk'); break;
+      case Key.P: writeType = $$('perform'); break;
+      case Key.I: writeType = $$('ignite'); break;
+      case Key.T: writeType = $$('target'); break;
+
+      case Key.SPACE:
+        if (evt.shiftKey) {
+          this.call('move-cursor', -1, 0);
+        } else {
+          this.call('move-cursor', 1, 0);
+        }
+        break;
+
+      case Key.ENTER:
+        if (evt.shiftKey) {
+          this.call('move-cursor', 0, -1);
+        } else {
+          this.call('move-cursor', 0, 1);
+        }
+        break;
+
+      case Key.PERIOD:
+        if (evt.ctrlKey) writeType = $$('period-vert');
+        else writeType = $$('period-horz');
+        break;
 
       case Key.BACK_SLASH:
         if (evt.shiftKey) {
           if (evt.ctrlKey) writeType = $$('block-vert');
-          else             writeType = $$('block-horz');
+          else writeType = $$('block-horz');
         }
         break;
 
       case Key.SEMI_COLON:
         if (evt.shiftKey) {
           if (evt.ctrlKey) writeType = $$('quote-vert');
-          else             writeType = $$('quote-horz');
+          else writeType = $$('quote-horz');
         }
         break;
 
       case Key._9:
         if (evt.shiftKey) {
           if (evt.ctrlKey) writeType = $$('round-open-vert');
-          else             writeType = $$('round-open-horz');
+          else writeType = $$('round-open-horz');
         }
         break;
 
       case Key._0:
         if (evt.shiftKey) {
           if (evt.ctrlKey) writeType = $$('round-close-vert');
-          else             writeType = $$('round-close-horz');
+          else writeType = $$('round-close-horz');
         }
         break;
 
       case Key.OPEN_BRACKET:
         if (evt.shiftKey) {
           if (evt.ctrlKey) writeType = $$('curly-open-vert');
-          else             writeType = $$('curly-open-horz');
+          else writeType = $$('curly-open-horz');
         } else {
           if (evt.ctrlKey) writeType = $$('square-open-vert');
-          else             writeType = $$('square-open-horz');
+          else writeType = $$('square-open-horz');
         }
         break;
 
       case Key.CLOSE_BRACKET:
         if (evt.shiftKey) {
           if (evt.ctrlKey) writeType = $$('curly-close-vert');
-          else             writeType = $$('curly-close-horz');
+          else writeType = $$('curly-close-horz');
         } else {
           if (evt.ctrlKey) writeType = $$('square-close-vert');
-          else             writeType = $$('square-close-horz');
+          else writeType = $$('square-close-horz');
         }
         break;
 
       case Key.ESCAPE:
-        this.call('close');
         this._owner.popPanel();
+        this.call('close');
         break;
     }
 

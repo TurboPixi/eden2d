@@ -106,6 +106,10 @@ export class Chunk implements IDict {
     return ents;
   }
 
+  entitiesWith(x: number, y: number, comp: ESym): Entity[] {
+    return this.entitiesAt(x, y).filter((ent) => ent.hasComp(comp) ? ent : nil);
+  }
+
   // Finds the top-most entity at an exact location.
   topEntity(x: number, y: number): Entity {
     let ents = this.entitiesAt(x, y);

@@ -1,6 +1,6 @@
 import { _print } from "./print";
 import { Dict, dictDef, dictFind, dictNames, dictRef, _root, _specialProps, isDict, isEDict, translateSym, dictParent } from "./dict";
-import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque, isString, isFullQuote } from "./script";
+import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque, isFullQuote } from "./script";
 import { envNew, TeeEnv } from "./env";
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.

@@ -1,7 +1,7 @@
 {
-  function _sym(name) { return { '[sym]': name }}
-  function _quote(expr) { return { '[q]': expr }}
-  function _fquote(expr) { return { '[fq]': expr }}
+  function _sym(name) { return { "[sym]": name }}
+  function _quote(expr) { return { "[q]": expr }}
+  function _fquote(expr) { return { "[fq]": expr }}
 }
 
 start = _ expr:expr _ { return expr }
@@ -23,9 +23,9 @@ _ = (ws comment)* ws / ws
 ws = [ \t\r\n]*
 comment = single / multi
 multi =  "-[" (!"]-" .)* "]-" { return null }
-single = '--' ([^\n]*)[\n] { return null }
+single = "--" ([^\n]*)[\n] { return null }
 
-pipe = "|" { return _sym('|') }
+pipe = "|" { return _sym("|") }
 
 prim
   = integer
@@ -81,7 +81,7 @@ list
   = "[" items:list_item* _ "]" { return items }
 
 short_block
-  = '(' items:list_item* _ ")" { items.unshift(_sym('|')); return items }
+  = "(" items:list_item* _ ")" { items.unshift(_sym("|")); return items }
 
 list_item = _ expr:expr { return expr }
 
@@ -89,7 +89,7 @@ dict
   = "{" entries:dict_entry* _ "}" {
     let r = {};
     for (let e of entries) {
-      r[e[0]['[sym]']] = e[1]
+      r[e[0]["[sym]"]] = e[1]
     }
     return r
   }

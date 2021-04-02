@@ -89,10 +89,10 @@ export class WorldPanel implements Panel {
 
   private defaultKey(evt: KeyboardEvent) {
     switch (evt.keyCode) {
-      case Key.UP:    case Key.W: this.call('move',  0, -1); break;
-      case Key.DOWN:  case Key.S: this.call('move',  0,  1); break;
-      case Key.LEFT:  case Key.A: this.call('move', -1,  0); break;
-      case Key.RIGHT: case Key.D: this.call('move',  1,  0); break;
+      case Key.UP:    this.call('move',  0, -1); break;
+      case Key.DOWN:  this.call('move',  0,  1); break;
+      case Key.LEFT:  this.call('move', -1,  0); break;
+      case Key.RIGHT: this.call('move',  1,  0); break;
 
       case Key.ENTER: this.call('enter');   break;
       case Key.SPACE: this.call('take');    break;
@@ -111,11 +111,12 @@ export class WorldPanel implements Panel {
 
   private useKey(evt: KeyboardEvent) {
     switch (evt.keyCode) {
-      case Key.UP:    case Key.W: this.call('use-selected',  0, -1); this._inputState = InputState.default; break;
-      case Key.DOWN:  case Key.S: this.call('use-selected',  0,  1); this._inputState = InputState.default; break;
-      case Key.LEFT:  case Key.A: this.call('use-selected', -1,  0); this._inputState = InputState.default; break;
-      case Key.RIGHT: case Key.D: this.call('use-selected',  1,  0); this._inputState = InputState.default; break;
+      case Key.UP:    this.call('use-selected',  0, -1); break;
+      case Key.DOWN:  this.call('use-selected',  0,  1); break;
+      case Key.LEFT:  this.call('use-selected', -1,  0); break;
+      case Key.RIGHT: this.call('use-selected',  1,  0); break;
     }
+    this._inputState = InputState.default;
   }
 
   private progSelected() {

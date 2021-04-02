@@ -21,7 +21,6 @@ TODO:
         [\foo]          =>  3
 - Try/catch?
 - Affordance to resolve resolution ambiguity with parent/child envs.
-- Allow dict entries without ' = ' spacing.
 - Splats...
 - single-quote symbols
 - Resolve def/set ambiguity. nil =?= missing?
@@ -55,13 +54,13 @@ TODO:
   [:sym]                  -- (same -- shorthand for [env :sym])
   [{env} expr]            -- expr -- evaluate expr in env (also gives [env:expr] as accessor)
   [{env} block]           -- expr -- evaluate block in env
-  [{env = ...} block]     -- expr -- evaluate block in env, with explicit environment
+  [{env: ...} block]      -- expr -- evaluate block in env, with explicit environment
   [block expr*]           -- rewrite to [{p0:expr0 p1:expr1 ...} expr] -- bind expr* to params, in order
 
 -[ Definition ]-
-  [def (env) {sym = expr ...}]  -- define :sym in env
-  [set (env) {sym = expr ...}]  -- set :sym in env (if defined)
-  [? (env):sym]                 -- true if :sym is defined in env
+  [def (env) {sym: expr ...}]  -- define :sym in env
+  [set (env) {sym: expr ...}]  -- set :sym in env (if defined)
+  [? (env):sym]                -- true if :sym is defined in env
 
 -[ Blocks ]-
   [x y | + x y]           -- block with two params
@@ -71,37 +70,37 @@ TODO:
   [x y | {env} | + x y]   -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-
-[def :add [a b | + a b]]
-[def :+ [x y | native)]
+[def {add: [a b | + a b]]}
+[def {+: [x y | native)]}
 
 -[ Rest params ]-
 [def :block [a b ...rest | do
   [log a] [log b] [log rest]
 ]]
-[block 1 2 3 4 5]                       -- logs 1 / 2 / [3 4 5]
-[{a = 1 b = 2 ...rest = [3 4 5]} block] -- ditto
+[block 1 2 3 4 5]                    -- logs 1 / 2 / [3 4 5]
+[{a: 1 b: 2 ...rest: [3 4 5]} block] -- ditto
 
 -[ Expressions with env ]-
-[{a = 6} [+ a 7]]
+[{a: 6} [+ a 7]]
 -- 13
 
 -[ Block evaluation ]-
-[{a = 6 b = 7} add]
+[{a: 6 b: 7} add]
 -[
-  [{a = 6 b = 7} [a b| [{x = a y = b} +]]]  -- named args as prefix env
-  [{a = 6 b = 7}       [{x = a y = b} +]]   --   merged with formal parameters
-  [                     {x = 6 y = 7} +]    --   and evaluated with the body
-                        13
+  [{a: 6 b: 7} [a b| [{x: a y: b} +]]] -- named args as prefix env
+  [{a: 6 b: 7}       [{x: a y: b} +]]  --   merged with formal parameters
+  [                  {x: 6 y: 7} +]    --   and evaluated with the body
+                     13
 ]-
 
 -[ With positional args ]-
 [add 6 7]
 -[
-  [[a b|               [{x = a y = b} +]] 6 7]  -- transform positional args
-  [{a = 6 b = 7} [a b| [{x = a y = b} +]]    ]  --   into named args
-  [{a = 6 b = 7}       [{x = a y = b} +]]       --   and continue as usual
-                       [{x = 6 y = 7} +]
-                       13
+  [[a b|             [{x: a y: b} +]] 6 7]  -- transform positional args
+  [{a: 6 b: 7} [a b| [{x: a y: b} +]]    ]  --   into named args
+  [{a: 6 b: 7}       [{x: a y: b} +]]       --   and continue as usual
+                     [{x: 6 y: 7} +]
+                     13
 ]-
 
 -[ Closure ]-
@@ -115,11 +114,11 @@ TODO:
 )]
 
 -[ Dict with parent ]-
-[def {parent = {
-  foo = 42
+[def {parent: {
+  foo: 42
 }}]
-[def {child = {
-  ^ = parent
-  bar = 54
+[def {child: {
+  ^: parent
+  bar: 54
 }}]
 [+ child:foo child:bar]
