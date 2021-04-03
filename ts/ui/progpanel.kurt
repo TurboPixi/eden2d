@@ -1,28 +1,28 @@
 [def {
   ProgPanel: {
-    make: [programmed width height parser | {
+    make: (programmed width height parser | {
       ^: ProgPanel:-impl
       programmed width height parser
       chunk: programmed:program-chunk
       cursor: [chunk:add [UI:Cursor:make]]
-    }]
+    })
 
     -impl: {
-      move-cursor: [dx dy |
+      move-cursor: (dx dy |
         {nx: [+ @:cursor:loc:x dx]
          ny: [+ @:cursor:loc:y dy]}
         [if [and [>= nx 0] [>= ny 0] [< nx @:width] [< ny @:height]]
           (@:cursor:move-to nx ny)
         ]
-      ]
+      )
 
       erase: (
         ?= [@:cursor:top-with :glyph] (@:chunk:remove prev)
       )
 
-      write: [type |
+      write: (type |
         @:chunk:add-at [Glyph:make type] @:cursor:loc:x @:cursor:loc:y
-      ]
+      )
 
       close: (do
         [@:chunk:remove @:cursor]
@@ -35,7 +35,7 @@
 
   Glyph: {
     -src: "images/script.png"
-    -scr-img: [x y | Rendered:image "images/script.png" {x: x y: y}]
+    -scr-img: (x y | Rendered:image "images/script.png" {x: x y: y})
     -imgs: {
       square-open-horz:  [-scr-img  0  0]
       square-open-vert:  [-scr-img 32  0]
@@ -64,12 +64,12 @@
       target:            [-scr-img 64 64]
     }
 
-    make: [type |
+    make: (type |
       [new-ent [list
         [Located:make]
         [Rendered:make [-imgs type]]
         {glyph: {type}}
       ]]
-    ]
+    )
   }
 }]

@@ -22,13 +22,13 @@
         {brazier: {
           on: false
           frame: 0
-          perform: [ent action |
+          perform: (ent action |
             if [= :ignite action:action] (
               set @ {on: true}
             )
-          ]
+          )
         }}
-        [Ticks:make 1 [ent |
+        [Ticks:make 1 (ent |
           -- TODO: Way too bespoke for a simple animation. Generalize this.
           {frame: [+ 1 ent:brazier:frame]}
           [do
@@ -36,7 +36,7 @@
             [set ent:rendered {image: [[if ent:brazier:on (Brazier:-imgs-on) (Brazier:-imgs-off)] frame]}]
             [set ent:brazier {frame: frame}]
           ]
-        ]]
+        )]
       ]]
     )
   }
@@ -64,7 +64,7 @@
       [Rendered:make Wand:-img]
       [Portable:make]
       [Programmed:make]
-      [Usable:make [user object target | object:programmed:run user target]]
+      [Usable:make (user object target | object:programmed:run user target)]
     ])
   }
 }]

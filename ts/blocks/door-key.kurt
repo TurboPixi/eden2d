@@ -5,16 +5,16 @@
       y: [* 22 16]
     }]
 
-    make: [code | new-ent [list
+    make: (code | new-ent [list
       [Located:make]
       [Rendered:make Key:-img]
       [Portable:make]
       {key: {code}}
-    ]]
+    ])
   }
 
   Door: {
-    make: [closed-img open-img | new-ent [list
+    make: (closed-img open-img | new-ent [list
       [Located:make]
       [Rendered:make closed-img]
       [Solid:make 1]
@@ -24,15 +24,15 @@
         open: false
         code: 123
       }}
-    ]]
+    ])
 
     impl: {
-      prepare: [ent action | if [= action:action :open] (
+      prepare: (ent action | if [= action:action :open] (
         if [!= [?= action :opener :player (prev:selected-item) :key :code] @:code]
           (set action {cancel: true})
-      )]
+      ))
 
-      perform: [ent action |
+      perform: (ent action |
         if [and [= action:action :open] [! action:cancel]] (do
           [set @ {open: [! @:open]}]
           [set ent:rendered {image: [if @:open @:open-img @:closed-img]}]
@@ -40,7 +40,7 @@
             set ent:solid {solid: [! ent:solid:solid]}
           )]
         )
-      ]
+      )
     }
   }
 

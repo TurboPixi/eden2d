@@ -63,20 +63,20 @@ TODO:
   [? (env):sym]                -- true if :sym is defined in env
 
 -[ Blocks ]-
-  [x y | + x y]           -- block with two params
-  [x | + x 1]             -- block with one param
-  [| + 1 2]               -- block with no params
+  (x y | + x y)           -- block with two params
+  (x | + x 1)             -- block with one param
+  (| + 1 2)               -- block with no params
   (+ 1 2)                 -- (shorthand) block with no params
-  [x y | {env} | + x y]   -- (TODO) block with two params, with an explicit environment
+  (x y | {env} | + x y)   -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-
-[def {add: [a b | + a b]]}
-[def {+: [x y | native)]}
+[def {add: (a b | + a b)}]
+[def {+: (x y | native)}]
 
 -[ Rest params ]-
-[def :block [a b ...rest | do
+[def :block (a b ...rest | do
   [log a] [log b] [log rest]
-]]
+)]
 [block 1 2 3 4 5]                    -- logs 1 / 2 / [3 4 5]
 [{a: 1 b: 2 ...rest: [3 4 5]} block] -- ditto
 
@@ -87,16 +87,16 @@ TODO:
 -[ Block evaluation ]-
 [{a: 6 b: 7} add]
 -[
-  [{a: 6 b: 7} [a b| [{x: a y: b} +]]] -- named args as prefix env
-  [{a: 6 b: 7}       [{x: a y: b} +]]  --   merged with formal parameters
-  [                  {x: 6 y: 7} +]    --   and evaluated with the body
-                     13
+  [{a: 6 b: 7} (a b | [{x: a y: b} +])] -- named args as prefix env
+  [{a: 6 b: 7}        [{x: a y: b} +]]  --   merged with formal parameters
+  [                   {x: 6 y: 7} +]    --   and evaluated with the body
+                      13
 ]-
 
 -[ With positional args ]-
 [add 6 7]
 -[
-  [[a b|             [{x: a y: b} +]] 6 7]  -- transform positional args
+  [(a b |            [{x: a y: b} +]) 6 7]  -- transform positional args
   [{a: 6 b: 7} [a b| [{x: a y: b} +]]    ]  --   into named args
   [{a: 6 b: 7}       [{x: a y: b} +]]       --   and continue as usual
                      [{x: 6 y: 7} +]

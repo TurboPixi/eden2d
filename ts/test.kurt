@@ -2,7 +2,7 @@
   {
     failures: 0
 
-    expect: [expect expr | if [= expect expr]
+    expect: (expect expr | if [= expect expr]
       (log "--[ pass ]-")
       (do
         [set {failures: [+ failures 1]}]
@@ -10,12 +10,12 @@
         [log expect]
         [log expr]
       )
-    ]
+    )
 
-    run: [name test | do
+    run: (name test | do
       [log name]
       [test]
-    ]
+    )
   }
 
   [do
@@ -171,25 +171,25 @@
       {val: 42}
       [do
         [def env {
-          fn: [x | do
+          fn: (x | do
             [def {vals: [list x val]}]
             [{vals} +]
-          ]
+          )
         }]
         [expect 96 [{x: 54} fn]]
       ]
     )]
 
     [run "simple function (named params)" (
-      {fn: [x | [{vals: [list x 54]} +]]}
+      {fn: (x | [{vals: [list x 54]} +])}
       [expect 96 [{x: 42} fn]]
     )]
 
     [run "default parameters" (
-      {bump: [a val |
+      {bump: (a val |
         {amt: [if [? :val] (val) 1]}
         [+ a amt]
-      ]}
+      )}
       [do
         [expect 43 [bump 42]]
         [expect 44 [bump 42 2]]
@@ -210,7 +210,7 @@
     [run "simple closure over lexical env" (do
       [def {
         outer: 42
-        fn: [x | + x outer]
+        fn: (x | + x outer)
       }]
       [expect 96 [fn 54]]
     )]
@@ -232,10 +232,10 @@
         max: 0
       }
       [do
-        [for-each list [val |
+        [for-each list (val |
           if [> val max]
             (set {max: val})
-          ]
+          )
         ]
         [expect 4 max]
       ]
@@ -257,15 +257,13 @@
 
     [run "class with callback to closure" (
       {
-        trampoline: [callback |
+        trampoline: (callback |
           [callback]
-        ]
+        )
 
         Thing: {
           val: 42
-          fn: (
-            trampoline (+ @:val 1)
-          )
+          fn: (trampoline (+ @:val 1))
         }
       }
       [do
@@ -331,15 +329,15 @@
 
     [run "rest params" (do
       [def {
-        fn: [a b ...rest | do
+        fn: (a b ...rest | do
           [def {x: [+ a b]}]
 
           -- TODO: Replace this with a splat... when they're implemented.
-          [for-each rest [val |
+          [for-each rest (val |
             [set {x: [+ x val]}]
-          ]]
+          )]
           x
-        ]
+        )
       }]
 
       [expect 15 [{^: env a: 1 b: 2 rest: :[3 4 5]} fn]]
@@ -367,11 +365,11 @@
       -- These are cases where we ended up with inadvertent copies of 'comp',
       -- so mutations wouldn't stick.
       [def {comps: {comp: [Comp:make]}}]
-      [for-each-entry comps [name value | [value:mutate]]]
+      [for-each-entry comps (name value | [value:mutate])]
       [expect "mutated" comps:comp:foo]
 
       [def {comps: [list [Comp:make]]}]
-      [for-each comps [value | [value:mutate]]]
+      [for-each comps (value | [value:mutate])]
       [expect "mutated" comps:0:foo]
     )]
 
@@ -395,9 +393,9 @@
             baz: 42
           }
           quux: nil
-          block: [p |
+          block: (p |
             if p {shazbot: @:bar:baz} nil
-          ]
+          )
         }
       }]
       -- TODO: list cases?
@@ -421,10 +419,10 @@
       [def {
         make-thing: (do
           [def {thing: 42}]
-          [foo | do
+          (foo | do
             [set {thing: [+ 1 thing]}]
             thing
-          ]
+          )
         )
       }]
       [def {thang: [make-thing]}]

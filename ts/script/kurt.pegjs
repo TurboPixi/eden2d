@@ -81,7 +81,15 @@ list
   = "[" items:list_item* _ "]" { return items }
 
 short_block
-  = "(" items:list_item* _ ")" { items.unshift(_sym("|")); return items }
+  = "(" items:list_item* _ ")" {
+    for (var it of items) {
+      if (it && it["[sym]"] == "|") {
+        return items;
+      }
+    }
+    items.unshift(_sym("|"));
+    return items
+  }
 
 list_item = _ expr:expr { return expr }
 

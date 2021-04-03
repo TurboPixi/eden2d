@@ -27,14 +27,14 @@
         @:contents:top-with @:slot 0 :portable
       )
 
-      select-inv: [slot | do
+      select-inv: (slot | do
         [set @ {slot}]
         [@:cursor-ent:move-to slot 0]
-      ]
+      )
 
-      inv-target: [comp |
+      inv-target: (comp |
         @:contents:top-with @:slot 0 comp
-      ]
+      )
     }
   }
 }]

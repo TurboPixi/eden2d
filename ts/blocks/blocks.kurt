@@ -25,10 +25,10 @@
     -upimg: [Rendered:image "images/stairs.png" {w: 16 h: 22 ay: 6}]
     -dnimg: [Rendered:image "images/stairs.png" {y: 22 h: 16}]
 
-    make: [target-chunk target-x target-y up? | new-ent [list
+    make: (target-chunk target-x target-y up? | new-ent [list
       [Located:make]
       [Rendered:make [if up? Stairs:-upimg Stairs:-dnimg]]
       [Transports:make target-chunk target-x target-y]
-    ]]
+    ])
   }
 }]

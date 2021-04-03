@@ -158,7 +158,7 @@ function peg$parse(input, options) {
       peg$c14 = peg$classExpectation(["\n"], false, false),
       peg$c15 = "|",
       peg$c16 = peg$literalExpectation("|", false),
-      peg$c17 = function() { return _sym('|') },
+      peg$c17 = function() { return _sym("|") },
       peg$c18 = "-",
       peg$c19 = peg$literalExpectation("-", false),
       peg$c20 = /^[0-9]/,
@@ -214,7 +214,15 @@ function peg$parse(input, options) {
       peg$c57 = peg$literalExpectation("(", false),
       peg$c58 = ")",
       peg$c59 = peg$literalExpectation(")", false),
-      peg$c60 = function(items) { items.unshift(_sym('|')); return items },
+      peg$c60 = function(items) {
+          for (var it of items) {
+            if (it && it["[sym]"] == "|") {
+              return items;
+            }
+          }
+          items.unshift(_sym("|"));
+          return items
+        },
       peg$c61 = "{",
       peg$c62 = peg$literalExpectation("{", false),
       peg$c63 = "}",
@@ -222,7 +230,7 @@ function peg$parse(input, options) {
       peg$c65 = function(entries) {
           let r = {};
           for (let e of entries) {
-            r[e[0]['[sym]']] = e[1]
+            r[e[0]["[sym]"]] = e[1]
           }
           return r
         },
@@ -1398,9 +1406,9 @@ function peg$parse(input, options) {
   }
 
 
-    function _sym(name) { return { '[sym]': name }}
-    function _quote(expr) { return { '[q]': expr }}
-    function _fquote(expr) { return { '[fq]': expr }}
+    function _sym(name) { return { "[sym]": name }}
+    function _quote(expr) { return { "[q]": expr }}
+    function _fquote(expr) { return { "[fq]": expr }}
 
 
   peg$result = peg$startRuleFunction();

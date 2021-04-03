@@ -9,7 +9,7 @@
     )
 
     impl: {
-      move: [dx dy | @:chunk:perform [action-move @:player dx dy]]
+      move: (dx dy | @:chunk:perform [action-move @:player dx dy])
 
       toy-chunk: (
         -- Ew. This would be so much less foul with simple Clojure-esque ranges & stuff.
@@ -37,7 +37,7 @@
         ]
       )
 
-      make-items: [chunk0 chunk1 | do
+      make-items: (chunk0 chunk1 | do
         [chunk0:add-at [Stairs:make chunk1 0 5 false] 1 5]
         [chunk1:add-at [Stairs:make chunk0 2 5 true] 1 5]
         [chunk0:add-at [Wand:make] 0 2]
@@ -45,7 +45,7 @@
         [chunk0:add-at [Key:make 456] 2 0]
         [chunk0:add-at [Brazier:make] 4 4]
         [chunk0:add-at [Crate:make] 5 5]
-      ]
+      )
 
       enter: (
         [?= [@:player:chunk:top-with @:player:loc:x @:player:loc:y :transports] (
@@ -60,16 +60,16 @@
         )]
       )
 
-      select-inv: [slot | @:player:player:select-inv slot]
+      select-inv: (slot | @:player:player:select-inv slot)
 
-      use-selected: [dx dy |
+      use-selected: (dx dy |
         {selected: [@:player:player:selected-item]
          x: [+ @:player:loc:x dx]
          y: [+ @:player:loc:y dy]}
         [if [!= selected nil] (
           [@:chunk:perform [action-use @:player selected [@:player:chunk:top-at x y]]]
         )]
-      ]
+      )
 
       selected-contains: (?= [@:player:player:inv-target :contains] :contains :chunk)
       selected-programmed: (?= [@:player:player:inv-target :programmed] :programmed)

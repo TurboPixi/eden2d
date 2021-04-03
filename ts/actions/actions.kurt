@@ -1,26 +1,26 @@
 [def {
-  action-move: [target dx dy | {
+  action-move: (target dx dy | {
     action: :move target: target dx dy
     ents: [list target]
-  }]
+  })
 
-  action-use: [user object target | {
+  action-use: (user object target | {
     action: :use user object target
     ents: [list user object target]
-  }]
+  })
 
-  action-open: [opener target | {
+  action-open: (opener target | {
     action: :open opener target cancel: false
     ents: [list opener target]
-  }]
+  })
 
-  action-enter: [transports ent | {
+  action-enter: (transports ent | {
     action: :enter transports ent
     ents: [list transports ent]
-  }]
+  })
 
-  action-ignite: [igniter target | {
+  action-ignite: (igniter target | {
     action: :ignite igniter target
     ents: [list igniter target]
-  }]
+  })
 }]
