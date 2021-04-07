@@ -1,10 +1,10 @@
 import { Container, Graphics } from "pixi.js";
-import { Chunk, isChunk } from "../chunk";
+import { Chunk } from "../chunk";
 import { ProgPanel } from "./progpanel";
 import { Panel, PanelOwner } from "../eden";
 import { Entity, isEntity } from "../entity";
 import { Key } from "./key";
-import { Dict, dictDef, isDict } from "../script/dict";
+import { Dict, dictDef, isDict, _root } from "../script/dict";
 import { _eval } from "../script/eval";
 import { $, $$, EExpr, _ } from "../script/script";
 
@@ -14,6 +14,7 @@ import { _parse } from "../script/parse";
 enum InputState {
   default = 0,
   use = 1,
+  open = 2,
 }
 
 export class WorldPanel implements Panel {
@@ -25,8 +26,8 @@ export class WorldPanel implements Panel {
   private _inputState: InputState = InputState.default;
 
   constructor(private _owner: PanelOwner) {
-    _eval(_owner.world, _parse('worldpanel.kurt', worldpanel_kurt)); // TODO: Do this only once.
-    this._impl = isDict(_eval(_owner.world, [[$('WorldPanel'), $$('make')]]));
+    _eval(_root, _parse('worldpanel.kurt', worldpanel_kurt)); // TODO: Do this only once.
+    this._impl = isDict(_eval(_root, [[$('WorldPanel'), $$('make')]]));
 
     let chunk = this.createChunk();
     this._player = isEntity(this.eval([[_(chunk), $$('add')], [[$('Player'), $$('make')]]]));
@@ -84,6 +85,10 @@ export class WorldPanel implements Panel {
       case InputState.use:
         this.useKey(evt);
         break;
+
+      case InputState.open:
+        this.openKey(evt);
+        break;
     }
   }
 
@@ -97,10 +102,10 @@ export class WorldPanel implements Panel {
       case Key.ENTER: this.call('enter');   break;
       case Key.SPACE: this.call('take');    break;
       case Key.R:     this.call('put');     break;
-      case Key.O:     this.call('open');    break;
 
-      case Key.E:     this.progSelected();               break;
-      case Key.Q:     this._inputState = InputState.use; break;
+      case Key.E:     this.progSelected();                break;
+      case Key.Q:     this._inputState = InputState.use;  break;
+      case Key.O:     this._inputState = InputState.open; break;
 
       case Key._1: case Key._2: case Key._3:
       case Key._4: case Key._5: case Key._6:
@@ -115,6 +120,16 @@ export class WorldPanel implements Panel {
       case Key.DOWN:  this.call('use-selected',  0,  1); break;
       case Key.LEFT:  this.call('use-selected', -1,  0); break;
       case Key.RIGHT: this.call('use-selected',  1,  0); break;
+    }
+    this._inputState = InputState.default;
+  }
+
+  private openKey(evt: KeyboardEvent) {
+    switch (evt.keyCode) {
+      case Key.UP:    this.call('open',  0, -1); break;
+      case Key.DOWN:  this.call('open',  0,  1); break;
+      case Key.LEFT:  this.call('open', -1,  0); break;
+      case Key.RIGHT: this.call('open',  1,  0); break;
     }
     this._inputState = InputState.default;
   }
@@ -140,6 +155,6 @@ export class WorldPanel implements Panel {
   }
 
   private eval(...expr: EExpr[]): EExpr {
-    return _eval(this._owner.world, expr);
+    return _eval(_root, expr);
   }
 }

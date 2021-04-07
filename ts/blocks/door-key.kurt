@@ -5,7 +5,7 @@
       y: [* 22 16]
     }]
 
-    make: (code | new-ent [list
+    make: (code | Entity:make [list
       [Located:make]
       [Rendered:make Key:-img]
       [Portable:make]
@@ -14,7 +14,7 @@
   }
 
   Door: {
-    make: (closed-img open-img | new-ent [list
+    make: (closed-img open-img | Entity:make [list
       [Located:make]
       [Rendered:make closed-img]
       [Solid:make 1]
@@ -35,11 +35,15 @@
       perform: (ent action |
         if [and [= action:action :open] [! action:cancel]] (do
           [set @ {open: [! @:open]}]
-          [set ent:rendered {image: [if @:open @:open-img @:closed-img]}]
-          [if [? ent :solid] (
-            set ent:solid {solid: [! ent:solid:solid]}
-          )]
+          [@:-update ent]
         )
+      )
+
+      -update: (ent | do
+        [set ent:rendered {image: [if @:open @:open-img @:closed-img]}]
+        [if [? ent :solid] (
+          set ent:solid {solid: [! ent:solid:solid]}
+        )]
       )
     }
   }

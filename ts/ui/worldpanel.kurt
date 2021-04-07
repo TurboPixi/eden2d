@@ -13,7 +13,7 @@
 
       toy-chunk: (
         -- Ew. This would be so much less foul with simple Clojure-esque ranges & stuff.
-        {x:0 y:0 chunk:[make-chunk]}
+        {x:0 y:0 chunk:[World:make-chunk]}
         [do
           [while (< x 10) (do
             [set {y:0}]
@@ -45,6 +45,7 @@
         [chunk0:add-at [Key:make 456] 2 0]
         [chunk0:add-at [Brazier:make] 4 4]
         [chunk0:add-at [Crate:make] 5 5]
+        [chunk0:add-at [Chest:make] 6 3]
       )
 
       enter: (
@@ -53,11 +54,10 @@
         )]
       )
 
-      open: (
-        {door: [@:player:near-with :door]}
-        [if [!= door nil] (
-          @:chunk:perform [action-open @:player door]
-        )]
+      open: (dx dy |
+        {x: [+ @:player:loc:x dx]
+         y: [+ @:player:loc:y dy]}
+        [@:chunk:perform [action-open @:player [@:player:chunk:top-at x y]]]
       )
 
       select-inv: (slot | @:player:player:select-inv slot)

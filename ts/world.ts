@@ -1,68 +1,33 @@
-import { EExpr, $, $$, chuck, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } from "./script/script";
+import { EExpr, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _, _parentTag } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
-import { IDict, Dict, dictParent, _root } from "./script/dict";
-import { Entity } from "./entity";
-import { Located } from "./components/located";
-import { Rendered } from "./components/rendered";
+import { IDict, Dict, _root } from "./script/dict";
 
-import components_kurt from "./components/components.kurt";
-import actions_kurt from "./actions/actions.kurt";
-import player_kurt from "./actors/player.kurt";
-import blocks_kurt from "./blocks/blocks.kurt";
-import door_key_kurt from "./blocks/door-key.kurt";
-import items_kurt from "./items/items.kurt";
 import { _parse } from "./script/parse";
+import { registerDefroster } from "./script/freezer";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World implements IDict {
+  static Dict = {
+    // Makes a new, empty chunk.
+    'make-chunk': [_blk, function (env: Dict): EExpr {
+      return World.inst.makeChunk();
+    }],
+  }
+
+  static inst = new World();
+
   private _chunks: { [id: number]: Chunk } = {};
   private _nextId: ChunkId = 1;
   private _defs: EDict = {};
 
-  constructor() {
-    _eval(_root, [_set, this, {'^': _root}]);
+  private constructor() {
+  }
 
-    // TODO: It's kind of gross to have to initialize all the scripts this way.
-    // May need some more generalized mechanism for importing.
-    _eval(this, [_def, {'Chunk': Chunk.Dict}]);
-    _eval(this, [_def, {'Entity': Entity.Dict}]);
-    _eval(this, _parse('components.kurt', components_kurt));
-    _eval(this, [_def, {'Located': Located.Dict}]);
-    _eval(this, [_def, {'Rendered': Rendered.Dict}]);
-    _eval(this, _parse('actions.kurt', actions_kurt));
-    _eval(this, _parse('player.kurt', player_kurt));
-    _eval(this, _parse('blocks.kurt', blocks_kurt));
-    _eval(this, _parse('door-key.kurt', door_key_kurt));
-    _eval(this, _parse('items.kurt', items_kurt));
-
-    _eval(this, [_def, {
-      // Makes a new, empty chunk.
-      'make-chunk': [_blk, function (env: Dict): EExpr {
-        return worldFrom(env).makeChunk();
-      }],
-
-      // Makes a new entity with no components.
-      'make-ent': [_blk, function (env: Dict): EExpr {
-        return new Entity(env);
-      }],
-
-      // [new-ent] accepts a list of component setters, of the form {name = {comp}}, which allows it to be used
-      // with component make expressions, like so:
-      //
-      // [new-ent [
-      //   [SomeComp:make 123]
-      //   [OtherComp:make :whatever 456]
-      // ]]
-      //
-      'new-ent': _parse('World:new-ent', `[comp-sets |
-        {ent: [make-ent]}
-        [do
-          [for-each comp-sets [setter | def ent setter]]
-          ent
-        ]
-      ]`)
-    }]);
+  init(defs: EDict, nextId: ChunkId, chunks: { [id: number]: Chunk }) {
+    this._defs = defs;
+    this._nextId = nextId;
+    this._chunks = chunks;
   }
 
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
@@ -79,15 +44,18 @@ export class World implements IDict {
   chunk(id: ChunkId): Chunk {
     return this._chunks[id];
   }
+
+  native(): any {
+    return {
+      native: 'World',
+      defs: this._defs,
+      nextId: this._nextId,
+      chunks: this._chunks,
+    }
+  }
 }
 
-function worldFrom(env: Dict): World {
-  let cur = env;
-  while (cur) {
-    if (cur instanceof World) {
-      return cur;
-    }
-    cur = dictParent(cur);
-  }
-  chuck(env, "missing world env");
-}
+registerDefroster('World', (obj) => {
+  World.inst.init(obj.defs, obj.nextId, obj.chunks);
+  return World.inst;
+});

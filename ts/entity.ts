@@ -2,50 +2,61 @@ import { Chunk, locChunk } from "./chunk";
 import { Located } from "./components/located";
 import { Rendered } from "./components/rendered";
 import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
-import { $, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentTag, _set } from "./script/script";
+import { $, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentTag, _self, _set } from "./script/script";
 import { lookupSym, envEval } from "./script/env";
 import { _parse } from "./script/parse";
 
 export class Entity implements IDict {
   static Dict = {
+    // Makes a new entity with no components.
+    '-make': [_blk, (env: Dict) => {
+      return new Entity();
+    }],
+
+    // [make] accepts a list of component setters, of the form {name = {comp}}, which allows it to be used
+    // with component make expressions, like so:
+    //
+    // [Entity:make [
+    //   [SomeComp:make 123]
+    //   [OtherComp:make :whatever 456]
+    // ]]
+    //
+    'make': _parse('Entity:make', `(comp-sets |
+      {ent: [Entity:-make]}
+      [do
+        [for-each comp-sets [setter | def ent setter]]
+        ent
+      ]
+    )`),
+
+    // TODO: Put these where they belong in impl.
     'jump': [$('chunk'), _blk, (env: Dict) => {
-      let self = locEnt(env, $('@'));
+      let self = locEnt(env, _self);
       let to = locChunk(env, $('chunk'));
       to.addEntity(self);
       return self;
     }],
 
-    'move': _parse('Entity:move', `[dx dy |
-      @:move-to [+ @:loc:x dx] [+ @:loc:y dy]
-    ]`),
+    'move': _parse('Entity:move', `(dx dy | @:move-to [+ @:loc:x dx] [+ @:loc:y dy])`),
+    'move-to': _parse('Entity:move-to', `(x y | set @:loc {x y})`),
+    'top-with': _parse('Entity:top-with', `(comp | @:chunk:top-with @:loc:x @:loc:y comp)`),
+    'near-with': _parse('Entity:near-with', `(comp | @:chunk:near-with @:loc:x @:loc:y comp)`),
 
-    'move-to': _parse('Entity:move-to', `[x y |
-      set @:loc {x y}
-    ]`),
-
-    'top-with': _parse('Entity:top-with', `[comp |
-      @:chunk:top-with @:loc:x @:loc:y comp
-    ]`),
-
-    'near-with': _parse('Entity:near-with', `[comp |
-      @:chunk:near-with @:loc:x @:loc:y comp
-    ]`),
-
-    'prepare': _parse('Entity:prepare', `[action |
-      for-each-entry @:comps [name comp |
+    'prepare': _parse('Entity:prepare', `(action |
+      for-each-entry @:comps (name comp |
         if [? comp :prepare] (
           comp:prepare @ action
         )
-      ]
-    ]`),
+      )
+    )`),
 
-    'perform': _parse('Entity:perform', `[action |
+    'perform': _parse('Entity:perform', `(action |
       for-each-entry @:comps [name comp |
         if [? comp :perform] (
           comp:perform @ action
         )
       ]
-    ]`)
+    )`)
   };
 
   private _chunk: Chunk;
@@ -53,8 +64,8 @@ export class Entity implements IDict {
   private _parent: EExpr;
   private _comps: EDict = {};
 
-  constructor(env: Dict) {
-    this._parent = lookupSym(env, $('Entity'));
+  constructor() {
+    this._parent = lookupSym(_root, $('Entity'));
   }
 
   get id(): number { return this._id }

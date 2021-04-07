@@ -65,7 +65,7 @@
     }
 
     make: (type |
-      [new-ent [list
+      [Entity:make [list
         [Located:make]
         [Rendered:make [-imgs type]]
         {glyph: {type}}

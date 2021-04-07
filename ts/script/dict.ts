@@ -1,3 +1,4 @@
+import { registerDefroster } from "./freezer";
 import { _print } from "./print";
 import { EDict, EExpr, ESym, nil, symName, $, chuck, isSym, _callerTag, _parentTag, _parent, _parentName, _nameTag, isBlock, _parentTagName } from "./script";
 
@@ -6,7 +7,6 @@ export type Dict = IDict | EDict;
 export const _specialProps = {
   "[parent]": true, // _parentTag
   "[caller]": true, // _callerTag
-  "[name]": true,   // _nameTag
 }
 
 export interface IDict {
@@ -18,10 +18,12 @@ export interface IDict {
 
 class RootEnv implements IDict {
   private _defs: EDict = {};
+
   get names(): string[] { return Object.getOwnPropertyNames(this._defs); }
   exists(sym: ESym): boolean {return symName(sym) in this._defs; }
   ref(sym: ESym): EExpr { return this._defs[symName(sym)]; }
   def(sym: ESym, value: EExpr): void { this._defs[symName(sym)] = value; }
+  native(): any { return { native: 'root' } }
 }
 
 export const _root = new RootEnv();

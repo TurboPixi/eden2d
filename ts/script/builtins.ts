@@ -1,9 +1,10 @@
 import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictFind, dictNames, dictRef, isDict, _root } from "./dict";
-import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq, isSym, EExpr, _callerTagName, _callerTag, isFullQuote, FullQuoteMarker, isQuote, QuoteMarker } from "./script";
-import { expectBool, expectNum, locBool, locList, locNum } from "./env";
+import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq, isSym, EExpr, _callerTagName, _callerTag, isFullQuote, FullQuoteMarker, isQuote, QuoteMarker, ESym } from "./script";
+import { expectBool, expectNum, locBool, locList, locNum, locStr, lookupSym } from "./env";
 import { _parse } from "./parse";
+import { _freeze, _thaw } from "./freezer";
 
 export const _debug = $('debug');
 export const _and = $('and');
@@ -219,4 +220,7 @@ export let builtinDefs = [_def, {
     }
     return val;
   }],
+
+  'freeze': _freeze,
+  'thaw': _thaw,
 }];

@@ -15,7 +15,7 @@
     ]
 
     make: (
-      [new-ent [list
+      [Entity:make [list
         [Located:make]
         [Solid:make 1]
         [Rendered:make Brazier:-imgs-off:0]
@@ -44,7 +44,7 @@
   Crate: {
     -img: [Rendered:image "images/crate.png" {x: 0 y: 0}]
 
-    make: (new-ent [list
+    make: (Entity:make [list
       [Located:make]
       [Rendered:make Crate:-img]
       [Portable:make]
@@ -59,12 +59,43 @@
       y: [* 30 16]
     }]
 
-    make: (new-ent [list
+    make: (Entity:make [list
       [Located:make]
       [Rendered:make Wand:-img]
       [Portable:make]
       [Programmed:make]
       [Usable:make (user object target | object:programmed:run user target)]
     ])
+  }
+
+  Chest: {
+    -src: "images/chests.png"
+    -img-closed: [Rendered:image -src { x:0  y:3 w:16 h:18 }]
+    -img-open:   [Rendered:image -src { x:32 y:3 w:16 h:18 }]
+
+    make: (Entity:make [list
+      [Located:make]
+      [Rendered:make Chest:-img-closed]
+      [Solid:make 1]
+      [Usable:make (user object target | object:programmed:run user target)]
+      {chest: {
+        ^: impl
+        open: false
+      }}
+    ])
+
+    impl: {
+      prepare: (ent action | nil)
+      perform: (ent action |
+        if [= action:action :open] (do
+          [set @ {open: [! @:open]}]
+          [@:-update ent]
+        )
+      )
+
+      -update: (ent |
+        set ent:rendered {image: [if @:open -img-open -img-closed]}
+      )
+    }
   }
 }]

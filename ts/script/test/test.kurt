@@ -450,6 +450,17 @@
       [expect 42 [bag bar]]
     )]
 
+    [run "freeze / thaw" (do
+      [def {
+        obj: {
+          x: [+ 1 2]
+        }
+        frozen: [freeze obj]
+      }]
+      [def {thawed: [thaw frozen]}]
+      [expect 3 thawed:x]
+    )]
+
     -- Wrap up.
     [log "--[ complete ]--"]
     [if [= 0 failures]

@@ -2,7 +2,7 @@
   Floor: {
     -img: [Rendered:image "images/floors.png" {x: 0 y: 16}]
 
-    make: (new-ent [list
+    make: (Entity:make [list
       [Located:make]
       [Rendered:make Floor:-img]
     ])
@@ -14,7 +14,7 @@
       y: [* 3 16]
     }]
 
-    make: (new-ent [list
+    make: (Entity:make [list
       [Located:make]
       [Solid:make 1]
       [Rendered:make Wall:-img]
@@ -25,7 +25,7 @@
     -upimg: [Rendered:image "images/stairs.png" {w: 16 h: 22 ay: 6}]
     -dnimg: [Rendered:image "images/stairs.png" {y: 22 h: 16}]
 
-    make: (target-chunk target-x target-y up? | new-ent [list
+    make: (target-chunk target-x target-y up? | Entity:make [list
       [Located:make]
       [Rendered:make [if up? Stairs:-upimg Stairs:-dnimg]]
       [Transports:make target-chunk target-x target-y]

@@ -30,7 +30,7 @@
     make: ({
       programmed: {
         ^: Programmed:impl
-        program-chunk: [make-chunk]
+        program-chunk: [World:make-chunk]
         program: (user target | )
       }
     })
@@ -44,7 +44,7 @@
 
   Contains: {
     make: ({contains: {
-      chunk: [make-chunk]
+      chunk: [World:make-chunk]
     }})
   }
 

@@ -9,13 +9,13 @@
 
     -- Quick utility to make a player entity.
     make: (
-      {inv-chunk: [make-chunk]}
-      [new-ent [list
+      {inv-chunk: [World:make-chunk]}
+      [Entity:make [list
         [Located:make]
         [Solid:make 1]
-        [Rendered:make Player:-img]
+        [Rendered:make -img]
         {player: {
-          ^: Player:impl
+          ^: impl
           slot: 0
           contents: inv-chunk
           cursor-ent: [inv-chunk:add [UI:Cursor:make]]

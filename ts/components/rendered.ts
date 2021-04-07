@@ -1,5 +1,5 @@
 import { Rectangle, Sprite, Texture } from "pixi.js";
-import { Entity, locEnt, NativeComp } from "../entity";
+import { NativeComp } from "../entity";
 import { Resources } from "../res";
 import { Dict } from "../script/dict";
 import { locDict, locOpaque, locStr } from "../script/env";

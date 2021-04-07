@@ -1,10 +1,10 @@
-[def {
+[def { UI: {
   Cursor: {
     -img: [Rendered:image "images/floors.png" {x: 0 y: 16}]
 
-    make: (new-ent [list
+    make: (Entity:make [list
       [Located:make]
       [Rendered:make Cursor:-img]
     ])
   }
-}]
+}}]

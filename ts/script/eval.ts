@@ -31,7 +31,7 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
         return quote[QuoteMarker];
       }
 
-      // /thing is fully quoted, and evals to itself.
+      // \thing is fully quoted, and evals to itself.
       let fquote = isFullQuote(expr);
       if (fquote) {
         return fquote;

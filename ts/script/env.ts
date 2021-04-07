@@ -1,9 +1,10 @@
 import { Dict, dictDef, dictExists, dictFind, dictNames, dictRef, IDict, isEDict } from "./dict";
 import { _eval } from "./eval";
+import { registerDefroster } from "./freezer";
 import { chuck, EExpr, EList, EOpaque, ESym, isList, isOpaque, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
 
 export class TeeEnv implements IDict {
-  constructor(private env: Dict, private parent: Dict) {}
+  constructor(public env: Dict, public parent: Dict) {}
 
   get names(): string[] {
     return dictNames(this.env);
@@ -26,7 +27,19 @@ export class TeeEnv implements IDict {
   def(sym: ESym, value: EExpr): void {
     dictDef(this.env, sym, value);
   }
+
+  native(): any {
+    return {
+      native: 'TeeEnv',
+      env: this.env,
+      parent: this.parent,
+    }
+  }
 }
+
+registerDefroster("TeeEnv", (obj) => {
+  return new TeeEnv(obj['env'], obj['parent']);
+})
 
 export function envNew(parent: Dict, caller: Dict, name: string): Dict {
   let env: any = {};

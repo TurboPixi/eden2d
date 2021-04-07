@@ -9,7 +9,6 @@ import { Dict, isDict, _root } from "../script/dict";
 import containerpanel_kurt from "./progpanel.kurt";
 import { _parse } from "../script/parse";
 import { parse } from "../script/kurt";
-import { expectStr, expectSym } from "../script/env";
 
 export class ProgPanel implements Panel {
   private _container: Container;
@@ -17,14 +16,14 @@ export class ProgPanel implements Panel {
   private _impl: Dict;
 
   constructor(programmed: EExpr, private _owner: PanelOwner) {
-    _eval(_owner.world, _parse('progpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
+    _eval(_root, _parse('progpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
 
-    this._progChunk = _eval(_owner.world, [_(programmed), $$('program-chunk')]) as Chunk;
+    this._progChunk = _eval(_root, [_(programmed), $$('program-chunk')]) as Chunk;
 
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._impl = isDict(_eval(_owner.world, [[$('ProgPanel'), $$('make')], _(programmed), 10, 10,
+    this._impl = isDict(_eval(_root, [[$('ProgPanel'), $$('make')], _(programmed), 10, 10,
     [$('chunk'), _blk, (env: Dict) => this.parser(env, locChunk(env, $('chunk')))]
     ]));
 
@@ -192,6 +191,6 @@ export class ProgPanel implements Panel {
   }
 
   private call(blockName: string, ...expr: EExpr[]): EExpr {
-    return _eval(this._owner.world, [[_(this._impl), $$(blockName)], ...expr]);
+    return _eval(_root, [[_(this._impl), $$(blockName)], ...expr]);
   }
 }

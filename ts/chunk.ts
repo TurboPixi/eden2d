@@ -1,7 +1,7 @@
 import { Container } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
-import { IDict, Dict, dictParent, dictRef, isDict } from "./script/dict";
+import { IDict, Dict, dictParent, dictRef, isDict, _root } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parentTagName, _self, _set } from "./script/script";
 import { World } from "./world";
 import { locNum, locSym, envEval } from "./script/env";
@@ -21,9 +21,7 @@ export class Chunk implements IDict {
       return ent;
     }],
 
-    'add-at': _parse('Chunk:add-at', `[ent x y |
-      [@:add ent]:move-to x y
-    ]`),
+    'add-at': _parse('Chunk:add-at', `(ent x y | [@:add ent]:move-to x y)`),
 
     'remove': [$('ent'), _blk, (env: Dict) => {
       let ent = locEnt(env, $('ent'));
@@ -61,13 +59,13 @@ export class Chunk implements IDict {
       );
     }],
 
-    'perform': [$('action'), _blk, _parse('Chunk:perform', `[action | do
+    'perform': [$('action'), _blk, _parse('Chunk:perform', `(action | do
       -- Let each entity prepare the action (possibly mutating it),
       -- then perform it once all of them have had a crack.
       -- TODO: Give the chunk a crack at it.
-      [for-each action:ents [ent | ent:prepare action]]
-      [for-each action:ents [ent | ent:perform action]]
-    ]`)],
+      [for-each action:ents (ent | ent:prepare action)]
+      [for-each action:ents (ent | ent:perform action)]
+    )`)],
   };
 
   private _entities: { [id: number]: Entity } = {};
@@ -79,7 +77,7 @@ export class Chunk implements IDict {
 
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
-    _eval(_world, [_set, this, {'^': $('Chunk')}]);
+    _eval(_root, [_set, this, {'^': $('Chunk')}]);
   }
 
   get world(): World { return this._world }
