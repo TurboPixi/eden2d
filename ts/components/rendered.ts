@@ -2,9 +2,9 @@ import { Rectangle, Sprite, Texture } from "pixi.js";
 import { NativeComp } from "../entity";
 import { Resources } from "../res";
 import { Dict } from "../script/dict";
-import { locDict, locOpaque, locStr } from "../script/env";
+import { locDict, locStr, lookupSym } from "../script/env";
 import { registerDefroster } from "../script/freezer";
-import { $, EOpaque, makeOpaque, opaqueVal, _blk } from "../script/script";
+import { $, EExpr, _blk } from "../script/script";
 
 interface ImageFrame {
   x: number;
@@ -15,35 +15,55 @@ interface ImageFrame {
   ay?: number;
 }
 
+export class Image extends NativeComp {
+  tex: Texture;
+
+  constructor(public file: string, public frame: ImageFrame) {
+    super();
+
+    let x = frame.x || 0, y = frame.y || 0;
+    let w = frame.w || 16, h = frame.h || 16;
+
+    let btex = Resources.tex(file);
+    let tex = new Texture(btex, new Rectangle(x, y, w, h));
+    tex.defaultAnchor.x = frame.ax ? (frame.ax / w) : 0;
+    tex.defaultAnchor.y = frame.ay ? (frame.ay / h) : 0;
+    this.tex = tex;
+  }
+
+  defrost() {
+    // TODO
+  }
+
+  native(): any {
+    // TODO
+    return "[image]";
+  }
+}
+
 export class Rendered extends NativeComp {
   static Dict = {
     make: [$('img'), _blk, (env: Dict) => {
+      let img = lookupSym(env, $('img')) as Image;
       let r = new Rendered();
-      r.sprite.texture = opaqueVal(locOpaque(env, $('img'))) as Texture;
-      r.sprite.anchor = r.sprite.texture.defaultAnchor;
-      return {'rendered': r};
+      r.image = img;
+      return { 'rendered': r };
     }],
 
     image: [$('file'), $('frame'), _blk, (env: Dict) => {
       let file = locStr(env, $('file'));
       let frame = locDict(env, $('frame')) as unknown as ImageFrame;
-      let x = frame.x || 0, y = frame.y || 0;
-      let w = frame.w || 16, h = frame.h || 16;
-
-      let btex = Resources.tex(file);
-      let tex = new Texture(btex, new Rectangle(x, y, w, h));
-      tex.defaultAnchor.x = frame.ax ? (frame.ax / w) : 0;
-      tex.defaultAnchor.y = frame.ay ? (frame.ay / h) : 0;
-      return makeOpaque(tex);
+      return new Image(file, frame);
     }],
   };
 
-  set image(otex: EOpaque) {
-    let tex = opaqueVal(otex) as Texture;
-    this.sprite.texture = tex;
-    this.sprite.anchor = tex.defaultAnchor;
+  set image(expr: EExpr) {
+    let img = expr as Image;
+    this.sprite.texture = img.tex;
+    this.sprite.anchor = img.tex.defaultAnchor;
   }
 
+  img: Image;
   sprite: Sprite;
 
   constructor() {
@@ -51,26 +71,20 @@ export class Rendered extends NativeComp {
     this.sprite = new Sprite();
   }
 
-  defrost(chunk: Chunk, id: number, parent: EExpr, comps: EDict): any {
-    this._chunk = chunk;
-    this._id = id;
-    this._parent = parent;
-    this._comps = comps;
+  defrost() {
+    // TODO
   }
 
   native(): any {
     return {
       native: 'Rendered',
-      img: this.
-      id: this._id,
-      parent: this._parent,
-      comps: this._comps,
+      img: this.img,
     }
   }
 }
 
 registerDefroster('Rendered', (obj) => {
   var rend = new Rendered();
-  rend.defrost(obj.entities, obj.nextId, obj.defs);
+  rend.defrost();
   return rend;
 });

@@ -69,7 +69,7 @@ export class Entity implements IDict {
     this._parent = lookupSym(_root, $('Entity'));
   }
 
-  defrost(chunk: Chunk, id: number, parent: EExpr, comps: EDict): any {
+  defrost(chunk: Chunk, id: number, parent: EExpr, comps: EDict) {
     this._chunk = chunk;
     this._id = id;
     this._parent = parent;

@@ -8,13 +8,6 @@ import { registerDefroster } from "./script/freezer";
 
 // TODO: Reliable garbage-collection on chunks.
 export class World implements IDict {
-  static Dict = {
-    // Makes a new, empty chunk.
-    'make-chunk': [_blk, function (env: Dict): EExpr {
-      return World.inst.makeChunk();
-    }],
-  }
-
   static inst = new World();
 
   private _chunks: { [id: number]: Chunk } = {};
@@ -22,6 +15,11 @@ export class World implements IDict {
   private _defs: EDict = {};
 
   private constructor() {
+    _eval(_root, [_def, this, {
+      'make-chunk': [_blk, function (env: Dict): EExpr {
+        return World.inst.makeChunk();
+      }]
+    }])
   }
 
   defrost(defs: EDict, nextId: ChunkId, chunks: { [id: number]: Chunk }) {

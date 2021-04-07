@@ -89,6 +89,10 @@
           [target:jump @:player:chunk]:move-to loc:x loc:y
         )]
       )
+
+      save: (
+        log [freeze World]
+      )
     }
   }
 }]

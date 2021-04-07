@@ -87,7 +87,7 @@ _eval(_root, _parse('test.kurt', test_kurt)); // language tests
 // TODO: It's kind of gross to have to initialize all the scripts this way.
 // May need some more generalized mechanism for importing.
 _eval(_root, [_def, {
-  'World': World.Dict,
+  'World': World.inst,
   'Chunk': Chunk.Dict,
   'Entity': Entity.Dict,
   'Located': Located.Dict,
