@@ -24,7 +24,7 @@ export class World implements IDict {
   private constructor() {
   }
 
-  init(defs: EDict, nextId: ChunkId, chunks: { [id: number]: Chunk }) {
+  defrost(defs: EDict, nextId: ChunkId, chunks: { [id: number]: Chunk }) {
     this._defs = defs;
     this._nextId = nextId;
     this._chunks = chunks;
@@ -56,6 +56,6 @@ export class World implements IDict {
 }
 
 registerDefroster('World', (obj) => {
-  World.inst.init(obj.defs, obj.nextId, obj.chunks);
+  World.inst.defrost(obj.defs, obj.nextId, obj.chunks);
   return World.inst;
 });

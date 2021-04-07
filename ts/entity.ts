@@ -5,6 +5,7 @@ import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentTag, _self, _set } from "./script/script";
 import { lookupSym, envEval } from "./script/env";
 import { _parse } from "./script/parse";
+import { registerDefroster } from "./script/freezer";
 
 export class Entity implements IDict {
   static Dict = {
@@ -68,6 +69,13 @@ export class Entity implements IDict {
     this._parent = lookupSym(_root, $('Entity'));
   }
 
+  defrost(chunk: Chunk, id: number, parent: EExpr, comps: EDict): any {
+    this._chunk = chunk;
+    this._id = id;
+    this._parent = parent;
+    this._comps = comps;
+  }
+
   get id(): number { return this._id }
   get chunk(): Chunk { return this._chunk }
   get names(): string[] { return ['id', 'chunk', symName(_parentTag)]; }
@@ -117,6 +125,16 @@ export class Entity implements IDict {
     this._chunk = chunk;
     this._id = id;
   }
+
+  native(): any {
+    return {
+      native: 'Entity',
+      chunk: this._chunk,
+      id: this._id,
+      parent: this._parent,
+      comps: this._comps,
+    }
+  }
 }
 
 // Convenience env implementation for simple components.
@@ -160,3 +178,9 @@ export function locEnt(env: Dict, sym: ESym): Entity {
   }
   return ent as Entity;
 }
+
+registerDefroster('Entity', (obj) => {
+  var ent = new Entity();
+  ent.defrost(obj.chunk, obj.id, obj.parent, obj.comps);
+  return ent;
+});

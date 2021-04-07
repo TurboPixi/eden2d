@@ -78,10 +78,7 @@
       [Rendered:make Chest:-img-closed]
       [Solid:make 1]
       [Usable:make (user object target | object:programmed:run user target)]
-      {chest: {
-        ^: impl
-        open: false
-      }}
+      {chest: {^: impl open: false}}
     ])
 
     impl: {

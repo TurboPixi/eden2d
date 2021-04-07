@@ -6,6 +6,7 @@ import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parentTagNa
 import { World } from "./world";
 import { locNum, locSym, envEval } from "./script/env";
 import { _parse } from "./script/parse";
+import { registerDefroster } from "./script/freezer";
 
 export type ChunkId = number;
 
@@ -78,6 +79,14 @@ export class Chunk implements IDict {
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
     _eval(_root, [_set, this, {'^': $('Chunk')}]);
+  }
+
+  defrost(entities: {[id: number]: Entity}, nextId: number, defs: EDict) {
+    this._entities = entities;
+    this._nextId = nextId;
+    this._defs = defs;
+    this.container.removeChildren();
+    this._millis = this._lastTickMillis = 0;
   }
 
   get world(): World { return this._world }
@@ -221,6 +230,15 @@ export class Chunk implements IDict {
       }
     }
   }
+
+  native(): any {
+    return {
+      native: 'Chunk',
+      entities: this._entities,
+      nextId: this._nextId,
+      defs: this._defs,
+    }
+  }
 }
 
 export function isChunk(expr: EExpr): Chunk {
@@ -241,3 +259,9 @@ export function locChunk(env: Dict, sym: ESym): Chunk {
   }
   return chunk as Chunk;
 }
+
+registerDefroster('Chunk', (obj) => {
+  var chunk = new Chunk(World.inst, obj.id);
+  chunk.defrost(obj.entities, obj.nextId, obj.defs);
+  return chunk;
+});

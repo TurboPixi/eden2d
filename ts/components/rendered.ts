@@ -3,6 +3,7 @@ import { NativeComp } from "../entity";
 import { Resources } from "../res";
 import { Dict } from "../script/dict";
 import { locDict, locOpaque, locStr } from "../script/env";
+import { registerDefroster } from "../script/freezer";
 import { $, EOpaque, makeOpaque, opaqueVal, _blk } from "../script/script";
 
 interface ImageFrame {
@@ -49,4 +50,27 @@ export class Rendered extends NativeComp {
     super();
     this.sprite = new Sprite();
   }
+
+  defrost(chunk: Chunk, id: number, parent: EExpr, comps: EDict): any {
+    this._chunk = chunk;
+    this._id = id;
+    this._parent = parent;
+    this._comps = comps;
+  }
+
+  native(): any {
+    return {
+      native: 'Rendered',
+      img: this.
+      id: this._id,
+      parent: this._parent,
+      comps: this._comps,
+    }
+  }
 }
+
+registerDefroster('Rendered', (obj) => {
+  var rend = new Rendered();
+  rend.defrost(obj.entities, obj.nextId, obj.defs);
+  return rend;
+});
