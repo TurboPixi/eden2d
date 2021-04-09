@@ -1,13 +1,12 @@
 import { _printStack, _print } from "./print";
-import { Dict, isEDict, _specialProps } from "./dict";
+import { Dict, isEDict, isTagProp } from "./dict";
 
-export type EExpr = ENil | EPrim | ESym | EQuote | EFullQuote | EList | Dict | NativeBlock | EOpaque;
+export type EExpr = ENil | EPrim | ESym | EQuote | EFullQuote | EList | Dict | NativeBlock;
 export type EPrim = number | boolean | string | ENil;
 export type ENil = undefined;
 export type ESym = { '[sym]': string };
 export type EQuote = { '[q]': EExpr };
 export type EFullQuote = { '[fq]': EExpr };
-export type EOpaque = { '[opaque]': any };
 export type EBlock = { '[block]': [EList, EExpr], '[env]': Dict, '[name]'?: string, '[self]'?: EDict };
 export type NativeBlock = (env: Dict) => EExpr;
 export type EList = EExpr[];
@@ -16,7 +15,6 @@ export type EDict = { [arg: string]: EExpr };
 export const QuoteMarker = '[q]';
 export const FullQuoteMarker = '[fq]';
 export const SymMarker = '[sym]';
-export const OpaqueMarker = '[opaque]';
 export const BlockMarker = '[block]';
 export const EnvMarker = '[env]';
 export const NameMarker = '[name]';
@@ -36,11 +34,10 @@ export const _def = $('def');
 export const _set = $('set');
 export const _exists = $('?');
 
-export const _parentTagName = '[parent]';
+// Tags.
 export const _callerTagName = '[caller]';
 export const _nameTagName = '[name]';
 export const _nameTag = $(_nameTagName);
-export const _parentTag = $(_parentTagName);
 export const _callerTag = $(_callerTagName);
 
 // Makes a quoted expression (unevaluated).
@@ -97,7 +94,7 @@ export function eq(a: EExpr, b: EExpr): boolean {
         let bKeys = Object.keys(bDict);
         if (aKeys.length == bKeys.length) {
           for (let key of aKeys) {
-            if (!(key in _specialProps)) {
+            if (!isTagProp(key)) {
               if (!eq(aDict[key], bDict[key])) {
                 return false;
               }
@@ -140,11 +137,19 @@ export function isQuote(val: EExpr): EQuote {
   return nil;
 }
 
+export function quoteExpr(q: EQuote): EExpr {
+  return q[QuoteMarker];
+}
+
 export function isFullQuote(val: EExpr): EFullQuote {
   if (val && typeof val == 'object' && (FullQuoteMarker in val)) {
     return val as EFullQuote;
   }
   return nil;
+}
+
+export function fullQuoteExpr(q: EFullQuote): EExpr {
+  return q[FullQuoteMarker];
 }
 
 export function isString(val: any): string {
@@ -172,21 +177,6 @@ export function symName(sym: ESym): string {
   return sym[SymMarker];
 }
 
-export function makeOpaque(val: any): EOpaque {
-  return {'[opaque]': val};
-}
-
-export function isOpaque(val: EExpr): EOpaque {
-  if (val && (typeof val == "object") && OpaqueMarker in (val as any)) {
-    return val as EOpaque;
-  }
-  return nil;
-}
-
-export function opaqueVal(opaque: EOpaque): any {
-  return opaque[OpaqueMarker];
-}
-
 export function isBlock(val: EExpr): EBlock {
   if (val && (typeof val == "object") && BlockMarker in (val as any)) {
     return val as EBlock;
@@ -207,7 +197,7 @@ export function blockEnv(block: EBlock): Dict {
 }
 
 export function blockName(block: EBlock): string {
-  return block ? block[NameMarker] : "";
+  return block ? (block[NameMarker] || "") : "";
 }
 
 export function blockSelf(block: EBlock): EDict {

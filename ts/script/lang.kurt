@@ -14,12 +14,12 @@ Principles:
 
 TODO:
 - Some kind of keyword-like "full quote" (that self-evals, like Clojure keywords)
-  E.g., {foo: /[+ 1 2]] => full quoted list. 
-        foo             => /[+ 1 2]
-        [foo]           => /[+ 1 2]
-        \foo            =>  [+ 1 2]
-        [\foo]          =>  3
-- Try/catch?
+  E.g., {foo: \[+ 1 2]] => full quoted list. 
+        foo             => \[+ 1 2]
+        [foo]           => \[+ 1 2]
+        /foo            =>  [+ 1 2]
+        [/foo]          =>  3
+- Try/catch? Pattern-match error handling?
 - Affordance to resolve resolution ambiguity with parent/child envs.
 - Splats...
 - single-quote symbols
@@ -32,6 +32,7 @@ TODO:
   Should change format to { :key = ... } to rationalize this
 - Backquote string literals?
 - Read caller? (?= native impl uses this right now)
+- Read block name, params, env, expr?
 ]-
 
 -[ Primitive values ]-

@@ -2,7 +2,7 @@ import { Chunk, locChunk } from "./chunk";
 import { Located } from "./components/located";
 import { Rendered } from "./components/rendered";
 import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
-import { $, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentTag, _self, _set } from "./script/script";
+import { $, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentName, _self, _set } from "./script/script";
 import { lookupSym, envEval } from "./script/env";
 import { _parse } from "./script/parse";
 import { registerDefroster } from "./script/freezer";
@@ -78,7 +78,7 @@ export class Entity implements IDict {
 
   get id(): number { return this._id }
   get chunk(): Chunk { return this._chunk }
-  get names(): string[] { return ['id', 'chunk', symName(_parentTag)]; }
+  get names(): string[] { return ['id', 'chunk', _parentName]; }
 
   exists(sym: ESym): boolean {
     let name = symName(sym);
@@ -97,7 +97,7 @@ export class Entity implements IDict {
       case 'chunk': return this._chunk;
       case 'id': return this._id;
       case 'comps': return this._comps;
-      case symName(_parentTag): return this._parent;
+      case _parentName: return this._parent;
     }
     return this._comps[name];
   }
@@ -108,7 +108,7 @@ export class Entity implements IDict {
       case 'chunk':
       case 'id':
       case 'comps':
-      case symName(_parentTag):
+      case _parentName:
         // TODO: Pass env to def/ref?
         chuck(_root, `can't set ${symName(sym)} on Entity`);
     }

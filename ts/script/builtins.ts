@@ -1,8 +1,8 @@
 import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictFind, dictNames, dictRef, isDict, _root } from "./dict";
-import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq, isSym, EExpr, _callerTagName, _callerTag, isFullQuote, FullQuoteMarker, isQuote, QuoteMarker, ESym } from "./script";
-import { expectBool, expectNum, locBool, locList, locNum, locStr, lookupSym } from "./env";
+import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq, isSym, EExpr, _callerTagName, _callerTag, isFullQuote, isQuote, quoteExpr, fullQuoteExpr } from "./script";
+import { expectBool, expectNum, locBool, locList, locNum } from "./env";
 import { _parse } from "./parse";
 import { _freeze, _thaw } from "./freezer";
 
@@ -36,11 +36,11 @@ export let builtinDefs = [_def, {
     let expr = dictRef(env, $('expr'));
     let fquote = isFullQuote(expr);
     if (fquote) {
-      return fquote[FullQuoteMarker];
+      return fullQuoteExpr(fquote);
     }
     let quote = isQuote(expr);
     if (quote) {
-      return quote[QuoteMarker];
+      return quoteExpr(quote);
     }
     chuck(env, `attempt to unquote ${_print(expr)}, which wasn't quoted`);
   }],

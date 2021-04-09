@@ -1,7 +1,7 @@
 import { _print } from "./print";
-import { Dict, dictDef, dictFind, dictNames, dictRef, _root, _specialProps, isDict, isEDict, translateSym, dictParent } from "./dict";
-import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, _parentTag, _parentTagName, EnvMarker, BlockMarker, QuoteMarker, blockName, EBlock, isOpaque, isFullQuote } from "./script";
-import { envNew, TeeEnv } from "./env";
+import { Dict, dictDef, dictFind, dictNames, dictRef, _root, isDict, isEDict, dictParent, isTagProp } from "./dict";
+import { chuck, EExpr, EList, ESym, isList, isQuote, isSym, NativeBlock, nil, $, _, symName, __, isBlock, blockExpr, blockParams, blockEnv, EDict, blockSelf, _self, EnvMarker, BlockMarker, blockName, EBlock, isFullQuote, quoteExpr } from "./script";
+import { envNew, Env } from "./env";
 
 // Internal evaluate implementation, that doesn't catch or log exceptions.
 export function _eval(env: Dict, expr: EExpr): EExpr {
@@ -28,7 +28,7 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
       // :thing is a literal expression, not evaluated.
       let quote = isQuote(expr);
       if (quote) {
-        return quote[QuoteMarker];
+        return quoteExpr(quote);
       }
 
       // \thing is fully quoted, and evals to itself.
@@ -57,12 +57,6 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
         return dictRef(target, sym);
       }
 
-      let opaque = isOpaque(expr);
-      if (opaque) {
-        // Leave opaque values alone.
-        return opaque;
-      }
-
       // [a b c ...] is a list.
       // Treat it as function application.
       let list = isList(expr);
@@ -76,9 +70,9 @@ export function _eval(env: Dict, expr: EExpr): EExpr {
       if (edict) {
         // Copy the dict to a new expression, so we're not mutating the original.
         let result = {} as EDict;
-        let dictEnv = new TeeEnv(result, env);
+        let dictEnv = new Env(result, env);
         for (let key in edict) {
-          if (key in _specialProps) {
+          if (isTagProp(key)) {
             // Specials are copied, not eval'd.
             result[key] = edict[key];
           } else {
@@ -129,8 +123,8 @@ export function _apply(env: Dict, _expr: EList): EExpr {
   if (argEnv && list.length == 2) {
     // [arg-env expr] => expr
     let overrideEnv = isDict(dictParent(argEnv));
-    if (dictRef(argEnv, _parentTag) === nil) {
-      argEnv = new TeeEnv(argEnv, env);
+    if (dictParent(argEnv) === nil) {
+      argEnv = new Env(argEnv, env);
     }
 
     let expr = _eval(argEnv, list[1]);
@@ -156,8 +150,8 @@ export function _apply(env: Dict, _expr: EList): EExpr {
       // Explicit env argument override.
       if (overrideEnv) {
         exprEnv = overrideEnv;
-        if (dictRef(exprEnv, _parentTag) === nil) {
-          exprEnv = new TeeEnv(exprEnv, env);
+        if (dictParent(exprEnv) === nil) {
+          exprEnv = new Env(exprEnv, env);
         }
       }
 
@@ -339,7 +333,7 @@ function applyDef(env: Dict, list: EList): EExpr {
   }
 
   for (let name in values) {
-    dictDef(target, translateSym($(name)), dictRef(values, $(name)));
+    dictDef(target, $(name), dictRef(values, $(name)));
   }
   return nil;
 }
@@ -358,7 +352,7 @@ function applySet(env: Dict, list: EList): EExpr {
         if (!target) {
           chuck(env, `${name} undefined`);
         }
-        dictDef(target, translateSym($(name)), dictRef(values, $(name)));
+        dictDef(target, $(name), dictRef(values, $(name)));
       }
       break;
     }
@@ -374,7 +368,7 @@ function applySet(env: Dict, list: EList): EExpr {
         chuck(env, `second of two set args must be dict`);
       }
       for (let name in values) {
-        dictDef(ctx, translateSym($(name)), dictRef(values, $(name)));
+        dictDef(ctx, $(name), dictRef(values, $(name)));
       }
       break;
     }
@@ -389,7 +383,7 @@ function applySet(env: Dict, list: EList): EExpr {
         chuck(env, `expected a symbol key`);
       }
       let value = list[3];
-      dictDef(ctx, translateSym(name), _eval(env, value));
+      dictDef(ctx, name, _eval(env, value));
       break;
     }
 

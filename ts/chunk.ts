@@ -2,7 +2,7 @@ import { Container } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, dictRef, isDict, _root } from "./script/dict";
-import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _parentTagName, _self, _set } from "./script/script";
+import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
 import { World } from "./world";
 import { locNum, locSym, envEval } from "./script/env";
 import { _parse } from "./script/parse";

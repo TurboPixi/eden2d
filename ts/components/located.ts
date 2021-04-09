@@ -2,7 +2,7 @@ import { NativeComp } from "../entity";
 import { Dict, _root } from "../script/dict";
 import { _eval } from "../script/eval";
 import { _parse } from "../script/parse";
-import { $, $$, EExpr, _blk, _def, _do } from "../script/script";
+import { $, $$, EExpr, _blk, _def, _do, _parentName } from "../script/script";
 
 export class Located extends NativeComp {
   static Dict = {
@@ -11,15 +11,15 @@ export class Located extends NativeComp {
     }],
 
     'impl': _parse('Located:impl', `{
-      perform: [ent action |
-        [if [= action:action :move] (do
+      perform: (ent action |
+        if [= action:action :move] (do
           [set @ {dx: action:dx dy: action:dy}]
-        )]
-      ]
+        )
+      )
     }`),
   };
 
-  '[parent]': EExpr;
+  '^': EExpr;
   dx = 0;
   dy = 0;
   x = 0;
@@ -27,6 +27,6 @@ export class Located extends NativeComp {
 
   constructor(env: Dict) {
     super();
-    this['[parent]'] = _eval(env, [$('Located'), $$('impl')]);
+    this[_parentName] = _eval(env, [$('Located'), $$('impl')]);
   }
 }

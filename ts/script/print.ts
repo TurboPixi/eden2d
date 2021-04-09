@@ -1,6 +1,6 @@
-import { Dict, dictNames, dictRef, isEDict, _specialProps } from "./dict";
+import { Dict, dictNames, dictRef, isEDict, isTagProp } from "./dict";
 import { envCaller, envName } from "./env";
-import { $, isList, EExpr, isSym, isQuote, isBlock, blockParams, blockExpr, nil, blockName, QuoteMarker, SymMarker, EList, EBlock } from "./script";
+import { $, isList, EExpr, isSym, isQuote, isBlock, blockParams, blockExpr, nil, blockName, SymMarker, EList, EBlock, quoteExpr } from "./script";
 
 (window as any)['_print'] = _print;
 (window as any)['_printStack'] = _printStack;
@@ -40,7 +40,7 @@ export function _print(expr: EExpr, short = false): string {
       let quote = isQuote(expr);
       let block = isBlock(expr);
       if (quote) {
-        return ":" + _print(quote[QuoteMarker]);
+        return ":" + _print(quoteExpr(quote));
       } else if (block) {
         let params = blockParams(block);
         let name = blockName(block);
@@ -57,7 +57,7 @@ export function _print(expr: EExpr, short = false): string {
         let obj = expr as { [key: string]: EExpr };
         let entries: string[] = [];
         for (let key in obj) {
-          if (!(key in _specialProps)) {
+          if (!isTagProp(key)) {
             let entry = "";
             entry += key;
             if (obj[key] !== nil) {

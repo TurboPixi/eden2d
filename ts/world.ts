@@ -1,4 +1,4 @@
-import { EExpr, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _, _parentTag } from "./script/script";
+import { EExpr, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } from "./script/script";
 import { Chunk, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
 import { IDict, Dict, _root } from "./script/dict";

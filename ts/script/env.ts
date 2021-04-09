@@ -1,9 +1,9 @@
 import { Dict, dictDef, dictExists, dictFind, dictNames, dictRef, IDict, isEDict } from "./dict";
 import { _eval } from "./eval";
 import { registerDefroster } from "./freezer";
-import { chuck, EExpr, EList, EOpaque, ESym, isList, isOpaque, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentTag, _parentTagName } from "./script";
+import { chuck, EExpr, EList, ESym, isList, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentName } from "./script";
 
-export class TeeEnv implements IDict {
+export class Env implements IDict {
   constructor(public env: Dict, public parent: Dict) {}
 
   get names(): string[] {
@@ -11,14 +11,14 @@ export class TeeEnv implements IDict {
   }
 
   exists(sym: ESym): boolean {
-    if (symName(sym) == _parentTagName) {
+    if (symName(sym) == _parentName) {
       return true;
     }
     return dictExists(this.env, sym);
   }
 
   ref(sym: ESym): EExpr {
-    if (symName(sym) == _parentTagName) {
+    if (symName(sym) == _parentName) {
       return this.parent;
     }
     return dictRef(this.env, sym);
@@ -30,20 +30,20 @@ export class TeeEnv implements IDict {
 
   native(): any {
     return {
-      native: 'TeeEnv',
+      native: 'Env',
       env: this.env,
-      parent: this.parent,
+      '^': this.parent,
     }
   }
 }
 
-registerDefroster("TeeEnv", (obj) => {
-  return new TeeEnv(obj['env'], obj['parent']);
+registerDefroster("Env", (obj) => {
+  return new Env(obj['env'], obj['^']);
 })
 
 export function envNew(parent: Dict, caller: Dict, name: string): Dict {
   let env: any = {};
-  if (parent !== nil) env[_parentTagName] = parent;
+  if (parent !== nil) env[_parentName] = parent;
   if (caller !== nil) env[_callerTagName] = caller;
   if (name !== nil) env[_nameTagName] = name;
   return env;
@@ -113,18 +113,6 @@ export function expectSym(env: Dict, value: EExpr): ESym {
     chuck(env, `${value} is not a symbol`);
   }
   return vsym;
-}
-
-export function locOpaque(env: Dict, sym: ESym): EOpaque {
-  return expectOpaque(env, lookupSym(env, sym));
-}
-
-export function expectOpaque(env: Dict, value: EExpr): EOpaque {
-  let opaque = isOpaque(value);
-  if (!opaque) {
-    chuck(env, `${value} is not an opaque value`);
-  }
-  return opaque;
 }
 
 export function locDict(env: Dict, sym: ESym): Dict {

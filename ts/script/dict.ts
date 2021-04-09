@@ -1,13 +1,7 @@
-import { registerDefroster } from "./freezer";
 import { _print } from "./print";
-import { EDict, EExpr, ESym, nil, symName, $, chuck, isSym, _callerTag, _parentTag, _parent, _parentName, _nameTag, isBlock, _parentTagName } from "./script";
+import { EDict, EExpr, ESym, nil, symName, $, chuck, isSym, _callerTag, _parent, _parentName, isBlock } from "./script";
 
 export type Dict = IDict | EDict;
-
-export const _specialProps = {
-  "[parent]": true, // _parentTag
-  "[caller]": true, // _callerTag
-}
 
 export interface IDict {
   readonly names: string[];
@@ -37,8 +31,6 @@ export function isDict(val: EExpr): Dict {
 }
 
 export function dictFind(dict: Dict, sym: ESym): Dict {
-  sym = translateSym(sym);
-
   while (dict) {
     if (dictExists(dict, sym)) {
       return dict;
@@ -49,7 +41,7 @@ export function dictFind(dict: Dict, sym: ESym): Dict {
 }
 
 export function dictParent(dict: Dict): Dict {
-  return dictRef(dict, _parentTag) as Dict;
+  return dictRef(dict, _parent) as Dict;
 }
 
 export function dictExists(dict: Dict, sym: ESym): boolean {
@@ -68,16 +60,7 @@ export function isEDict(val: EExpr): EDict {
   return nil;
 }
 
-// For special symbol forms, like ^ that translate to internal ones like [parent].
-export function translateSym(sym: ESym): ESym {
-  if (symName(sym) == _parentName) {
-    sym = _parentTag;
-  }
-  return sym;
-}
-
 export function dictRef(dict: Dict, sym: ESym): EExpr {
-  sym = translateSym(sym);
   let idict = isIDict(dict);
   if (idict) {
     return idict.ref(sym);
@@ -87,16 +70,11 @@ export function dictRef(dict: Dict, sym: ESym): EExpr {
 }
 
 export function dictDef(dict: Dict, sym: ESym, value: EExpr): EExpr {
-  sym = translateSym(sym);
   let idict = isIDict(dict);
   if (idict) {
     idict.def(sym, value);
   } else {
     let edict = dict as EDict;
-    if (symName(sym) == _parentTagName && value == edict) {
-      debugger;
-      throw(`cycle in parent chain ${_print(dict)}`)
-    }
     edict[symName(sym)] = value;
   }
   return value;
@@ -108,10 +86,18 @@ export function dictNames(dict: Dict): string[] {
     return idict.names;
   }
   let edict = dict as EDict;
-  return Object.getOwnPropertyNames(edict).filter((name) => !(name in _specialProps));
+  return Object.getOwnPropertyNames(edict).filter((name) => !isTagProp(name));
 }
 
 function isIDict(val: EExpr): IDict {
   return (typeof val == 'object') && ('def' in val) && ('ref' in val) &&
     ('names' in val) ? (val as IDict) : nil;
+}
+
+export function isTagProp(prop: string): boolean {
+  return prop in {
+    "[caller]": true, // _callerTag
+    "[name]": true,   // _nameTag
+    "[id]": true,     // Byproduct of _freeze()
+  };
 }
