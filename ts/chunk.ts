@@ -1,7 +1,7 @@
 import { Container } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
-import { IDict, Dict, dictParent, dictRef, isDict, _root } from "./script/dict";
+import { IDict, Dict, dictParent, dictRef, isDict, _root, isTagProp } from "./script/dict";
 import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
 import { World } from "./world";
 import { locNum, locSym, envEval } from "./script/env";
@@ -101,15 +101,14 @@ export class Chunk implements IDict {
   entitiesAt(x: number, y: number): Entity[] {
     // TODO: Do some indexing to not make this obscenely slow.
     let ents: Entity[] = [];
-    for (let id in this._entities) {
-      let ent = this._entities[id];
+    this.forEachEnt((id, ent) => {
       let loc = ent.loc;
       if (loc) {
         if (loc.x == x && loc.y == y) {
           ents.push(ent);
         }
       }
-    }
+    });
     return ents;
   }
 
@@ -186,9 +185,7 @@ export class Chunk implements IDict {
     let ticks = Math.floor((this._millis - this._lastTickMillis) / tickMillis);
     this._lastTickMillis += ticks * tickMillis;
 
-    for (let id in this._entities) {
-      let ent = this._entities[id];
-
+    this.forEachEnt((id, ent) => {
       // Movement & collision.
       let loc = ent.loc;
       if (loc && (loc.dx != 0 || loc.dy != 0)) {
@@ -197,7 +194,7 @@ export class Chunk implements IDict {
         if (ent !== nil) {
           let solid = ent.ref($('solid')) as Dict;
           if (dictRef(solid, $('solid'))) {
-            continue;
+            return;
           }
         }
         loc.x = nx; loc.y = ny;
@@ -212,7 +209,7 @@ export class Chunk implements IDict {
           _eval(this, [block, ent]);
         }
       }
-    }
+    });
   }
 
   render(x: number, y: number, z: number) {
@@ -220,14 +217,23 @@ export class Chunk implements IDict {
 
     // TODO: Create a nicer way to build systems with component queries.
     // TODO: Add some kind of component dirty tracking to avoid running through them all?
-    for (let id in this._entities) {
-      let ent = this._entities[id];
+    this.forEachEnt((id, ent) => {
       let loc = ent.loc;
       let render = ent.rendered;
       if (loc && render) {
         render.sprite.position.x = loc.x * 16;
         render.sprite.position.y = loc.y * 16;
       }
+    });
+  }
+
+  private forEachEnt(fn: (id: number, ent: Entity) => void) {
+    for (let id in this._entities) {
+      if (isTagProp(id)) {
+        // _entities can get gummed up with tag properties because of [freeze].
+        continue;
+      }
+      fn(parseInt(id), this._entities[id]);
     }
   }
 

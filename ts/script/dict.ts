@@ -1,5 +1,5 @@
 import { _print } from "./print";
-import { EDict, EExpr, ESym, nil, symName, $, chuck, isSym, _callerTag, _parent, _parentName, isBlock } from "./script";
+import { EDict, EExpr, ESym, nil, symName, isSym, _callerTag, _parent, _parentName, isBlock } from "./script";
 
 export type Dict = IDict | EDict;
 
@@ -98,6 +98,7 @@ export function isTagProp(prop: string): boolean {
   return prop in {
     "[caller]": true, // _callerTag
     "[name]": true,   // _nameTag
-    "[id]": true,     // Byproduct of _freeze()
+    "[id]": true,     // Byproduct of [freeze]
+    "[mark]": true,   //   ...
   };
 }

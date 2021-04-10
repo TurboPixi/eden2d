@@ -49,6 +49,11 @@ export function _(expr: EExpr): EExpr {
   return expr;
 }
 
+// Makes a full-quoted expression (unevaluated until explicitly unquoted with /).
+export function fq(expr: EExpr): EFullQuote {
+  return { '[fq]': expr };
+}
+
 // Makes a block.
 export function __(...exprs: EExpr[]): EList {
   // TODO: Check all cases to make sure this always makes sense.

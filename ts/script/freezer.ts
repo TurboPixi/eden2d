@@ -1,6 +1,6 @@
 import { Dict, IDict, isTagProp, _root } from "./dict";
-import { lookupSym } from "./env";
-import { $, blockEnv, blockExpr, blockName, blockParams, EExpr, fullQuoteExpr, isBlock, isFullQuote, isQuote, isSym, nil, quoteExpr, symName, _blk, _def } from "./script";
+import { locStr, lookupSym } from "./env";
+import { $, blockEnv, blockExpr, blockName, blockParams, EBlock, EDict, EExpr, ESym, fq, fullQuoteExpr, isBlock, isFullQuote, isQuote, isSym, nil, quoteExpr, symName, _, _blk, _def, __ } from "./script";
 
 export type Defroster = (obj: any) => IDict;
 var _defrosters: { [name: string]: Defroster } = {};
@@ -18,6 +18,9 @@ registerDefroster('root', (obj) => {
 });
 
 type FreezeArr = (null|boolean|number|string)[];
+
+// Freeze mark counter, used to [mark] objects in cycle checks with a different check number each time.
+var freezeCounter = 0;
 
 // Uses a simple JSON flat array format for now:
 //  Primitives:
@@ -39,13 +42,14 @@ type FreezeArr = (null|boolean|number|string)[];
 //   '>id': set current list/map/block id (must be first item after open delimiter)
 //   '<id': ref to expression id
 //
-// TODO:
-// - Figure out an efficient way to tag only objects that are referenced.
-// - Make this work more than once ([id] leaves dingleberries that will break the second call).
-//
 export var _freeze = [$('x'), _blk, (env: Dict) => {
+  // Get a new freeze mark counter for cycle checks.
+  freezeCounter++;
+
+  let curId = 1;
   let obj = lookupSym(env, $('x'));
   let arr: FreezeArr = [];
+  let marked: {[id: number]: true} = {};
   function freezer(obj: any): void {
     switch (typeof obj) {
       case 'undefined':
@@ -61,7 +65,7 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
         break;
       case 'object':
         if (isSym(obj)) {
-          arr.push('-' + symName(obj));
+          arr.push('$' + symName(obj));
           return;
         } else if (isQuote(obj)) {
           arr.push(':')
@@ -85,16 +89,16 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
         }
 
         // Only arrays and dicts get an id.
-        if ('[id]' in obj) {
+        if (obj['[mark]'] == freezeCounter) {
           let id = obj['[id]'] as number;
-          if (!('[mark]' in obj)) {
-            arr.splice(id + 1, 0, '>' + id);
-            obj['[mark]'] = true;
-          }
           arr.push('<' + id);
+          if (!marked[id]) {
+            marked[id] = true;
+          }
           return;
         }
-        obj['[id]'] = arr.length;
+        obj['[mark]'] = freezeCounter;
+        obj['[id]'] = curId++; // arr.length;
 
         if (obj.constructor == Array) {
           arr.push('[');
@@ -110,7 +114,7 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
           if (key == '[id]' || isTagProp(key)) {
             continue;
           }
-          arr.push('-' + key);
+          arr.push('$' + key);
           freezer(obj[key]);
         }
         arr.push('}');
@@ -122,11 +126,82 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
   }
 
   freezer(obj);
-  // return JSON.stringify(arr);
-  return arr.join(" ");
+  console.log(arr.join(" ")); // for debugging
+  return JSON.stringify(arr);
 }];
 
 export var _thaw = [$('x'), _blk, (env: Dict) => {
-  // TODO: Thaw it out!
-  return nil
+  let arr: FreezeArr = JSON.parse(locStr(env, $('x')));
+  let refs: {[id: number]: any} = {};
+  let curId = 1;
+  let idx = 0;
+  function thawer(): any {
+    let tok = arr[idx++];
+    switch (typeof tok) {
+      case 'undefined':
+      case 'boolean':
+      case 'number':
+        return tok;
+
+      case 'string':
+        switch (tok[0]) {
+          case '"':
+            return tok.slice(1);
+          case '$':
+            return $(tok.slice(1));
+          case ':':
+            return _(thawer());
+          case '!':
+            throw "nyi"; // TODO
+          case '\\':
+            return fq(thawer());
+          case '<':
+            let id = parseInt(tok.slice(1));
+            if (!(id in refs)) {
+              throw `missing id ${id} in refs`;
+            }
+            return refs[id];
+          case '[':
+            let list: FreezeArr = [];
+            refs[curId++] = list;
+            while (arr[idx] != ']') {
+              list.push(thawer())
+            }
+            idx++; // skip ]
+            return list;
+          case '{':
+            let dict: EDict = {};
+            refs[curId++] = dict;
+            let defrost: Defroster;
+            while (arr[idx] != '}') {
+              let key = thawer() as ESym;
+              let val = thawer();
+              let name = symName(key);
+              if (name == 'native') {
+                if (!(val in _defrosters)) {
+                  throw `defroster "${val}" not found`;
+                }
+                defrost = _defrosters[val];
+              } else {
+                dict[name] = val;
+              }
+            }
+            idx++; // skip }
+            if (defrost) {
+              return defrost(dict);
+            }
+            return dict;
+          case '(':
+            // [name, params, env, expr] -- TODO: self?
+            let name = thawer();
+            let params = thawer();
+            let env = thawer();
+            let expr = thawer();
+            idx++; // skip )
+            return { '[block]': [params, expr], '[env]': {env}, '[name]': name, '[self]': nil };
+        }
+    }
+  }
+
+  return thawer();
 }];

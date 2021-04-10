@@ -451,29 +451,32 @@
     )]
 
     -- Not yet working
-    -- [run "freeze / thaw" (do
+    [run "freeze / thaw" (do
+      [def {
+        obj: {
+          x: [+ 1 2]
+          fn: (x | + x 1)
+        }
+        frozen: [freeze obj]
+      }]
+      [log frozen]
+      [def {thawed: [thaw frozen]}]
+      [log thawed]
+      [expect 4 [thawed:fn thawed:x]]
+    )]
+
+    -- [run "freeze" (do
     --   [def {
     --     obj: {
     --       x: [+ 1 2]
+    --       y: {val: 42}
     --       fn: (obj:x)
     --     }
     --     frozen: [freeze obj]
     --   }]
     --   [log frozen]
-    --   [def {thawed: [thaw frozen]}]
-    --   [expect 3 [thawed:fn]]
+    --   [log [thaw frozen]]
     -- )]
-
-    [run "freeze" (do
-      [def {
-        obj: {
-          x: [+ 1 2]
-          fn: (obj:x)
-        }
-        frozen: [freeze obj]
-      }]
-      [log frozen]
-    )]
 
     -- Wrap up.
     [log "--[ complete ]--"]

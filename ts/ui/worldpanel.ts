@@ -112,7 +112,7 @@ export class WorldPanel implements Panel {
       case Key._7: case Key._8: case Key._9: this.call('select-inv', evt.keyCode - Key._1); break;
       case Key._0:                           this.call('select-inv', 9);                    break;
 
-      case Key.F1: this.call('save'); break;
+      case Key.F1: this.call('save'); evt.preventDefault(); break;
     }
   }
 
