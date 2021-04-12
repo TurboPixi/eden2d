@@ -1,8 +1,8 @@
-import { Dict, IDict, isTagProp, _root } from "./dict";
+import { Dict, isTagProp, _root } from "./dict";
 import { locStr, lookupSym } from "./env";
 import { $, blockEnv, blockExpr, blockName, blockParams, EBlock, EDict, EExpr, ESym, fq, fullQuoteExpr, isBlock, isFullQuote, isQuote, isSym, nil, quoteExpr, symName, _, _blk, _def, __ } from "./script";
 
-export type Defroster = (obj: any) => IDict;
+export type Defroster = (obj: any) => Dict;
 var _defrosters: { [name: string]: Defroster } = {};
 
 export function registerDefroster(name: string, defroster: Defroster) {
@@ -29,8 +29,6 @@ var freezeCounter = 0;
 //   123.456: number
 //   '"something': string
 //   '$something": symbol
-//  Natives:
-//   '!name': native expression
 //  Quotes:
 //   ':': quote next expression
 //   '\': fully quote next expression
@@ -57,12 +55,14 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
       case 'boolean':
         arr.push(obj);
         break;
+
+      case 'function':
+        throw `cannot serialize native functions (${obj})`;
+
       case 'string':
         arr.push('"' + obj);
         break;
-      case 'function':
-        arr.push('!' + obj.name);
-        break;
+
       case 'object':
         if (isSym(obj)) {
           arr.push('$' + symName(obj));
@@ -83,9 +83,6 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
           freezer(blockExpr(obj));
           arr.push(')');
           return;
-        } else if (('native' in obj) && (typeof obj['native'] == 'function')) {
-          freezer(obj['native']());
-          return;
         }
 
         // Only arrays and dicts get an id.
@@ -98,7 +95,11 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
           return;
         }
         obj['[mark]'] = freezeCounter;
-        obj['[id]'] = curId++; // arr.length;
+        obj['[id]'] = curId++;
+
+        if (('freeze' in obj) && (typeof obj['freeze'] == 'function')) {
+          obj = obj['freeze']();
+        }
 
         if (obj.constructor == Array) {
           arr.push('[');
@@ -171,6 +172,7 @@ export var _thaw = [$('x'), _blk, (env: Dict) => {
             return list;
           case '{':
             let dict: EDict = {};
+            let refId = curId;
             refs[curId++] = dict;
             let defrost: Defroster;
             while (arr[idx] != '}') {
@@ -188,7 +190,9 @@ export var _thaw = [$('x'), _blk, (env: Dict) => {
             }
             idx++; // skip }
             if (defrost) {
-              return defrost(dict);
+              let defrosted = defrost(dict);
+              refs[refId] = defrosted;
+              return defrosted;
             }
             return dict;
           case '(':
@@ -198,7 +202,7 @@ export var _thaw = [$('x'), _blk, (env: Dict) => {
             let env = thawer();
             let expr = thawer();
             idx++; // skip )
-            return { '[block]': [params, expr], '[env]': {env}, '[name]': name, '[self]': nil };
+            return { '[block]': [params, expr], '[env]': env, '[name]': name, '[self]': nil };
         }
     }
   }

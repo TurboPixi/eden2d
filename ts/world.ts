@@ -2,7 +2,6 @@ import { EExpr, EDict, __, symName, ESym, _do, _def, _blk, _set, _parent, _ } fr
 import { Chunk, ChunkId } from "./chunk";
 import { _eval } from "./script/eval";
 import { IDict, Dict, _root } from "./script/dict";
-
 import { _parse } from "./script/parse";
 import { registerDefroster } from "./script/freezer";
 
@@ -22,12 +21,12 @@ export class World implements IDict {
     }])
   }
 
-  defrost(defs: EDict, nextId: ChunkId, chunks: { [id: number]: Chunk }) {
-    this._defs = defs;
+  thaw(nextId: ChunkId, chunks: { [id: number]: Chunk }) {
     this._nextId = nextId;
     this._chunks = chunks;
   }
 
+  // TODO: World shouldn't allow new defs, unless it wants to save them.
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
   exists(sym: ESym): boolean { return symName(sym) in this._defs }
   ref(sym: ESym): EExpr { return this._defs[symName(sym)] }
@@ -43,10 +42,9 @@ export class World implements IDict {
     return this._chunks[id];
   }
 
-  native(): any {
+  freeze(): any {
     return {
       native: 'World',
-      defs: this._defs,
       nextId: this._nextId,
       chunks: this._chunks,
     }
@@ -54,6 +52,6 @@ export class World implements IDict {
 }
 
 registerDefroster('World', (obj) => {
-  World.inst.defrost(obj.defs, obj.nextId, obj.chunks);
+  World.inst.thaw(obj.nextId, obj.chunks);
   return World.inst;
 });

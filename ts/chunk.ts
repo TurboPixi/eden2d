@@ -67,6 +67,12 @@ export class Chunk implements IDict {
       [for-each action:ents (ent | ent:prepare action)]
       [for-each action:ents (ent | ent:perform action)]
     )`)],
+
+    'freeze': (env: Dict) => {
+      return () => {
+        return { native: 'Entity.Dict' };
+      }
+    },
   };
 
   private _entities: { [id: number]: Entity } = {};
@@ -81,18 +87,24 @@ export class Chunk implements IDict {
     _eval(_root, [_set, this, {'^': $('Chunk')}]);
   }
 
-  defrost(entities: {[id: number]: Entity}, nextId: number, defs: EDict) {
+  thaw(entities: {[id: number]: Entity}, nextId: number, defs: EDict) {
     this._entities = entities;
     this._nextId = nextId;
     this._defs = defs;
-    this.container.removeChildren();
     this._millis = this._lastTickMillis = 0;
+    for (let id in this._entities) {
+      let ent = this._entities[id];
+      if (ent.rendered) {
+        this._container.addChild(ent.rendered.sprite);
+      }
+    }
   }
 
   get world(): World { return this._world }
   get id(): number { return this._id }
   get container(): Container { return this._container }
 
+  // TODO: Chunk shouldn't allow new defs, unless it wants to save them.
   get names(): string[] { return this._defs ? Object.keys(this._defs) : [] }
   exists(sym: ESym): boolean { return symName(sym) in this._defs }
   ref(name: ESym): EExpr { return this._defs && this._defs[symName(name)] }
@@ -237,7 +249,7 @@ export class Chunk implements IDict {
     }
   }
 
-  native(): any {
+  freeze(): any {
     return {
       native: 'Chunk',
       entities: this._entities,
@@ -266,8 +278,9 @@ export function locChunk(env: Dict, sym: ESym): Chunk {
   return chunk as Chunk;
 }
 
+registerDefroster("Chunk.Dict", (obj) => Chunk.Dict);
 registerDefroster('Chunk', (obj) => {
   var chunk = new Chunk(World.inst, obj.id);
-  chunk.defrost(obj.entities, obj.nextId, obj.defs);
+  chunk.thaw(obj.entities, obj.nextId, obj.defs);
   return chunk;
 });

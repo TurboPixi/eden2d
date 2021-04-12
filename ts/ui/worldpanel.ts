@@ -113,6 +113,10 @@ export class WorldPanel implements Panel {
       case Key._0:                           this.call('select-inv', 9);                    break;
 
       case Key.F1: this.call('save'); evt.preventDefault(); break;
+      case Key.F2:
+        evt.preventDefault();
+        console.log(this.call('load'));
+        break;
     }
   }
 

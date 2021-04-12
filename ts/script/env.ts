@@ -4,7 +4,11 @@ import { registerDefroster } from "./freezer";
 import { chuck, EExpr, EList, ESym, isList, isSym, nil, symName, _callerTag, _callerTagName, _nameTag, _nameTagName, _parentName } from "./script";
 
 export class Env implements IDict {
-  constructor(public env: Dict, public parent: Dict) {}
+  '^': Dict;
+
+  constructor(public env: Dict, parent: Dict) {
+    this["^"] = parent;
+  }
 
   get names(): string[] {
     return dictNames(this.env);
@@ -19,7 +23,7 @@ export class Env implements IDict {
 
   ref(sym: ESym): EExpr {
     if (symName(sym) == _parentName) {
-      return this.parent;
+      return this["^"];
     }
     return dictRef(this.env, sym);
   }
@@ -28,18 +32,14 @@ export class Env implements IDict {
     dictDef(this.env, sym, value);
   }
 
-  native(): any {
+  freeze(): any {
     return {
       native: 'Env',
       env: this.env,
-      '^': this.parent,
+      '^': this["^"],
     }
   }
 }
-
-registerDefroster("Env", (obj) => {
-  return new Env(obj['env'], obj['^']);
-})
 
 export function envNew(parent: Dict, caller: Dict, name: string): Dict {
   let env: any = {};
@@ -138,3 +138,5 @@ export function expectList(env: Dict, value: EExpr): EList {
   }
   return list;
 }
+
+registerDefroster("Env", (obj) => new Env(obj['env'], obj['^']));

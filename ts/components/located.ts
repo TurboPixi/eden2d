@@ -1,13 +1,14 @@
 import { NativeComp } from "../entity";
 import { Dict, _root } from "../script/dict";
 import { _eval } from "../script/eval";
+import { registerDefroster } from "../script/freezer";
 import { _parse } from "../script/parse";
 import { $, $$, EExpr, _blk, _def, _do, _parentName } from "../script/script";
 
 export class Located extends NativeComp {
   static Dict = {
     'make': [_blk, (env: Dict) => {
-      return {'loc': new Located(env)};
+      return {'loc': new Located()};
     }],
 
     'impl': _parse('Located:impl', `{
@@ -17,6 +18,12 @@ export class Located extends NativeComp {
         )
       )
     }`),
+
+    'freeze': (env: Dict) => {
+      return function() {
+        return { native: 'Located.Dict' };
+      }
+    },
   };
 
   '^': EExpr;
@@ -25,8 +32,25 @@ export class Located extends NativeComp {
   x = 0;
   y = 0;
 
-  constructor(env: Dict) {
+  constructor() {
     super();
-    this[_parentName] = _eval(env, [$('Located'), $$('impl')]);
+    this[_parentName] = _eval(_root, [$('Located'), $$('impl')]);
+  }
+
+  freeze(): any {
+    return {
+      native: 'Located',
+      x:this.x, y:this.y, dx:this.dx, dy:this.dy,
+    }
   }
 }
+
+registerDefroster("Located.Dict", (obj) => Located.Dict);
+registerDefroster("Located", (obj) => {
+  let loc = new Located();
+  loc.dx = obj['dx'];
+  loc.dy = obj['dy'];
+  loc.x = obj['x'];
+  loc.y = obj['y'];
+  return loc;
+});

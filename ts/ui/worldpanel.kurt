@@ -90,8 +90,14 @@
         )]
       )
 
-      save: (
-        log [freeze World]
+      save: (do
+        [def {frozen: [freeze World]}]>
+        [log frozen]
+        [def @ {saved: frozen}]
+      )
+
+      load: (
+        if [? @ :saved] (thaw @:saved)
       )
     }
   }

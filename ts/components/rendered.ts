@@ -31,13 +31,12 @@ export class Image extends NativeComp {
     this.tex = tex;
   }
 
-  defrost() {
-    // TODO
-  }
-
-  native(): any {
-    // TODO
-    return "[image]";
+  freeze(): any {
+    return {
+      native: "Image",
+      file: this.file,
+      frame: this.frame,
+    };
   }
 }
 
@@ -55,12 +54,16 @@ export class Rendered extends NativeComp {
       let frame = locDict(env, $('frame')) as unknown as ImageFrame;
       return new Image(file, frame);
     }],
+
+    'freeze': (env: Dict) => {
+      return () => { return { native: 'Entity.Dict' } }
+    },
   };
 
   set image(expr: EExpr) {
-    let img = expr as Image;
-    this.sprite.texture = img.tex;
-    this.sprite.anchor = img.tex.defaultAnchor;
+    this.img = expr as Image;
+    this.sprite.texture = this.img.tex;
+    this.sprite.anchor = this.img.tex.defaultAnchor;
   }
 
   img: Image;
@@ -71,11 +74,7 @@ export class Rendered extends NativeComp {
     this.sprite = new Sprite();
   }
 
-  defrost() {
-    // TODO
-  }
-
-  native(): any {
+  freeze(): any {
     return {
       native: 'Rendered',
       img: this.img,
@@ -83,8 +82,10 @@ export class Rendered extends NativeComp {
   }
 }
 
+registerDefroster("Image", (obj) => new Image(obj['file'], obj['frame']));
+registerDefroster("Rendered.Dict", (obj) => Rendered.Dict);
 registerDefroster('Rendered', (obj) => {
   var rend = new Rendered();
-  rend.defrost();
+  rend.image = obj['img'];
   return rend;
 });

@@ -17,7 +17,7 @@ class RootEnv implements IDict {
   exists(sym: ESym): boolean {return symName(sym) in this._defs; }
   ref(sym: ESym): EExpr { return this._defs[symName(sym)]; }
   def(sym: ESym, value: EExpr): void { this._defs[symName(sym)] = value; }
-  native(): any { return { native: 'root' } }
+  freeze(): any { return { native: 'root' } }
 }
 
 export const _root = new RootEnv();

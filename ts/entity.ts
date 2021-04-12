@@ -57,7 +57,13 @@ export class Entity implements IDict {
           comp:perform @ action
         )
       ]
-    )`)
+    )`),
+
+    'freeze': (env: Dict) => {
+      return () => {
+        return { native: 'Entity.Dict' };
+      }
+    },
   };
 
   private _chunk: Chunk;
@@ -69,10 +75,9 @@ export class Entity implements IDict {
     this._parent = lookupSym(_root, $('Entity'));
   }
 
-  defrost(chunk: Chunk, id: number, parent: EExpr, comps: EDict) {
+  thaw(chunk: Chunk, id: number, comps: EDict) {
     this._chunk = chunk;
     this._id = id;
-    this._parent = parent;
     this._comps = comps;
   }
 
@@ -126,12 +131,11 @@ export class Entity implements IDict {
     this._id = id;
   }
 
-  native(): any {
+  freeze(): any {
     return {
       native: 'Entity',
       chunk: this._chunk,
       id: this._id,
-      parent: this._parent,
       comps: this._comps,
     }
   }
@@ -179,8 +183,9 @@ export function locEnt(env: Dict, sym: ESym): Entity {
   return ent as Entity;
 }
 
+registerDefroster("Entity.Dict", (obj) => Entity.Dict);
 registerDefroster('Entity', (obj) => {
   var ent = new Entity();
-  ent.defrost(obj.chunk, obj.id, obj.parent, obj.comps);
+  ent.thaw(obj.chunk, obj.id, obj.comps);
   return ent;
 });
