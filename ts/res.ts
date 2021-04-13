@@ -1,24 +1,7 @@
 import { BaseTexture, Loader, MIPMAP_MODES, Rectangle, SCALE_MODES, Sprite, Texture } from "pixi.js";
 
-const _preload = [
-  "images/floors.png", "images/wall-stone-blue.png", "images/stairs.png", "images/char-female.png", "images/crate.png"
+const _preload: string[] = [
 ];
-
-interface Image {
-  tex: string;
-  x: number; y: number;
-  w: number; h: number;
-  ax: number; ay: number;
-}
-
-function img(tex: string, x?: number, y?: number, w?: number, h?: number, ax?: number, ay?: number): Image {
-  return {
-    tex: tex,
-    x: x || 0, y: y || 0,
-    w: w || 16, h: h || 16,
-    ax: ax || 0, ay: ay || 0
-  }
-}
 
 export class Resources {
   private static _texCache: { [key: string]: Texture } = {};

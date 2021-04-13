@@ -1,14 +1,14 @@
 [def {
   Chest: {
-    -src: "images/chests.png"
-    -img-closed: [Comps:Rendered:image -src { x:0  y:3 w:16 h:18 }]
-    -img-open:   [Comps:Rendered:image -src { x:32 y:3 w:16 h:18 }]
+    -src: "items/chest-silver.png"
+    -img-closed: [Rendered:image -src { x:0  y:3 w:16 h:16 }]
+    -img-open:   [Rendered:image -src { x:32 y:3 w:16 h:16 }]
 
     make: (Entity:make [list
-      [Comps:Located:make]
-      [Comps:Rendered:make Chest:-img-closed]
-      [Comps:Solid:make 1]
-      [Comps:Usable:make (user object target | object:programmed:run user target)]
+      [Located:make]
+      [Rendered:make Chest:-img-closed]
+      [Solid:make 1]
+      [Usable:make (user obj tgt | obj:programmed:run user tgt)]
       {chest: {^: impl open: false}}
     ])
 

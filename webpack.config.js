@@ -31,7 +31,8 @@ module.exports = {
   },
 
   devServer: {
-    contentBase: webDir,
+    contentBase: [webDir, tsDir],
+    openPage: 'eden.html',
   },
 
   plugins: [

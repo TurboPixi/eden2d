@@ -1,13 +1,13 @@
 [def {
   Crate: {
-    -img: [Comps:Rendered:image "images/crate.png" {x: 0 y: 0}]
+    -img: [Rendered:image "items/crate.png" {x: 0 y: 0}]
 
     make: (Entity:make [list
-      [Comps:Located:make]
-      [Comps:Rendered:make Crate:-img]
-      [Comps:Portable:make]
-      [Comps:Contains:make]
-      [Comps:Solid:make 1]
+      [Located:make]
+      [Rendered:make Crate:-img]
+      [Portable:make]
+      [Contains:make]
+      [Solid:make 1]
     ])
   }
 }]

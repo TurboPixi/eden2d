@@ -1,16 +1,13 @@
 [def {
   Wand: {
-    -img: [Comps:Rendered:image "images/tf/icons/fullcolor/icons_full_16.png" {
-      x: [* 3 16]
-      y: [* 30 16]
-    }]
+    -img: [Rendered:image "items/wand.png" {}]
 
     make: (Entity:make [list
-      [Comps:Located:make]
-      [Comps:Rendered:make Wand:-img]
-      [Comps:Portable:make]
-      [Comps:Programmed:make]
-      [Comps:Usable:make (user object target | object:programmed:run user target)]
+      [Located:make]
+      [Rendered:make Wand:-img]
+      [Portable:make]
+      [Programmed:make]
+      [Usable:make (user obj tgt | obj:programmed:run user tgt)]
     ])
   }
 }]

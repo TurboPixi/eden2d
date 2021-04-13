@@ -202,7 +202,7 @@ export let builtinDefs = [_def, {
         continue;
       }
 
-      // [| block]
+      // (block)
       let block = isBlock(expr);
       if (block !== nil) {
         // Eval block in the current env, so that the block can reference

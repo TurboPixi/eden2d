@@ -1,14 +1,14 @@
 [def {
   Wall: {
-    -img: [Comps:Rendered:image "images/wall-stone-blue.png" {
+    -img: [Rendered:image "blocks/wall-stone-blue.png" {
       x: [* 5 16]
       y: [* 3 16]
     }]
 
     make: (Entity:make [list
-      [Comps:Located:make]
-      [Comps:Solid:make 1]
-      [Comps:Rendered:make Wall:-img]
+      [Located:make]
+      [Solid:make 1]
+      [Rendered:make Wall:-img]
     ])
   }
 }]

@@ -1,9 +1,9 @@
 [def {
   Door: {
     make: (closed-img open-img | Entity:make [list
-      [Comps:Located:make]
-      [Comps:Rendered:make closed-img]
-      [Comps:Solid:make 1]
+      [Located:make]
+      [Rendered:make closed-img]
+      [Solid:make 1]
       {door: {
         ^: Door:impl
         open-img closed-img
@@ -14,7 +14,7 @@
 
     impl: {
       prepare: (ent action | if [= action:action :open] (
-        if [!= [?= action :opener :player (prev:selected-item) :key :code] @:code]
+        if [!= @:code [?= action :opener :player (prev :selected-item) :key :code]]
           (set action {cancel: true})
       ))
 
@@ -35,10 +35,11 @@
   }
 
   WoodDoor: {
-    -img-closed: [Comps:Rendered:image "images/environment.png" {x: 16 y: [* 8 16]}]
-    -img-open: [Comps:Rendered:image "images/environment.png" {
-      x: 4 y: [+ [* 8 16] 9]
-      w: 8 h: 22
+    -img: "blocks/door-wood.png"
+    -img-closed: [Rendered:image -img {}]
+    -img-open: [Rendered:image -img {
+      x: 20 y: 0
+      w: 8 h: 23
     }]
 
     make: (

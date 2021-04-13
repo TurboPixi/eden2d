@@ -7,5 +7,15 @@ import brazier from "./brazier.kurt";
 import key from "./key.kurt";
 
 export function nsItems() {
-  _ns('Items', [crate, wand, chest, brazier, key])
+  _ns('Items', [`[def {
+      Located:    Comps:Located
+      Rendered:   Comps:Rendered
+      Portable:   Comps:Portable
+      Programmed: Comps:Programmed
+      Usable:     Comps:Usable
+      Contains:   Comps:Contains
+      Solid:      Comps:Solid
+    }]`,
+    crate, wand, chest, brazier, key]
+  );
 }

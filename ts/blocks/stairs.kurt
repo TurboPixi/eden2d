@@ -1,12 +1,13 @@
 [def {
   Stairs: {
-    -upimg: [Comps:Rendered:image "images/stairs.png" {w: 16 h: 22 ay: 6}]
-    -dnimg: [Comps:Rendered:image "images/stairs.png" {y: 22 h: 16}]
+    -stairs: "blocks/stairs.png"
+    -upimg: [Rendered:image -stairs {w: 16 h: 22 ay: 6}]
+    -dnimg: [Rendered:image -stairs {y: 22 h: 16}]
 
     make: (target-chunk target-x target-y up? | Entity:make [list
-      [Comps:Located:make]
-      [Comps:Rendered:make [if up? Stairs:-upimg Stairs:-dnimg]]
-      [Comps:Transports:make target-chunk target-x target-y]
+      [Located:make]
+      [Rendered:make [if up? Stairs:-upimg Stairs:-dnimg]]
+      [Transports:make target-chunk target-x target-y]
     ])
   }
 }]

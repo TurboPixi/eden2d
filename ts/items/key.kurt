@@ -1,14 +1,11 @@
 [def {
   Key: {
-    -img: [Comps:Rendered:image "images/tf/icons/fullcolor/icons_full_16.png" {
-      x: [* 5 16]
-      y: [* 22 16]
-    }]
+    -img: [Rendered:image "items/key.png" {}]
 
     make: (code | Entity:make [list
-      [Comps:Located:make]
-      [Comps:Rendered:make Key:-img]
-      [Comps:Portable:make]
+      [Located:make]
+      [Rendered:make Key:-img]
+      [Portable:make]
       {key: {code}}
     ])
   }
