@@ -127,7 +127,6 @@ export var _freeze = [$('x'), _blk, (env: Dict) => {
   }
 
   freezer(obj);
-  console.log(arr.join(" ")); // for debugging
   return JSON.stringify(arr);
 }];
 

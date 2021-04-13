@@ -1,12 +1,11 @@
 import { Container, Graphics } from "pixi.js";
 import { Chunk, locChunk } from "../chunk";
 import { Panel, PanelOwner } from "../eden";
-import { Key } from "./key";
+import { Key } from "./keys";
 import { _eval } from "../script/eval";
 import { $, $$, EExpr, ESym, nil, symName, _, _blk } from "../script/script";
 import { Dict, isDict, _root } from "../script/dict";
 
-import containerpanel_kurt from "./progpanel.kurt";
 import { _parse } from "../script/parse";
 import { parse } from "../script/kurt";
 
@@ -16,15 +15,13 @@ export class ProgPanel implements Panel {
   private _impl: Dict;
 
   constructor(programmed: EExpr, private _owner: PanelOwner) {
-    _eval(_root, _parse('progpanel.kurt', containerpanel_kurt)); // TODO: Do this only once.
-
     this._progChunk = _eval(_root, [_(programmed), $$('program-chunk')]) as Chunk;
 
     this._container = new Container();
     this._container.setTransform(64 * 4, 64 * 4);
 
-    this._impl = isDict(_eval(_root, [[$('ProgPanel'), $$('make')], _(programmed), 10, 10,
-    [$('chunk'), _blk, (env: Dict) => this.parser(env, locChunk(env, $('chunk')))]
+    this._impl = isDict(_eval(_root, [[[$('UI'), $$('ProgPanel')], $$('make')], _(programmed), 10, 10,
+      [$('chunk'), _blk, (env: Dict) => this.parser(env, locChunk(env, $('chunk')))]
     ]));
 
     let bg = new Graphics();
@@ -43,7 +40,7 @@ export class ProgPanel implements Panel {
     this._progChunk.render(0, 0, 4);
   }
 
-  // [user target | user:chunk:perform [action-ignite user target]]
+  // [user target | user:chunk:perform [Action:ignite user target]]
   private parser(env: Dict, chunk: Chunk): EExpr {
     interface Cell {
       sym?: ESym;

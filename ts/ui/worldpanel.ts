@@ -3,13 +3,10 @@ import { Chunk } from "../chunk";
 import { ProgPanel } from "./progpanel";
 import { Panel, PanelOwner } from "../eden";
 import { Entity, isEntity } from "../entity";
-import { Key } from "./key";
+import { Key } from "./keys";
 import { Dict, dictDef, isDict, _root } from "../script/dict";
 import { _eval } from "../script/eval";
 import { $, $$, EExpr, _ } from "../script/script";
-
-import worldpanel_kurt from "./worldpanel.kurt";
-import { _parse } from "../script/parse";
 
 enum InputState {
   default = 0,
@@ -26,11 +23,10 @@ export class WorldPanel implements Panel {
   private _inputState: InputState = InputState.default;
 
   constructor(private _owner: PanelOwner) {
-    _eval(_root, _parse('worldpanel.kurt', worldpanel_kurt)); // TODO: Do this only once.
-    this._impl = isDict(_eval(_root, [[$('WorldPanel'), $$('make')]]));
+    this._impl = isDict(_eval(_root, [[[$('UI'), $$('WorldPanel')], $$('make')]]));
 
     let chunk = this.createChunk();
-    this._player = isEntity(this.eval([[_(chunk), $$('add')], [[$('Player'), $$('make')]]]));
+    this._player = isEntity(this.eval([[_(chunk), $$('add')], [[[$('Actors'), $$('Player')], $$('make')]]]));
     dictDef(this._impl, $('player'), this._player as Dict); // copy into impl
 
     let bg = new Graphics();

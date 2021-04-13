@@ -1,0 +1,6 @@
+[def {
+  -- Entities with the Portable component can be picked up.
+  Portable: {
+    make: ({portable: true})
+  }
+}]

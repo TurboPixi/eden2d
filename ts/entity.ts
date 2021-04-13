@@ -1,11 +1,12 @@
 import { Chunk, locChunk } from "./chunk";
-import { Located } from "./components/located";
-import { Rendered } from "./components/rendered";
+import { Located } from "./comps/located";
+import { Rendered } from "./comps/rendered";
 import { IDict, Dict, dictParent, dictRef, _root, isDict } from "./script/dict";
-import { $, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentName, _self, _set } from "./script/script";
-import { lookupSym, envEval } from "./script/env";
+import { $, $$, chuck, EDict, EExpr, ESym, symName, _, _blk, _def, _parent, _parentName, _self, _set } from "./script/script";
+import { envEval } from "./script/env";
 import { _parse } from "./script/parse";
 import { registerDefroster } from "./script/freezer";
+import { _eval } from "./script/eval";
 
 export class Entity implements IDict {
   static Dict = {
@@ -30,40 +31,42 @@ export class Entity implements IDict {
       ]
     )`),
 
-    // TODO: Put these where they belong in impl.
-    'jump': [$('chunk'), _blk, (env: Dict) => {
-      let self = locEnt(env, _self);
-      let to = locChunk(env, $('chunk'));
-      to.addEntity(self);
-      return self;
-    }],
+    'impl': {
+      // TODO: Put these where they belong in impl.
+      'jump': [$('chunk'), _blk, (env: Dict) => {
+        let self = locEnt(env, _self);
+        let to = locChunk(env, $('chunk'));
+        to.addEntity(self);
+        return self;
+      }],
 
-    'move': _parse('Entity:move', `(dx dy | @:move-to [+ @:loc:x dx] [+ @:loc:y dy])`),
-    'move-to': _parse('Entity:move-to', `(x y | set @:loc {x y})`),
-    'top-with': _parse('Entity:top-with', `(comp | @:chunk:top-with @:loc:x @:loc:y comp)`),
-    'near-with': _parse('Entity:near-with', `(comp | @:chunk:near-with @:loc:x @:loc:y comp)`),
+      'move': _parse('Entity:move', `(dx dy | @:move-to [+ @:loc:x dx] [+ @:loc:y dy])`),
+      'move-to': _parse('Entity:move-to', `(x y | set @:loc {x y})`),
+      'top-with': _parse('Entity:top-with', `(comp | @:chunk:top-with @:loc:x @:loc:y comp)`),
+      'near-with': _parse('Entity:near-with', `(comp | @:chunk:near-with @:loc:x @:loc:y comp)`),
 
-    'prepare': _parse('Entity:prepare', `(action |
-      for-each-entry @:comps (name comp |
-        if [? comp :prepare] (
-          comp:prepare @ action
+      'prepare': _parse('Entity:prepare', `(action |
+        for-each-entry @:comps (name comp |
+          if [? comp :prepare] (
+            comp:prepare @ action
+          )
         )
-      )
-    )`),
+      )`),
 
-    'perform': _parse('Entity:perform', `(action |
-      for-each-entry @:comps [name comp |
-        if [? comp :perform] (
-          comp:perform @ action
-        )
-      ]
-    )`),
+      'perform': _parse('Entity:perform', `(action |
+        for-each-entry @:comps [name comp |
+          if [? comp :perform] (
+            comp:perform @ action
+          )
+        ]
+      )`),
 
-    'freeze': (env: Dict) => {
-      return () => {
-        return { native: 'Entity.Dict' };
-      }
-    },
+      'freeze': (env: Dict) => {
+        return () => {
+          return { native: 'Entity.Dict' };
+        }
+      },
+    }
   };
 
   private _chunk: Chunk;
@@ -72,7 +75,7 @@ export class Entity implements IDict {
   private _comps: EDict = {};
 
   constructor() {
-    this._parent = lookupSym(_root, $('Entity'));
+    this._parent = _eval(_root, [$('Entity'), $$('impl')]);
   }
 
   thaw(chunk: Chunk, id: number, comps: EDict) {

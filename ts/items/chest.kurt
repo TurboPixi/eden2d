@@ -1,0 +1,29 @@
+[def {
+  Chest: {
+    -src: "images/chests.png"
+    -img-closed: [Comps:Rendered:image -src { x:0  y:3 w:16 h:18 }]
+    -img-open:   [Comps:Rendered:image -src { x:32 y:3 w:16 h:18 }]
+
+    make: (Entity:make [list
+      [Comps:Located:make]
+      [Comps:Rendered:make Chest:-img-closed]
+      [Comps:Solid:make 1]
+      [Comps:Usable:make (user object target | object:programmed:run user target)]
+      {chest: {^: impl open: false}}
+    ])
+
+    impl: {
+      prepare: (ent action | nil)
+      perform: (ent action |
+        if [= action:action :open] (do
+          [set @ {open: [! @:open]}]
+          [@:-update ent]
+        )
+      )
+
+      -update: (ent |
+        set ent:rendered {image: [if @:open -img-open -img-closed]}
+      )
+    }
+  }
+}]

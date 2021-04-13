@@ -1,0 +1,15 @@
+[def {
+  Usable: {
+    make: (use | {usable: {
+      ^: Usable:impl
+      use
+    }})
+
+    impl: {
+      perform: (ent action |
+        if [= action:action :use]
+          (@:use action:user action:object action:target)
+      )
+    }
+  }
+}]

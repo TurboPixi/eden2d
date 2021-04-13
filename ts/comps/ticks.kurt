@@ -1,0 +1,5 @@
+[def {
+  Ticks: {
+    make: (freq block | {ticker: {freq block}})
+  }
+}]

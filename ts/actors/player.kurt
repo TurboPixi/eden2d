@@ -1,7 +1,7 @@
 [def {
   -- Player component.
   Player: {
-    -img: [Rendered:image "images/tf/characters/chara3.png" {
+    -img: [Comps:Rendered:image "images/tf/characters/chara3.png" {
       x: 4 y: 7
       w: 17 h: 32
       ax: 0 ay: 16
@@ -11,9 +11,9 @@
     make: (
       {inv-chunk: [World:make-chunk]}
       [Entity:make [list
-        [Located:make]
-        [Solid:make 1]
-        [Rendered:make -img]
+        [Comps:Located:make]
+        [Comps:Solid:make 1]
+        [Comps:Rendered:make -img]
         {player: {
           ^: impl
           slot: 0

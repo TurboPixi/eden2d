@@ -2,7 +2,7 @@ import { Container } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, dictRef, isDict, _root, isTagProp } from "./script/dict";
-import { $, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
+import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
 import { World } from "./world";
 import { locNum, locSym, envEval } from "./script/env";
 import { _parse } from "./script/parse";
@@ -16,62 +16,64 @@ export type ChunkId = number;
 // - Create efficient entity filters by component query.
 export class Chunk implements IDict {
   static Dict = {
-    'add': [$('ent'), _blk, (env: Dict) => {
-      let ent = locEnt(env, $('ent'));
-      locChunk(env, _self).addEntity(ent);
-      return ent;
-    }],
-
-    'add-at': _parse('Chunk:add-at', `(ent x y | [@:add ent]:move-to x y)`),
-
-    'remove': [$('ent'), _blk, (env: Dict) => {
-      let ent = locEnt(env, $('ent'));
-      locChunk(env, _self).removeEntity(ent);
-      return ent;
-    }],
-
-    'entities-at': [$('x'), $('y'), _blk, (env: Dict) => {
-      return locChunk(env, _self).entitiesAt(
-        locNum(env, $('x')),
-        locNum(env, $('y'))
-      );
-    }],
-
-    'top-at': [$('x'), $('y'), _blk, (env: Dict) => {
-      return locChunk(env, _self).topEntity(
-        locNum(env, $('x')),
-        locNum(env, $('y')),
-      );
-    }],
-
-    'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
-      return locChunk(env, _self).topEntityWith(
-        locNum(env, $('x')),
-        locNum(env, $('y')),
-        locSym(env, $('comp'))
-      );
-    }],
-
-    'near-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
-      return locChunk(env, _self).nearEntityWith(
-        locNum(env, $('x')),
-        locNum(env, $('y')),
-        locSym(env, $('comp'))
-      );
-    }],
-
-    'perform': [$('action'), _blk, _parse('Chunk:perform', `(action | do
-      -- Let each entity prepare the action (possibly mutating it),
-      -- then perform it once all of them have had a crack.
-      -- TODO: Give the chunk a crack at it.
-      [for-each action:ents (ent | ent:prepare action)]
-      [for-each action:ents (ent | ent:perform action)]
-    )`)],
-
     'freeze': (env: Dict) => {
       return () => {
         return { native: 'Entity.Dict' };
       }
+    },
+
+    'impl': {
+      'add': [$('ent'), _blk, (env: Dict) => {
+        let ent = locEnt(env, $('ent'));
+        locChunk(env, _self).addEntity(ent);
+        return ent;
+      }],
+
+      'add-at': _parse('Chunk:add-at', `(ent x y | [@:add ent]:move-to x y)`),
+
+      'remove': [$('ent'), _blk, (env: Dict) => {
+        let ent = locEnt(env, $('ent'));
+        locChunk(env, _self).removeEntity(ent);
+        return ent;
+      }],
+
+      'entities-at': [$('x'), $('y'), _blk, (env: Dict) => {
+        return locChunk(env, _self).entitiesAt(
+          locNum(env, $('x')),
+          locNum(env, $('y'))
+        );
+      }],
+
+      'top-at': [$('x'), $('y'), _blk, (env: Dict) => {
+        return locChunk(env, _self).topEntity(
+          locNum(env, $('x')),
+          locNum(env, $('y')),
+        );
+      }],
+
+      'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
+        return locChunk(env, _self).topEntityWith(
+          locNum(env, $('x')),
+          locNum(env, $('y')),
+          locSym(env, $('comp'))
+        );
+      }],
+
+      'near-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
+        return locChunk(env, _self).nearEntityWith(
+          locNum(env, $('x')),
+          locNum(env, $('y')),
+          locSym(env, $('comp'))
+        );
+      }],
+
+      'perform': [$('action'), _blk, _parse('Chunk:perform', `(action | do
+        -- Let each entity prepare the action (possibly mutating it),
+        -- then perform it once all of them have had a crack.
+        -- TODO: Give the chunk a crack at it.
+        [for-each action:ents (ent | ent:prepare action)]
+        [for-each action:ents (ent | ent:perform action)]
+      )`)],
     },
   };
 
@@ -84,7 +86,7 @@ export class Chunk implements IDict {
 
   constructor(private _world: World, private _id: number) {
     this._container = new Container();
-    _eval(_root, [_set, this, {'^': $('Chunk')}]);
+    _eval(_root, [_set, this, {'^': [$('Chunk'), $$('impl')]}]);
   }
 
   thaw(entities: {[id: number]: Entity}, nextId: number, defs: EDict) {

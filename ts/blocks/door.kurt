@@ -1,23 +1,9 @@
 [def {
-  Key: {
-    -img: [Rendered:image "images/tf/icons/fullcolor/icons_full_16.png" {
-      x: [* 5 16]
-      y: [* 22 16]
-    }]
-
-    make: (code | Entity:make [list
-      [Located:make]
-      [Rendered:make Key:-img]
-      [Portable:make]
-      {key: {code}}
-    ])
-  }
-
   Door: {
     make: (closed-img open-img | Entity:make [list
-      [Located:make]
-      [Rendered:make closed-img]
-      [Solid:make 1]
+      [Comps:Located:make]
+      [Comps:Rendered:make closed-img]
+      [Comps:Solid:make 1]
       {door: {
         ^: Door:impl
         open-img closed-img
@@ -49,8 +35,8 @@
   }
 
   WoodDoor: {
-    -img-closed: [Rendered:image "images/environment.png" {x: 16 y: [* 8 16]}]
-    -img-open: [Rendered:image "images/environment.png" {
+    -img-closed: [Comps:Rendered:image "images/environment.png" {x: 16 y: [* 8 16]}]
+    -img-open: [Comps:Rendered:image "images/environment.png" {
       x: 4 y: [+ [* 8 16] 9]
       w: 8 h: 22
     }]

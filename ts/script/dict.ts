@@ -1,5 +1,7 @@
+import { _eval } from "./eval";
+import { _parse } from "./parse";
 import { _print } from "./print";
-import { EDict, EExpr, ESym, nil, symName, isSym, _callerTag, _parent, _parentName, isBlock } from "./script";
+import { EDict, EExpr, ESym, nil, symName, isSym, _callerTag, _parent, _parentName, isBlock, $ } from "./script";
 
 export type Dict = IDict | EDict;
 
@@ -21,6 +23,18 @@ class RootEnv implements IDict {
 }
 
 export const _root = new RootEnv();
+
+// Define a namespace within the root, with compilation units parsed into the new namespace.
+// Returns the namespace dict.
+export function _ns(name: string, units: string[]): EDict {
+  let env = {"^": _root};
+  _root.def($(name), env);
+
+  for (let i = 0; i < units.length; i++) {
+    _eval(env, _parse(name + ":" + i, units[i]));
+  }
+  return env;
+}
 
 export function isDict(val: EExpr): Dict {
   let dict = isEDict(val);

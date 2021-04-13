@@ -1,0 +1,19 @@
+[def {
+  -- Entities with this component transport an entity to another location/chunk.
+  Transports: {
+    make: (target-chunk target-x target-y | {transports: {
+      ^: Transports:impl
+      target-chunk target-x target-y
+    }})
+
+    impl: {
+      perform: (ent action |
+        if [= action:action :enter]
+        (do
+          [action:ent:jump @:target-chunk]
+          [action:ent:move-to @:target-x @:target-y]
+        )
+      )
+    }
+  }
+}]

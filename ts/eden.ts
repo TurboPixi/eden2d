@@ -9,19 +9,13 @@ import { builtinDefs } from "./script/builtins";
 import { WorldPanel } from "./ui/worldpanel";
 import { _parse } from "./script/parse";
 import { Entity } from "./entity";
-import { Located } from "./components/located";
-import { Rendered } from "./components/rendered";
 import { Chunk } from "./chunk";
-
-import components_kurt from "./components/components.kurt";
-import actions_kurt from "./actions/actions.kurt";
-import player_kurt from "./actors/player.kurt";
-import blocks_kurt from "./blocks/blocks.kurt";
-import door_key_kurt from "./blocks/door-key.kurt";
-import items_kurt from "./items/items.kurt";
-
-import test_kurt from "./script/test/test.kurt";
-import ui_kurt from "./ui/ui.kurt";
+import { nsBlocks } from "./blocks/blocks";
+import { nsItems } from "./items/items";
+import { nsActors } from "./actors/actors";
+import { nsComps } from "./comps/comps";
+import { nsUI } from "./ui/ui";
+import { nsActions } from "./actions/actions";
 
 export interface PanelOwner {
   showPanel(panel: Panel): void;
@@ -82,24 +76,23 @@ class Eden implements PanelOwner {
 _eval(_root, builtinDefs);
 
 // Run language tests.
+import test_kurt from "./script/test/test.kurt";
 _eval(_root, _parse('test.kurt', test_kurt)); // language tests
 
-// TODO: It's kind of gross to have to initialize all the scripts this way.
-// May need some more generalized mechanism for importing.
+// Eval the native implementations.
 _eval(_root, [_def, {
   'World': World.inst,
   'Chunk': Chunk.Dict,
   'Entity': Entity.Dict,
-  'Located': Located.Dict,
-  'Rendered': Rendered.Dict,
 }]);
-_eval(_root, _parse('components.kurt', components_kurt));
-_eval(_root, _parse('actions.kurt', actions_kurt));
-_eval(_root, _parse('player.kurt', player_kurt));
-_eval(_root, _parse('blocks.kurt', blocks_kurt));
-_eval(_root, _parse('door-key.kurt', door_key_kurt));
-_eval(_root, _parse('items.kurt', items_kurt));
-_eval(_root, _parse('ui.kurt', ui_kurt));
+
+// And various namespaces.
+nsComps();
+nsBlocks();
+nsItems();
+nsActors();
+nsUI();
+nsActions();
 
 // Start the game.
 new Eden();

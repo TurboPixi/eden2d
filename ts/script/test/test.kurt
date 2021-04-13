@@ -459,24 +459,9 @@
         }
         frozen: [freeze obj]
       }]
-      [log frozen]
       [def {thawed: [thaw frozen]}]
-      [log thawed]
       [expect 4 [thawed:fn thawed:x]]
     )]
-
-    -- [run "freeze" (do
-    --   [def {
-    --     obj: {
-    --       x: [+ 1 2]
-    --       y: {val: 42}
-    --       fn: (obj:x)
-    --     }
-    --     frozen: [freeze obj]
-    --   }]
-    --   [log frozen]
-    --   [log [thaw frozen]]
-    -- )]
 
     -- Wrap up.
     [log "--[ complete ]--"]

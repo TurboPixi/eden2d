@@ -1,0 +1,5 @@
+[def {
+  Solid: {
+    make: (mass | {solid: {solid: true mass}})
+  }
+}]

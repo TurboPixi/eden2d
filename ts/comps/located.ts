@@ -34,7 +34,7 @@ export class Located extends NativeComp {
 
   constructor() {
     super();
-    this[_parentName] = _eval(_root, [$('Located'), $$('impl')]);
+    this[_parentName] = _eval(_root, [[$('Comps'), $$('Located')], $$('impl')]);
   }
 
   freeze(): any {

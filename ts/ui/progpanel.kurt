@@ -35,7 +35,7 @@
 
   Glyph: {
     -src: "images/script.png"
-    -scr-img: (x y | Rendered:image "images/script.png" {x: x y: y})
+    -scr-img: (x y | Comps:Rendered:image "images/script.png" {x: x y: y})
     -imgs: {
       square-open-horz:  [-scr-img  0  0]
       square-open-vert:  [-scr-img 32  0]
@@ -66,8 +66,8 @@
 
     make: (type |
       [Entity:make [list
-        [Located:make]
-        [Rendered:make [-imgs type]]
+        [Comps:Located:make]
+        [Comps:Rendered:make [-imgs type]]
         {glyph: {type}}
       ]]
     )

@@ -1,0 +1,17 @@
+[def {
+  Programmed: {
+    make: ({
+      programmed: {
+        ^: Programmed:impl
+        program-chunk: [World:make-chunk]
+        program: (user target | )
+      }
+    })
+
+    impl: {
+      run: (user target |
+        @:program user target
+      )
+    }
+  }
+}]
