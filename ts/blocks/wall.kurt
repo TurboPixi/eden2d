@@ -1,9 +1,6 @@
 [def {
   Wall: {
-    -img: [Rendered:image "blocks/wall-stone-blue.png" {
-      x: [* 5 16]
-      y: [* 3 16]
-    }]
+    -img: [Rendered:image "blocks/wall-stone.png" {x:32 y:0 w:16 h:48 ay:32}]
 
     make: (Entity:make [list
       [Located:make]

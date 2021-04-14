@@ -18,7 +18,7 @@
           [while (< x 10) (do
             [set {y:0}]
             [while (< y 10) (do
-              [chunk:add-at [Blocks:Floor:make] x y]
+              [chunk:add-at [Blocks:Floor:make] x y -0.5]
               [set {y: [+ y 1]}]
             )]
             [set {x: [+ x 1]}]
@@ -27,8 +27,8 @@
           [set {x: 1}]
           [while (< x 9) (do
             [if (= x 5)
-              (chunk:add-at [Blocks:WoodDoor:make] x 1)
-              (chunk:add-at [Blocks:Wall:make] x 1)
+              (chunk:add-at [Blocks:TallDoor:make] x 1 0)
+              (chunk:add-at [Blocks:Wall:make] x 1 0)
             ]
             [set {x: [+ x 1]}]
           )]
@@ -38,15 +38,15 @@
       )
 
       make-items: (chunk0 chunk1 | do
-        [chunk0:add-at [Blocks:Stairs:make chunk1 0 5 false] 1 5]
-        [chunk1:add-at [Blocks:Stairs:make chunk0 2 5 true] 1 5]
-        [chunk0:add-at [Items:Wand:make] 0 2]
-        [chunk0:add-at [Items:Key:make 123] 1 0]
-        [chunk0:add-at [Items:Key:make 456] 2 0]
-        [chunk0:add-at [Items:Brazier:make] 4 4]
-        [chunk0:add-at [Items:Crate:make] 5 5]
-        [chunk0:add-at [Items:Chest:make] 6 3]
-        [chunk0:add-at [Items:Torch:make] 3 3]
+        [chunk0:add-at [Blocks:Stairs:make chunk1 0 5 false] 1 5 0]
+        [chunk1:add-at [Blocks:Stairs:make chunk0 2 5 true] 1 5 0]
+        [chunk0:add-at [Items:Wand:make] 0 2 0]
+        [chunk0:add-at [Items:Key:make 123] 1 0 0]
+        [chunk0:add-at [Items:Key:make 456] 2 0 0]
+        [chunk0:add-at [Items:Brazier:make] 4 4 0]
+        [chunk0:add-at [Items:Crate:make] 5 5 0]
+        [chunk0:add-at [Items:Chest:make] 6 3 0]
+        [chunk0:add-at [Items:Torch:make] 3 3 0]
       )
 
       enter: (
@@ -65,14 +65,14 @@
 
       use-selected: (dx dy |
         {selected: [@:player:player:selected-item]
-         x: [+ @:player:loc:x dx]
-         y: [+ @:player:loc:y dy]}
+         x:        [+ @:player:loc:x dx]
+         y:        [+ @:player:loc:y dy]}
         [if [!= selected nil] (
           [@:chunk:perform [Actions:use @:player selected [@:player:chunk:top-at x y]]]
         )]
       )
 
-      selected-contains: (?= [@:player:player:inv-target :contains] :contains :chunk)
+      selected-contains:   (?= [@:player:player:inv-target :contains] :contains :chunk)
       selected-programmed: (?= [@:player:player:inv-target :programmed] :programmed)
 
       take: (
@@ -81,26 +81,25 @@
          player:      @:player:player}
         [if [!= target nil] (do
           [if [!= inv-target nil] (@:put)]
-          [[target:jump player:contents]:move-to player:slot 0]
+          [[target:jump player:contents]:move-to player:slot 0 0]
         )]
       )
 
       put: (
-        {loc: @:player:loc
+        {loc:     @:player:loc
          target: [@:player:player:inv-target :portable]}
         [if [!= target nil] (
-          [target:jump @:player:chunk]:move-to loc:x loc:y
+          [target:jump @:player:chunk]:move-to loc:x loc:y 0
         )]
       )
 
-      save: (do
-        [def {frozen: [freeze World]}]>
-        [log frozen]
+      save: (
+        {frozen: [freeze World]}
         [def @ {saved: frozen}]
       )
 
-      load: (
-        if [? @ :saved] (thaw @:saved)
+      load: (if [? @ :saved]
+        (thaw @:saved)
       )
     }
   }

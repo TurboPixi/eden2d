@@ -28,17 +28,23 @@ single = "--" ([^\n]*)[\n] { return null }
 pipe = "|" { return _sym("|") }
 
 prim
-  = integer
+  = real
+  / integer
   / string
   / boolean
   / nil
 
-// TODO: Floats
 integer
   = neg:"-"? digits:[0-9]+ {
     let num = parseInt(digits.join(""), 10)
     return neg ? -num : num;
   }
+
+// TODO: Scientific notation.
+real = neg:"-"? left:[0-9]+ "." right:[0-9]+ {
+  let num = parseFloat(left.join("") + "." +   right.join(""));
+  return neg ? -num : num;
+}
 
 string
   = "\"" chars:[^"]* "\"" { return chars.join("") }

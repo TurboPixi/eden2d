@@ -1,6 +1,6 @@
 [def {
   Floor: {
-    -img: [Rendered:image "blocks/tile-blue.png" {x: 0 y: 16}]
+    -img: [Rendered:image "blocks/tile-blue.png" {x:0 y:16 ay:8}]
 
     make: (Entity:make [list
       [Located:make]

@@ -40,8 +40,8 @@ export class Entity implements IDict {
         return self;
       }],
 
-      'move': _parse('Entity:move', `(dx dy | @:move-to [+ @:loc:x dx] [+ @:loc:y dy])`),
-      'move-to': _parse('Entity:move-to', `(x y | set @:loc {x y})`),
+      'move': _parse('Entity:move', `(dx dy dz | @:move-to [+ @:loc:x dx] [+ @:loc:y dy] [+ @:loc:z dz])`),
+      'move-to': _parse('Entity:move-to', `(x y z | set @:loc {x y z})`),
       'top-with': _parse('Entity:top-with', `(comp | @:chunk:top-with @:loc:x @:loc:y comp)`),
       'near-with': _parse('Entity:near-with', `(comp | @:chunk:near-with @:loc:x @:loc:y comp)`),
 

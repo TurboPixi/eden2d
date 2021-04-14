@@ -485,6 +485,11 @@
       ]]
     )]
 
+    [run "floats" (do
+      [expect 4.2 [+ 2.1 2.1]]
+      [expect -4.2 [+ -2.1 -2.1]]
+    )]
+
     -- Wrap up.
     [log "--[ complete ]--"]
     [if [= 0 failures]

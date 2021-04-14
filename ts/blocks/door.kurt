@@ -34,6 +34,16 @@
     }
   }
 
+  TallDoor: {
+    -img: "blocks/wall-stone.png"
+    -img-closed: [Rendered:image -img {x:64 y:96 w:16 h:48 ay:32}]
+    -img-open:   [Rendered:image -img {x:64 y:144 w:16 h:48 ay:32}]
+
+    make: (
+      Door:make -img-closed -img-open
+    )
+  }
+
   WoodDoor: {
     -img: "blocks/door-wood.png"
     -img-closed: [Rendered:image -img {}]

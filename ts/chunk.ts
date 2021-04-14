@@ -29,7 +29,7 @@ export class Chunk implements IDict {
         return ent;
       }],
 
-      'add-at': _parse('Chunk:add-at', `(ent x y | [@:add ent]:move-to x y)`),
+      'add-at': _parse('Chunk:add-at', `(ent x y z | [@:add ent]:move-to x y z)`),
 
       'remove': [$('ent'), _blk, (env: Dict) => {
         let ent = locEnt(env, $('ent'));
@@ -226,8 +226,8 @@ export class Chunk implements IDict {
     });
   }
 
-  render(x: number, y: number, z: number) {
-    this._container.setTransform(-x * z, -y * z, z, z);
+  render(x: number, y: number, scale: number) {
+    this._container.setTransform(-x * scale, -y * scale, scale, scale);
 
     // TODO: Create a nicer way to build systems with component queries.
     // TODO: Add some kind of component dirty tracking to avoid running through them all?
@@ -236,9 +236,11 @@ export class Chunk implements IDict {
       let render = ent.rendered;
       if (loc && render) {
         render.sprite.position.x = loc.x * 16;
-        render.sprite.position.y = loc.y * 16;
+        render.sprite.position.y = loc.y * 16 - loc.z * 16;
+        render.sprite.zIndex = (loc.y * 10000) + loc.z;
       }
     });
+    this.container.sortChildren();
   }
 
   private forEachEnt(fn: (id: number, ent: Entity) => void) {

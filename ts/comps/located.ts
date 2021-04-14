@@ -29,8 +29,10 @@ export class Located extends NativeComp {
   '^': EExpr;
   dx = 0;
   dy = 0;
+  dz = 0;
   x = 0;
   y = 0;
+  z = 0;
 
   constructor() {
     super();
@@ -40,7 +42,8 @@ export class Located extends NativeComp {
   freeze(): any {
     return {
       native: 'Located',
-      x:this.x, y:this.y, dx:this.dx, dy:this.dy,
+      x:this.x, y:this.y, z:this.z,
+      dx:this.dx, dy:this.dy, dz:this.dz,
     }
   }
 }
@@ -50,7 +53,9 @@ registerDefroster("Located", (obj) => {
   let loc = new Located();
   loc.dx = obj['dx'];
   loc.dy = obj['dy'];
+  loc.dy = obj['dz'];
   loc.x = obj['x'];
   loc.y = obj['y'];
+  loc.y = obj['z'];
   return loc;
 });

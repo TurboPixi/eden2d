@@ -11,7 +11,7 @@
         if [= action:action :enter]
         (do
           [action:ent:jump @:target-chunk]
-          [action:ent:move-to @:target-x @:target-y]
+          [action:ent:move-to @:target-x @:target-y 0]
         )
       )
     }

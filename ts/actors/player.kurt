@@ -22,7 +22,8 @@
           contents: inv-chunk
           cursor-ent: [inv-chunk:add [UI:Cursor:make]]
         }}
-    ]])
+      ]]
+    )
 
     impl: {
       selected-item: (
@@ -31,7 +32,7 @@
 
       select-inv: (slot | do
         [set @ {slot}]
-        [@:cursor-ent:move-to slot 0]
+        [@:cursor-ent:move-to slot 0 0]
       )
 
       inv-target: (comp |
