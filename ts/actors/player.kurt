@@ -1,19 +1,21 @@
 [def {
-  -- Player component.
   Player: {
-    -img: [Comps:Rendered:image "images/tf/characters/chara3.png" {
-      x: 4 y: 7
-      w: 17 h: 32
-      ax: 0 ay: 16
-    }]
+    -sheet: "actors/player.png"
+    -imgs: [list
+      [Comps:Rendered:image -sheet {x: 0 y:0 w:17 h:32 ax:0 ay:20}]
+      [Comps:Rendered:image -sheet {x:17 y:0 w:17 h:32 ax:0 ay:20}]
+      [Comps:Rendered:image -sheet {x:34 y:0 w:17 h:32 ax:0 ay:20}]
+      [Comps:Rendered:image -sheet {x:17 y:0 w:17 h:32 ax:0 ay:20}]
+    ]
 
-    -- Quick utility to make a player entity.
     make: (
       {inv-chunk: [World:make-chunk]}
       [Entity:make [list
         [Comps:Located:make]
         [Comps:Solid:make 1]
-        [Comps:Rendered:make -img]
+        [Comps:Rendered:make -imgs:0]
+        [Comps:Animated:make -imgs]
+        [Comps:Ticks:make 1 (ent | ent:animated:tick ent)]
         {player: {
           ^: impl
           slot: 0

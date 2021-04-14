@@ -1,43 +1,40 @@
 [def {
   Brazier: {
-    -src: "images/tf/tiles/animated/torch.png" 
-    -imgs-off: [list
-      [Comps:Rendered:image -src {x: 35 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
-      [Comps:Rendered:image -src {x: 35 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
-      [Comps:Rendered:image -src {x: 35 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
-      [Comps:Rendered:image -src {x: 35 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
+    -src: "items/brazier.png" 
+    -imgs-unlit: [list
+      [Rendered:image -src {x: 35 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 35 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 35 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 35 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
     ]
-    -imgs-on: [list
-      [Comps:Rendered:image -src {x: 19 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
-      [Comps:Rendered:image -src {x: 19 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
-      [Comps:Rendered:image -src {x: 19 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
-      [Comps:Rendered:image -src {x: 19 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
+    -imgs-lit: [list
+      [Rendered:image -src {x: 19 y:  2 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 19 y: 22 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 19 y: 42 w: 11 h: 18 ax: -3 ay: 4}]
+      [Rendered:image -src {x: 19 y: 62 w: 11 h: 18 ax: -3 ay: 4}]
     ]
 
     make: (
       [Entity:make [list
-        [Comps:Located:make]
-        [Comps:Solid:make 1]
-        [Comps:Rendered:make Brazier:-imgs-off:0]
+        [Located:make]
+        [Solid:make 1]
+        [Rendered:make Brazier:-imgs-unlit:0]
+        [Animated:make -imgs-unlit]
+        [Ticks:make 1 (ent | ent:animated:tick ent)]
         {brazier: {
-          on: false
-          frame: 0
-          perform: (ent action |
-            if [= :ignite action:action] (
-              set @ {on: true}
-            )
-          )
+          ^: -impl
+          lit: false
         }}
-        [Comps:Ticks:make 1 (ent |
-          -- TODO: Way too bespoke for a simple animation. Generalize this.
-          {frame: [+ 1 ent:brazier:frame]}
-          [do
-            [if [> frame 3] (set {frame: 0})]
-            [set ent:rendered {image: [[if ent:brazier:on (Brazier:-imgs-on) (Brazier:-imgs-off)] frame]}]
-            [set ent:brazier {frame: frame}]
-          ]
-        )]
       ]]
+    )
+  }
+
+  -impl: {
+    perform: (ent action | cond
+      (and (= :use action:action) (= true [?= action:object :flaming])) (do
+        [set @ {lit: true}]
+        [set ent:animated {frames: [if ent:brazier:lit (Brazier:-imgs-lit) (Brazier:-imgs-unlit)]}]
+      )
     )
   }
 }]

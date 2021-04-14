@@ -450,7 +450,6 @@
       [expect 42 [bag bar]]
     )]
 
-    -- Not yet working
     [run "freeze / thaw" (do
       [def {
         obj: {
@@ -461,6 +460,29 @@
       }]
       [def {thawed: [thaw frozen]}]
       [expect 4 [thawed:fn thawed:x]]
+    )]
+
+    [run "cond" (do
+      [def {
+        x: 42
+        y: 54
+        z: 37
+      }]
+      [expect "foo" [cond
+        (= x 42) "foo"
+        :else    "bar"
+      ]]
+      [expect "bar" [cond
+        (= x 43) "foo"
+        :else    "bar"
+      ]]
+      [expect "baz" [cond
+        (= x 43) "foo"
+        (= y 55) (set {z: 38})
+        (= z 38) "bar"
+        (= z 37) "baz"
+        :else    "nope"
+      ]]
     )]
 
     -- Wrap up.

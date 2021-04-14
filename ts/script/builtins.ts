@@ -49,6 +49,10 @@ export let builtinDefs = [_def, {
     return locList(env, $('elems'));
   }],
 
+  'len': [$('list'), _blk, (env: Dict) => {
+    return locList(env, $('list')).length;
+  }],
+
   'and': [$('...vals'), _blk, (env: Dict) => {
     let vals = locList(env, $('vals'));
     for (let val of vals) {
@@ -86,6 +90,20 @@ export let builtinDefs = [_def, {
       let els = dictRef(env, $('else'));
       if (els !== nil) {
         return _eval(env, [{}, els]);
+      }
+    }
+    return nil;
+  }],
+
+  'cond': [$('...exprs'), _blk, (env: Dict) => {
+    let exprs = locList(env, $('exprs'));
+    if (exprs.length % 1 != 0) {
+      throw "cond requires an even number of arguments";
+    }
+    for (let i = 0; i < exprs.length; i += 2) {
+      let cond = exprs[i], expr = exprs[i + 1];
+      if (expectBool(env, _eval(env, [{else: true}, cond]))) {
+        return _eval(env, [{}, expr]);
       }
     }
     return nil;
@@ -135,6 +153,19 @@ export let builtinDefs = [_def, {
     let result = 0;
     for (let val of vals) {
       result += expectNum(env, val);
+    }
+    return result;
+  }],
+
+  '-': [$('...vals'), _blk, (env: Dict) => {
+    let vals = locList(env, $('vals'));
+    let result: number = nil;
+    for (let val of vals) {
+      if (result === nil) {
+        result = expectNum(env, val);
+      } else {
+        result -= expectNum(env, val);
+      }
     }
     return result;
   }],

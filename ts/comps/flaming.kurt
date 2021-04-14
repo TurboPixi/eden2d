@@ -1,0 +1,5 @@
+[def {
+  Flaming: {
+    make: ({flaming: true})
+  }
+}]

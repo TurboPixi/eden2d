@@ -5,6 +5,7 @@ import wand from "./wand.kurt";
 import chest from "./chest.kurt";
 import brazier from "./brazier.kurt";
 import key from "./key.kurt";
+import torch from "./torch.kurt";
 
 export function nsItems() {
   _ns('Items', [`[def {
@@ -15,7 +16,10 @@ export function nsItems() {
       Usable:     Comps:Usable
       Contains:   Comps:Contains
       Solid:      Comps:Solid
+      Ticks:      Comps:Ticks
+      Animated:   Comps:Animated
+      Flaming:    Comps:Flaming
     }]`,
-    crate, wand, chest, brazier, key]
+    crate, wand, chest, brazier, key, torch]
   );
 }

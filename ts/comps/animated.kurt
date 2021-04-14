@@ -1,0 +1,23 @@
+[def {
+  -- Animated component.
+  Animated: {
+    make: (frames |
+      {animated: {
+        ^: -impl
+        frames
+        frame: 0
+      }}
+    )
+
+    -impl: {
+      tick: (ent |
+        { next: [+ 1 @:frame]
+          frame: [if [> next [- [len @:frames] 1]] 0 next] }
+        [do
+          [set ent:rendered {image: [@:frames frame]}]
+          [set ent:animated {frame: frame}]
+        ]
+      )
+    }
+  }
+}]

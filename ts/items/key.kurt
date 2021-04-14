@@ -4,7 +4,7 @@
 
     make: (code | Entity:make [list
       [Located:make]
-      [Rendered:make Key:-img]
+      [Rendered:make -img]
       [Portable:make]
       {key: {code}}
     ])

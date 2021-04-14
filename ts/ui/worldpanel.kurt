@@ -46,6 +46,7 @@
         [chunk0:add-at [Items:Brazier:make] 4 4]
         [chunk0:add-at [Items:Crate:make] 5 5]
         [chunk0:add-at [Items:Chest:make] 6 3]
+        [chunk0:add-at [Items:Torch:make] 3 3]
       )
 
       enter: (
@@ -75,9 +76,11 @@
       selected-programmed: (?= [@:player:player:inv-target :programmed] :programmed)
 
       take: (
-        {target: [@:player:top-with :portable]}
-        [if [!= target nil] (
-          {player: @:player:player}
+        {target:     [@:player:top-with :portable]
+         inv-target: [@:player:player:inv-target :portable]
+         player:      @:player:player}
+        [if [!= target nil] (do
+          [if [!= inv-target nil] (@:put)]
           [[target:jump player:contents]:move-to player:slot 0]
         )]
       )

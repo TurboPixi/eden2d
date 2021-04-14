@@ -1,0 +1,23 @@
+[def {
+  Torch: {
+    -img: "items/torch.png" 
+    -imgs: [list
+      [Rendered:image -img {}]
+      [Rendered:image -img {x:16}]
+      [Rendered:image -img {x:32}]
+      [Rendered:image -img {x:48}]
+      [Rendered:image -img {x:64}]
+    ]
+
+    make: (
+      Entity:make [list
+        [Located:make]
+        [Rendered:make -imgs:0]
+        [Portable:make]
+        [Flaming:make]
+        [Animated:make -imgs]
+        [Ticks:make 1 (ent | ent:animated:tick ent)]
+      ]
+    )
+  }
+}]

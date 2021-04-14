@@ -5,21 +5,21 @@
       [Rendered:make closed-img]
       [Solid:make 1]
       {door: {
-        ^: Door:impl
+        ^: -impl
         open-img closed-img
+        locked: true
         open: false
         code: 123
       }}
     ])
 
-    impl: {
-      prepare: (ent action | if [= action:action :open] (
-        if [!= @:code [?= action :opener :player (prev :selected-item) :key :code]]
-          (set action {cancel: true})
-      ))
-
-      perform: (ent action |
-        if [and [= action:action :open] [! action:cancel]] (do
+    -impl: {
+      perform: (ent action | cond
+        (and [= action:action :use] [= @:code [?= action :object :key :code]]) (do
+          [set @ {locked: [! @:locked]}]
+          [@:-update ent]
+        )
+        (and [= action:action :open] [! @:locked]) (do
           [set @ {open: [! @:open]}]
           [@:-update ent]
         )
@@ -28,7 +28,7 @@
       -update: (ent | do
         [set ent:rendered {image: [if @:open @:open-img @:closed-img]}]
         [if [? ent :solid] (
-          set ent:solid {solid: [! ent:solid:solid]}
+          set ent:solid {solid: [! @:open]}
         )]
       )
     }
