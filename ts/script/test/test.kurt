@@ -490,6 +490,13 @@
       [expect -4.2 [+ -2.1 -2.1]]
     )]
 
+    [run "map" (do
+      [expect [list 20 22] [map
+        [list 10 11]
+        (x | [* x 2])
+      ]]
+    )]
+
     -- Wrap up.
     [log "--[ complete ]--"]
     [if [= 0 failures]

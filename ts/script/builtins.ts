@@ -2,7 +2,7 @@ import { _apply, _eval } from "./eval";
 import { _print } from "./print";
 import { Dict, dictFind, dictNames, dictRef, isDict, _root } from "./dict";
 import { chuck, $, isList, _blk, _, isBlock, _def, _do, nil, eq, isSym, EExpr, _callerTagName, _callerTag, isFullQuote, isQuote, quoteExpr, fullQuoteExpr } from "./script";
-import { expectBool, expectNum, locBool, locList, locNum } from "./env";
+import { expectBool, expectNum, expectSym, locBool, locList, locNum, lookupSym } from "./env";
 import { _parse } from "./parse";
 import { _freeze, _thaw } from "./freezer";
 
@@ -199,7 +199,7 @@ export let builtinDefs = [_def, {
     return eq(dictRef(env, $('a')), dictRef(env, $('b')));
   }],
 
-  '!=': _parse('!=', `[a b | ![= a b]]`),
+  '!=': _parse('!=', `(a b | ![= a b])`),
 
   '!': [$('x'), _blk, (env: Dict) => {
     return !locBool(env, $('x'));
@@ -250,6 +250,22 @@ export let builtinDefs = [_def, {
       val = expr;
     }
     return val;
+  }],
+
+  'map': [$('list'), $('blk'), _blk, (env: Dict) => {
+    let list = locList(env, $('list'));
+    let blk = lookupSym(env, $('blk'));
+    let result: EExpr[] = [];
+    for (let i = 0; i < list.length; i++) {
+      result.push(_eval(env, [blk, list[i]]));
+    }
+    return result;
+  }],
+
+  'apply': [$('blk'), $('list'), _blk, (env: Dict) => {
+    let blk = lookupSym(env, $('blk'));
+    let list = locList(env, $('list'));
+    return _eval(env, [blk].concat(list));
   }],
 
   'freeze': _freeze,

@@ -16,5 +16,6 @@ export function nsBlocks() {
       Solid:      Comps:Solid
       Transports: Comps:Transports
     }]`,
-    floor, wall, stairs, door]);
+    floor, wall, stairs, door
+  ]);
 }

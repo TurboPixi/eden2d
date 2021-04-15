@@ -18,21 +18,11 @@
           [while (< x 10) (do
             [set {y:0}]
             [while (< y 10) (do
-              [chunk:add-at [Blocks:Floor:make] x y -0.5]
+              [chunk:add-at [Blocks:WoodFloor:make] x y -0.5]
               [set {y: [+ y 1]}]
             )]
             [set {x: [+ x 1]}]
           )]
-
-          [set {x: 1}]
-          [while (< x 9) (do
-            [if (= x 5)
-              (chunk:add-at [Blocks:TallDoor:make] x 1 0)
-              (chunk:add-at [Blocks:Wall:make] x 1 0)
-            ]
-            [set {x: [+ x 1]}]
-          )]
-
           chunk
         ]
       )
@@ -47,6 +37,19 @@
         [chunk0:add-at [Items:Crate:make] 5 5 0]
         [chunk0:add-at [Items:Chest:make] 6 3 0]
         [chunk0:add-at [Items:Torch:make] 3 3 0]
+      )
+
+      make-wall: (wall |
+        {loc:  @:player:loc
+         wall: [wall:make]
+        }
+        [do
+          [@:chunk:add-at wall loc:x loc:y 0]
+
+          -- TODO: It's a little gross having to manually update all the adjacent walls.
+          -- Find a way to generalize this so it's automatic.
+          [for-each [wall:near-with :wall] (adj | adj:wall:update adj)]
+        ]
       )
 
       enter: (

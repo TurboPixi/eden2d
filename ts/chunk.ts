@@ -60,7 +60,7 @@ export class Chunk implements IDict {
       }],
 
       'near-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
-        return locChunk(env, _self).nearEntityWith(
+        return locChunk(env, _self).nearWith(
           locNum(env, $('x')),
           locNum(env, $('y')),
           locSym(env, $('comp'))
@@ -152,15 +152,16 @@ export class Chunk implements IDict {
   }
 
   // Finds the top-most entity near a location (within one unit), with the given component.
-  nearEntityWith(x: number, y: number, comp: ESym): Entity {
+  nearWith(x: number, y: number, comp: ESym): Entity[] {
+    let ents: Entity[] = [];
     let deltas = [[0, 0], [-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
     for (let delta of deltas) {
       let ent = this.topEntityWith(x + delta[0], y + delta[1], comp);
       if (ent) {
-        return ent;
+        ents.push(ent);
       }
     }
-    return nil;
+    return ents;
   }
 
   addEntity(entity: Entity) {
