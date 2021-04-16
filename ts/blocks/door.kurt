@@ -3,7 +3,7 @@
     make: (closed-img open-img | Entity:make [list
       [Located:make]
       [Rendered:make closed-img]
-      [Solid:make 1]
+      [{height:2} Solid:make]
       {door: {
         ^: -impl
         open-img closed-img

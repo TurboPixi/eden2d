@@ -26,9 +26,9 @@
       \[1 0]  -- 1111
     ]
 
-    make: (imgs | Entity:make [list
+    make: (height imgs | Entity:make [list
       [Located:make]
-      [Solid:make 1]
+      [{height} Solid:make]
       [Rendered:make [imgs 0]]
       {wall: {^:-impl wall:true imgs}}
     ])
@@ -58,7 +58,7 @@
       }
     )]
 
-    make: (Wall:make StoneWall:-imgs)
+    make: (Wall:make 2 StoneWall:-imgs)
   }
 
   Bar: {
@@ -70,6 +70,6 @@
       }
     )]
 
-    make: (Wall:make Bar:-imgs)
+    make: (Wall:make 1 Bar:-imgs)
   }
 }]

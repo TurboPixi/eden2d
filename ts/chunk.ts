@@ -4,7 +4,7 @@ import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, dictRef, isDict, _root, isTagProp } from "./script/dict";
 import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
 import { World } from "./world";
-import { locNum, locSym, envEval } from "./script/env";
+import { locNum, locSym, envEval, locDict, expectNum } from "./script/env";
 import { _parse } from "./script/parse";
 import { registerDefroster } from "./script/freezer";
 
@@ -203,17 +203,23 @@ export class Chunk implements IDict {
     this.forEachEnt((id, ent) => {
       // Movement & collision.
       let loc = ent.loc;
-      if (loc && (loc.dx != 0 || loc.dy != 0)) {
-        let nx = loc.x + loc.dx, ny = loc.y + loc.dy;
-        let ent = this.topEntityWith(nx, ny, $('solid'));
-        if (ent !== nil) {
-          let solid = ent.ref($('solid')) as Dict;
+      if (loc && (loc.dx != 0 || loc.dy != 0 || loc.dz != 0)) {
+        let dx = loc.dx, dy = loc.dy, dz = loc.dz;
+
+        let other = this.topEntityWith(loc.x + dx, loc.y + dy, $('solid'));
+        loc.dx = 0; loc.dy = 0; loc.dz = 0;
+
+        if (other !== nil) {
+          let solid = other.ref($('solid')) as Dict;
           if (dictRef(solid, $('solid'))) {
-            return;
+            let action = _eval(_root, [[$('Actions'), $$('collide')], ent, other, dx, dy, dz]);
+            _eval(_root, [[this, $$('perform')], _(action)]);
+            dx = expectNum(_root, _eval(_root, [_(action), $$('dx')]));
+            dy = expectNum(_root, _eval(_root, [_(action), $$('dy')]));
+            dz = expectNum(_root, _eval(_root, [_(action), $$('dz')]));
           }
         }
-        loc.x = nx; loc.y = ny;
-        loc.dx = 0; loc.dy = 0;
+        loc.x += dx; loc.y += dy; loc.z += dz;
       }
 
       // Ticks.

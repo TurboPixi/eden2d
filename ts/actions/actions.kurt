@@ -24,6 +24,12 @@
     ents: [list transports ent]
   })
 
+  collide: (ent other dx dy dz| {
+    action: :collide
+    ent other dx dy dz
+    ents: [list ent other]
+  })
+
   ignite: (igniter target | {
     action: :ignite
     igniter target

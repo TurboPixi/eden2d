@@ -12,7 +12,7 @@
       {inv-chunk: [World:make-chunk]}
       [Entity:make [list
         [Comps:Located:make]
-        [Comps:Solid:make 1]
+        [Comps:Solid:make]
         [Comps:Rendered:make -imgs:0]
         [Comps:Animated:make -imgs]
         [Comps:Ticks:make 1 (ent | ent:animated:tick ent)]

@@ -15,7 +15,10 @@ import animated from "./animated.kurt";
 import flaming from "./flaming.kurt";
 
 export function nsComps() {
-  let Comps = _ns("Comps", [solid, portable, ticks, usable, programmed, contains, transports, animated, flaming]);
+  let Comps = _ns("Comps", [
+    solid, portable, ticks, usable, programmed,
+    contains, transports, animated, flaming
+  ]);
 
   _eval(Comps, [_def, {
     'Located': Located.Dict,

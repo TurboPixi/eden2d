@@ -1,5 +1,22 @@
 [def {
   Solid: {
-    make: (mass | {solid: {solid: true mass}})
+    make: (height mass moveable | {
+      solid: {
+        ^: -impl
+        solid: true
+        -- TODO: Make an 'opt' macro
+        height: [if ?:height (height) 1]
+        mass: [if ?:mass (mass) 1]
+        moveable: [if ?:moveable (moveable) false]
+      }
+    })
+
+    -impl: {
+      prepare: (ent action | cond
+        [= action:action :collide] (
+          set action {dx:0 dy:0 dz:0}
+        )
+      )
+    }
   }
 }]

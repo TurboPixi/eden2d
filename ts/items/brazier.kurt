@@ -17,7 +17,7 @@
     make: (
       [Entity:make [list
         [Located:make]
-        [Solid:make 1]
+        [Solid:make]
         [Rendered:make Brazier:-imgs-unlit:0]
         [Animated:make -imgs-unlit]
         [Ticks:make 1 (ent | ent:animated:tick ent)]
