@@ -48,7 +48,7 @@
       perform: (ent action | cond
         [and @:moveable (= action:action :update)] (
           {below: [ent:top-with :solid]}
-          [if [? :below] (
+          [if [!= nil below] (
             {dz: [- ent:loc:z [+ below:loc:z below:solid:height]]}
             [-> ent:loc {z: [- ent:loc:z dz]}]
           )]

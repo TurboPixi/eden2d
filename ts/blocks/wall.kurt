@@ -1,4 +1,4 @@
-[def {
+[=> {
   Wall: {
     -adj: [list
       {dx:-1 dy: 0 bit:8}
@@ -34,7 +34,7 @@
     ])
 
     -impl: {
-      update: (ent | set ent:rendered { image:
+      update: (ent | -> ent:rendered { image:
         [@:imgs [
           apply + [
             map -adj (entry | {

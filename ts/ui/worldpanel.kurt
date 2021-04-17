@@ -53,10 +53,7 @@
         ]
       )
 
-      nuke-top: (do
-        [log [@:player:top-with :solid]]
-        [?= [@:player:top-with :solid] (<-:remove)]
-      )
+      nuke-top: (?= [@:player:top-with :solid] (<-:remove))
 
       enter: (
         {loc: @:player:loc}

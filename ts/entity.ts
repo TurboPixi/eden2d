@@ -32,7 +32,7 @@ export class Entity implements IDict {
     )`),
 
     'impl': {
-      'remove': _parse('Entity:remove', `(do [log @] [@:chunk:remove @])`),
+      'remove': _parse('Entity:remove', `(@:chunk:remove @)`),
 
       'jump': [$('chunk'), _blk, (env: Dict) => {
         let self = locEnt(env, _self);
