@@ -256,8 +256,10 @@ function applySpecial(env: Dict, list: EList): [EExpr, boolean] {
       case 'do':
         return [applyDo(env, list), true];
       case 'def':
+      case '=>':
         return [applyDef(env, list), true];
       case 'set':
+      case '->':
         return [applySet(env, list), true];
       case '?':
         return [applyExists(env, list), true];

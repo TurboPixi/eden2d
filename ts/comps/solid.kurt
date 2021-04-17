@@ -1,20 +1,46 @@
-[def {
+[=> {
   Solid: {
     make: (height mass moveable | {
       solid: {
         ^: -impl
-        solid: true
-        -- TODO: Make an 'opt' macro
+        -- TODO: Could simplify these with an 'opt' macro.
         height: [if ?:height (height) 1]
         mass: [if ?:mass (mass) 1]
-        moveable: [if ?:moveable (moveable) false]
+        moveable: [if ?:moveable (moveable) false] -- TODO: Actually do something with 'moveable'
+        solid: true
       }
     })
 
     -impl: {
       prepare: (ent action | cond
-        [= action:action :collide] (
-          set action {dx:0 dy:0 dz:0}
+        -- Consider collision actions only from the perspective of the stationary entity.
+        [and [= action:action :collide] (= ent action:moved)] (
+          {
+            moved: action:moved
+            hit: action:hit
+            -- Compute the moving/hit ents' bottom/top extents.
+            mb: moved:loc:z
+            mt: [+ mb moved:solid:height]
+            hb: hit:loc:z
+            ht: [+ hb hit:solid:height]
+          }
+          [do
+            -- Bottom collided; move up if it's only a single unit step.
+            [if [and [>= mb hb] [< mb ht]] (do
+              [if [= 1 [- ht mb]] (do
+                [-> action {dz:1}]             -- redirect up one unit
+                [-> {mb:[+ mb 1] mt:[+ mt 1]}] -- and adjust the moving ent's extents
+              )]
+            )]
+
+            -- See if the moving object collided with this one.
+            -- If so, stop it from moving.
+            [if [or (and [>= mb hb] [< mb ht])
+                    (and [>= mt hb] [< mt ht])]
+              -- Stop it from moving.
+              (-> action {dx:0 dy:0 dz:0})
+            ]
+          ]
         )
       )
     }

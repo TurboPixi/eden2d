@@ -200,23 +200,23 @@ export class Chunk implements IDict {
     let ticks = Math.floor((this._millis - this._lastTickMillis) / tickMillis);
     this._lastTickMillis += ticks * tickMillis;
 
-    this.forEachEnt((id, ent) => {
+    this.forEachEnt((id, moved) => {
       // Movement & collision.
-      let loc = ent.loc;
+      let loc = moved.loc;
       if (loc && (loc.dx != 0 || loc.dy != 0 || loc.dz != 0)) {
         let dx = loc.dx, dy = loc.dy, dz = loc.dz;
 
-        let other = this.topEntityWith(loc.x + dx, loc.y + dy, $('solid'));
+        let hit = this.topEntityWith(loc.x + dx, loc.y + dy, $('solid'));
         loc.dx = 0; loc.dy = 0; loc.dz = 0;
 
-        if (other !== nil) {
-          let solid = other.ref($('solid')) as Dict;
+        if (hit !== nil) {
+          let solid = hit.ref($('solid')) as Dict;
           if (dictRef(solid, $('solid'))) {
-            let action = _eval(_root, [[$('Actions'), $$('collide')], ent, other, dx, dy, dz]);
-            _eval(_root, [[this, $$('perform')], _(action)]);
-            dx = expectNum(_root, _eval(_root, [_(action), $$('dx')]));
-            dy = expectNum(_root, _eval(_root, [_(action), $$('dy')]));
-            dz = expectNum(_root, _eval(_root, [_(action), $$('dz')]));
+            let action = _eval(_root, [[$('Actions'), $$('collide')], moved, hit, dx, dy, dz]);
+            this.call('perform', _(action));
+            dx = _num(_(action), 'dx');
+            dy = _num(_(action), 'dy');
+            dz = _num(_(action), 'dz');
           }
         }
         loc.x += dx; loc.y += dy; loc.z += dz;
@@ -224,10 +224,10 @@ export class Chunk implements IDict {
 
       // Ticks.
       for (let i = 0; i < ticks; i++) {
-        let ticker = isDict(ent.ref($('ticker')));
+        let ticker = isDict(moved.ref($('ticker')));
         if (ticker !== nil) {
           let block = dictRef(ticker, $('block'));
-          _eval(this, [block, ent]);
+          _eval(this, [block, moved]);
         }
       }
     });
@@ -258,6 +258,14 @@ export class Chunk implements IDict {
       }
       fn(parseInt(id), this._entities[id]);
     }
+  }
+
+  private call(blockName: string, ...expr: EExpr[]): EExpr {
+    return this.eval([_(this), $$(blockName)], ...expr);
+  }
+
+  private eval(...expr: EExpr[]): EExpr {
+    return _eval(_root, expr);
   }
 
   freeze(): any {
@@ -295,3 +303,7 @@ registerDefroster('Chunk', (obj) => {
   chunk.thaw(obj.entities, obj.nextId, obj.defs);
   return chunk;
 });
+
+function _num(expr: EExpr, name: string): number {
+  return expectNum(_root, _eval(_root, [_(expr), $$(name)]));
+}

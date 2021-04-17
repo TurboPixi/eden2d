@@ -1,4 +1,4 @@
-[def {
+[=> {
   WorldPanel: {
     make: (
       {
@@ -16,12 +16,12 @@
         {x:0 y:0 chunk:[World:make-chunk]}
         [do
           [while (< x 10) (do
-            [set {y:0}]
+            [-> {y:0}]
             [while (< y 10) (do
               [chunk:add-at [Blocks:WoodFloor:make] x y -0.5]
-              [set {y: [+ y 1]}]
+              [-> {y: [+ y 1]}]
             )]
-            [set {x: [+ x 1]}]
+            [-> {x: [+ x 1]}]
           )]
           chunk
         ]
@@ -98,7 +98,7 @@
 
       save: (
         {frozen: [freeze World]}
-        [def @ {saved: frozen}]
+        [=> @ {saved: frozen}]
       )
 
       load: (if [? @ :saved]

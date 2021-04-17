@@ -7,7 +7,7 @@
       [Rendered:make Crate:-img]
       [Portable:make]
       [Contains:make]
-      [{solid:true} Solid:make]
+      [Solid:make]
     ])
   }
 }]
