@@ -1,10 +1,10 @@
-import { Container } from "pixi.js";
+import { Container, TilingSprite } from "pixi.js";
 import { Entity, locEnt } from "./entity";
 import { _eval } from "./script/eval";
 import { IDict, Dict, dictParent, dictRef, isDict, _root, isTagProp } from "./script/dict";
 import { $, $$, chuck, EDict, EExpr, ESym, nil, symName, _, _blk, _def, _self, _set } from "./script/script";
 import { World } from "./world";
-import { locNum, locSym, envEval, locDict, expectNum } from "./script/env";
+import { locNum, locSym, envEval, locDict, expectNum, lookupSym } from "./script/env";
 import { _parse } from "./script/parse";
 import { registerDefroster } from "./script/freezer";
 
@@ -51,11 +51,12 @@ export class Chunk implements IDict {
         );
       }],
 
-      'top-with': [$('x'), $('y'), $('comp'), _blk, (env: Dict) => {
+      'top-with': [$('x'), $('y'), $('comp'), $('except'), _blk, (env: Dict) => {
         return locChunk(env, _self).topEntityWith(
           locNum(env, $('x')),
           locNum(env, $('y')),
-          locSym(env, $('comp'))
+          locSym(env, $('comp')),
+          lookupSym(env, $('except')) as Entity,
         );
       }],
 
@@ -126,8 +127,16 @@ export class Chunk implements IDict {
     return ents;
   }
 
-  entitiesWith(x: number, y: number, comp: ESym): Entity[] {
-    return this.entitiesAt(x, y).filter((ent) => ent.hasComp(comp) ? ent : nil);
+  entitiesWith(comp: ESym, fn: (id: number, ent: Entity) => void) {
+    this.forEachEnt((id, ent) => {
+      if (ent.hasComp(comp)) {
+        fn(id, ent);
+      }
+    })
+  }
+
+  entitiesAtWith(x: number, y: number, comp: ESym, fn: (id: number, ent: Entity) => void) {
+    this.entitiesAt(x, y).filter((ent) => ent.hasComp(comp) ? ent : nil);
   }
 
   // Finds the top-most entity at an exact location.
@@ -140,15 +149,25 @@ export class Chunk implements IDict {
   }
 
   // Finds the top-most entity at an exact location, with the given component.
-  topEntityWith(x: number, y: number, comp: ESym): Entity {
+  topEntityWith(x: number, y: number, comp: ESym, except?: Entity): Entity {
     let ents = this.entitiesAt(x, y);
+    let top: Entity = nil;
+    let topZ = -10000;
     for (let i = ents.length-1; i >= 0; i--) {
       let ent = ents[i];
-      if (ent.ref(comp) !== nil) {
-        return ent;
+      if (ent != except && ent.ref(comp) !== nil) {
+        let z = ent.loc.z;
+        let solid = ent.ref($('solid')) as Dict;
+        if (solid) {
+          z += expectNum(_root, dictRef(solid, $('height')));
+        }
+        if (z > topZ) {
+          top = ent;
+          topZ = z;
+        }
       }
     }
-    return nil;
+    return top;
   }
 
   // Finds the top-most entity near a location (within one unit), with the given component.
@@ -200,8 +219,8 @@ export class Chunk implements IDict {
     let ticks = Math.floor((this._millis - this._lastTickMillis) / tickMillis);
     this._lastTickMillis += ticks * tickMillis;
 
-    this.forEachEnt((id, moved) => {
-      // Movement & collision.
+    // Movement & collision.
+    this.entitiesWith($('loc'), (id, moved) => {
       let loc = moved.loc;
       if (loc && (loc.dx != 0 || loc.dy != 0 || loc.dz != 0)) {
         let dx = loc.dx, dy = loc.dy, dz = loc.dz;
@@ -214,20 +233,29 @@ export class Chunk implements IDict {
           if (dictRef(solid, $('solid'))) {
             let action = _eval(_root, [[$('Actions'), $$('collide')], moved, hit, dx, dy, dz]);
             this.call('perform', _(action));
-            dx = _num(_(action), 'dx');
-            dy = _num(_(action), 'dy');
-            dz = _num(_(action), 'dz');
+            dx = _num(action, 'dx');
+            dy = _num(action, 'dy');
+            dz = _num(action, 'dz');
           }
         }
         loc.x += dx; loc.y += dy; loc.z += dz;
       }
+    });
 
-      // Ticks.
+    // Updates.
+    // TODO: Limit this to recently moved entities and adjacencies.
+    this.entitiesWith($('solid'), (id, ent) => {
+      let action = _eval(_root, [[$('Actions'), $$('update')], ent]);
+      this.call('perform', _(action));
+    });
+
+    // Tickers.
+    this.entitiesWith($('ticker'), (id, ent) => {
       for (let i = 0; i < ticks; i++) {
-        let ticker = isDict(moved.ref($('ticker')));
+        let ticker = isDict(ent.ref($('ticker')));
         if (ticker !== nil) {
           let block = dictRef(ticker, $('block'));
-          _eval(this, [block, moved]);
+          _eval(this, [block, ent]);
         }
       }
     });

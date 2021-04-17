@@ -1,4 +1,10 @@
 [=> {
+  update: (ent | {
+    action: :update
+    ent
+    ents: [list ent]
+  })
+
   move: (target dx dy | {
     action: :move
     target dx dy

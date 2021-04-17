@@ -237,8 +237,8 @@ export let builtinDefs = [_def, {
       let block = isBlock(expr);
       if (block !== nil) {
         // Eval block in the current env, so that the block can reference
-        // the result of the last expression as 'prev'.
-        val = _eval(env, [{prev: cur}, expr]);
+        // the result of the last expression as '<-'.
+        val = _eval(env, [{'<-': cur}, expr]);
         cur = isDict(val);
         continue;
       }

@@ -17,7 +17,7 @@
       )
 
       erase: (
-        ?= [@:cursor:top-with :glyph] (@:chunk:remove prev)
+        ?= [@:cursor:top-with :glyph] (@:chunk:remove <-)
       )
 
       write: (type |

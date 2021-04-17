@@ -1,19 +1,21 @@
 [def {
   BlueTile: {
-    -img: [Rendered:image "blocks/floors.png" {x:0 y:16 ay:8}]
+    -img: [Rendered:image "blocks/floors.png" {x:0 y:16 ay:16}]
 
     make: (Entity:make [list
       [Located:make]
       [Rendered:make -img]
+      [Solid:make]
     ])
   }
 
   WoodFloor: {
-    -img: [Rendered:image "blocks/floors.png" {x:112 y:0 ay:8}]
+    -img: [Rendered:image "blocks/floors.png" {x:112 y:0 ay:16}]
 
     make: (Entity:make [list
       [Located:make]
       [Rendered:make -img]
+      [Solid:make]
     ])
   }
 }]

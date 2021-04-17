@@ -18,7 +18,7 @@
           [while (< x 10) (do
             [-> {y:0}]
             [while (< y 10) (do
-              [chunk:add-at [Blocks:WoodFloor:make] x y -0.5]
+              [chunk:add-at [Blocks:WoodFloor:make] x y -1]
               [-> {y: [+ y 1]}]
             )]
             [-> {x: [+ x 1]}]
@@ -48,13 +48,20 @@
 
           -- TODO: It's a little gross having to manually update all the adjacent walls.
           -- Find a way to generalize this so it's automatic.
+          -- TODO: Maybe just use the update code?
           [for-each [wall:near-with :wall] (adj | adj:wall:update adj)]
         ]
       )
 
+      nuke-top: (do
+        [log [@:player:top-with :solid]]
+        [?= [@:player:top-with :solid] (<-:remove)]
+      )
+
       enter: (
-        [?= [@:player:chunk:top-with @:player:loc:x @:player:loc:y :transports] (
-          @:chunk:perform [Actions:enter prev @:player]
+        {loc: @:player:loc}
+        [?= [@:player:chunk:top-with loc:x loc:y :transports] (
+          @:chunk:perform [Actions:enter <- @:player]
         )]
       )
 

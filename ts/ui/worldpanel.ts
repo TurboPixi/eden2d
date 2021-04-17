@@ -95,16 +95,17 @@ export class WorldPanel implements Panel {
       case Key.LEFT:  this.call('move', -1,  0); break;
       case Key.RIGHT: this.call('move',  1,  0); break;
 
-      case Key.ENTER: this.call('enter');   break;
-      case Key.SPACE: this.call('take');    break;
-      case Key.R:     this.call('put');     break;
+      case Key.ENTER: this.call('enter'); break;
+      case Key.SPACE: this.call('take');  break;
+      case Key.R:     this.call('put');   break;
 
       case Key.E:     this.progSelected();                break;
       case Key.Q:     this._inputState = InputState.use;  break;
       case Key.O:     this._inputState = InputState.open; break;
 
-      case Key.F:     this.call('make-wall', [$('Blocks'), $$('Bar')]); break;
-      case Key.G:     this.call('make-wall', [$('Blocks'), $$('StoneWall')]); break;
+      case Key.F:         this.call('make-wall', [$('Blocks'), $$('Bar')]); break;
+      case Key.G:         this.call('make-wall', [$('Blocks'), $$('StoneWall')]); break;
+      case Key.BACKSPACE: this.call('nuke-top'); break;
 
       case Key._1: case Key._2: case Key._3:
       case Key._4: case Key._5: case Key._6:

@@ -32,7 +32,8 @@ export class Entity implements IDict {
     )`),
 
     'impl': {
-      // TODO: Put these where they belong in impl.
+      'remove': _parse('Entity:remove', `(do [log @] [@:chunk:remove @])`),
+
       'jump': [$('chunk'), _blk, (env: Dict) => {
         let self = locEnt(env, _self);
         let to = locChunk(env, $('chunk'));
@@ -42,7 +43,7 @@ export class Entity implements IDict {
 
       'move': _parse('Entity:move', `(dx dy dz | @:move-to [+ @:loc:x dx] [+ @:loc:y dy] [+ @:loc:z dz])`),
       'move-to': _parse('Entity:move-to', `(x y z | set @:loc {x y z})`),
-      'top-with': _parse('Entity:top-with', `(comp | @:chunk:top-with @:loc:x @:loc:y comp)`),
+      'top-with': _parse('Entity:top-with', `(comp | @:chunk:top-with @:loc:x @:loc:y comp @)`),
       'near-with': _parse('Entity:near-with', `(comp | @:chunk:near-with @:loc:x @:loc:y comp)`),
 
       'prepare': _parse('Entity:prepare', `(action |
