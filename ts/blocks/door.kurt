@@ -16,19 +16,19 @@
     -impl: {
       perform: (ent action | cond
         (and [= action:action :use] [= @:code [?= action :object :key :code]]) (do
-          [set @ {locked: [! @:locked]}]
+          [-> @ {locked: [! @:locked]}]
           [@:-update ent]
         )
         (and [= action:action :open] [! @:locked]) (do
-          [set @ {open: [! @:open]}]
+          [-> @ {open: [! @:open]}]
           [@:-update ent]
         )
       )
 
       -update: (ent | do
-        [set ent:rendered {image: [if @:open @:open-img @:closed-img]}]
+        [-> ent:rendered {image: [if @:open @:open-img @:closed-img]}]
         [if [? ent :solid] (
-          set ent:solid {solid: [! @:open]}
+          -> ent:solid {solid: [! @:open]}
         )]
       )
     }

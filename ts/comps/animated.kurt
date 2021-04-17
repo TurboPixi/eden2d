@@ -14,8 +14,8 @@
         { next: [+ 1 @:frame]
           frame: [if [> next [- [len @:frames] 1]] 0 next] }
         [do
-          [set ent:rendered {image: [@:frames frame]}]
-          [set ent:animated {frame: frame}]
+          [-> ent:rendered {image: [@:frames frame]}]
+          [-> ent:animated {frame: frame}]
         ]
       )
     }

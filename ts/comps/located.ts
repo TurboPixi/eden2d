@@ -14,7 +14,7 @@ export class Located extends NativeComp {
     'impl': _parse('Located:impl', `{
       perform: (ent action |
         if [= action:action :move] (do
-          [set @ {dx: action:dx dy: action:dy}]
+          [-> @ {dx: action:dx dy: action:dy}]
         )
       )
     }`),

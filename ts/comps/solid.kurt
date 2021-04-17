@@ -16,31 +16,20 @@
         -- Consider collision actions only from the perspective of the stationary entity.
         [and [= action:action :collide] (= ent action:moved)] (
           {
-            moved: action:moved
-            hit: action:hit
-
             -- Compute the moving/hit ents' bottom/top extents.
+            moved: action:moved
             mb: moved:loc:z
             mt: [+ mb moved:solid:height]
+            hit: action:hit
             hb: hit:loc:z
             ht: [+ hb hit:solid:height]
           }
-          [do
-            -- Bottom collided; move up if it's only a single unit step.
-            [if [and [>= mb hb] [< mb ht]] (do
-              [if [= 1 [- ht mb]] (do
-                [-> action {dz:1}]             -- redirect up one unit
-                [-> {mb:[+ mb 1] mt:[+ mt 1]}] -- and adjust the moving ent's extents
-              )]
-            )]
-
-            -- See if the moving object collided with this one.
-            -- If so, stop it from moving.
-            [if [or (and [>= mb hb] [< mb ht])
-                    (and [>= mt hb] [< mt ht])]
-              -- Stop it from moving.
-              (-> action {dx:0 dy:0 dz:0})
-            ]
+          -- See if the moving object collided with this one.
+          -- If so, stop it from moving.
+          [if [or (and [>= mb hb] [> [- ht mb] 1]) -- leave room to step up 1m
+                  (and [>= mt hb] [< mt ht])]
+            -- Stop it from moving.
+            (-> action {dx:0 dy:0 dz:0})
           ]
         )
       )

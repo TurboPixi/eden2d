@@ -214,9 +214,12 @@ export class Chunk implements IDict {
   tick(deltaMillis: number) {
     // Ticker handling.
     // TODO: Simple 4Hz for now; use ticker freq.
-    let tickMillis = 250;
+    let tickMillis = 125;
     this._millis += deltaMillis;
     let ticks = Math.floor((this._millis - this._lastTickMillis) / tickMillis);
+    if (ticks == 0) {
+      return;
+    }
     this._lastTickMillis += ticks * tickMillis;
 
     // Movement & collision.

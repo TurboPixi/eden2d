@@ -13,16 +13,20 @@
     ])
 
     impl: {
-      prepare: (ent action | nil)
       perform: (ent action |
         if [= action:action :open] (do
-          [set @ {open: [! @:open]}]
+          [-> @ {open: [! @:open]}]
           [@:-update ent]
         )
       )
 
       -update: (ent |
-        set ent:rendered {image: [if @:open -img-open -img-closed]}
+        -> ent:rendered {
+          image: [if @:open
+            -img-open
+            -img-closed
+          ]
+        }
       )
     }
   }

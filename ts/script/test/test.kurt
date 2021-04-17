@@ -5,7 +5,7 @@
     expect: (expect expr | if [= expect expr]
       (log "--[ pass ]-")
       (do
-        [set {failures: [+ failures 1]}]
+        [-> {failures: [+ failures 1]}]
         [log "--[ fail ]-"]
         [log expect]
         [log expr]
@@ -28,9 +28,9 @@
     [run "quoted list" (expect :[42 54] :[42 54])]
 
     [run "basic accessors" (do
-      [def env {foo: 42}]
+      [=> env {foo: 42}]
       [expect 42 [env :foo]]
-      [set {foo: 54}]
+      [-> {foo: 54}]
       [expect 54 foo]
     )]
 
@@ -39,7 +39,7 @@
       [do
         [expect true [? bag :foo]]
         [expect 42 bag:foo]
-        [set bag {foo: 54}]
+        [-> bag {foo: 54}]
         [expect 54 bag:foo]
         [expect true [? bag :bar]]
         [expect false [? bag :baz]]
@@ -49,7 +49,7 @@
     [run "dict accessors" (
       {thing: 42}
       [do
-        [def {bag: {val: thing}}]
+        [=> {bag: {val: thing}}]
         [expect {val: 42} bag]
         [expect 42 [bag :val]]
       ]
@@ -57,22 +57,22 @@
 
     [run "defs" (do
       [expect false [? :foo]]
-      [def {foo: 42}]
+      [=> {foo: 42}]
       [expect true [? :foo]]
       [expect 42 foo]
 
       [{foo: 42} (do
-        [def {bar: 54}]
+        [=> {bar: 54}]
         [expect true [? :bar]]
       )]
       [expect false [? :bar]]
     )]
 
     [run "simple def/set" (do
-      [def env :bag {}]
-      [def bag :foo 42]
+      [=> env :bag {}]
+      [=> bag :foo 42]
       [expect 42 bag:foo]
-      [set bag :foo 54]
+      [-> bag :foo 54]
       [expect 54 bag:foo]
     )]
 
@@ -86,7 +86,7 @@
 
     [run "basic block scoping" (
       {fn: ( do
-        [def {foo: 42}]
+        [=> {foo: 42}]
         [+ foo 1]
       )}
       [expect 43 [fn]]
@@ -104,7 +104,7 @@
     )]
 
     -- TODO: Explicit block env in declaration NYI.
-    -- [def {
+    -- [=> {
     --   env: {x: 22}
     --   fn: [y | env | + x y]
     -- }]
@@ -113,9 +113,9 @@
     -- [run "blocks with explicit env" (
     --   {fn2: [y | + x y]}
     --   [do
-    --     [def {env2: {^: env x: 23}}]
+    --     [=> {env2: {^: env x: 23}}]
     --     [expect 43 [{^: env2 y: 20} fn2]]
-    --     [def {env3: {x: 24}}]
+    --     [=> {env3: {x: 24}}]
     --     [expect 44 [{^: env3 y: 20} (+ x y)]]
     --   ]
     -- )]
@@ -127,9 +127,9 @@
     )]
 
     [run "full quoting" (do
-      [def {foo: \42}]
+      [=> {foo: \42}]
       [expect 42 /foo]
-      [def {
+      [=> {
         bag: {contents: 42}
         foo: \contents
       }]
@@ -140,7 +140,7 @@
     [run "basic do" (
       expect "w00t"
       [do
-        [def {foo: "w00t"}]
+        [=> {foo: "w00t"}]
         [log foo]
         foo
       ]
@@ -170,9 +170,9 @@
     [run "Reference to outer env" (
       {val: 42}
       [do
-        [def env {
+        [=> env {
           fn: (x | do
-            [def {vals: [list x val]}]
+            [=> {vals: [list x val]}]
             [{vals} +]
           )
         }]
@@ -201,14 +201,14 @@
     [run "basic if with expressions" (do
       [expect 42 [if true 42]]
       [expect 42 [(if true 42)]]
-      [def {foo: "bar"}]
+      [=> {foo: "bar"}]
       [expect 42  [if [= foo "bar"] 42]]
-      [set {foo: "baz"}]
+      [-> {foo: "baz"}]
       [expect 43 [if [= foo "bar"] 42 43]]
     )]
 
     [run "simple closure over lexical env" (do
-      [def {
+      [=> {
         outer: 42
         fn: (x | + x outer)
       }]
@@ -218,7 +218,7 @@
     [run "closure over enclosing env, after return" (
       {
         fn: (do
-          [def {hidden: 42}]
+          [=> {hidden: 42}]
           (hidden)
         )
         cl: [fn]
@@ -234,7 +234,7 @@
       [do
         [for-each list (val |
           if [> val max]
-            (set {max: val})
+            (-> {max: val})
           )
         ]
         [expect 4 max]
@@ -303,11 +303,11 @@
     )]
 
     [run "self vs env" (do
-      [def {Thing: {
+      [=> {Thing: {
         val: 42
         fn: (if true
           (do
-            [def {val: 43}]
+            [=> {val: 43}]
             @:val
           )
         )
@@ -316,25 +316,25 @@
     )]
 
     [run "test set-parent" (do
-      [def {
+      [=> {
         Thing: {val1: 42}
         thing: {
           val2: 54
           fn: (+ @:val1 @:val2)
         }
       }]
-      [set thing {^: Thing}]
+      [-> thing {^: Thing}]
       [expect 96 [thing:fn]]
     )]
 
     [run "rest params" (do
-      [def {
+      [=> {
         fn: (a b ...rest | do
-          [def {x: [+ a b]}]
+          [=> {x: [+ a b]}]
 
           -- TODO: Replace this with a splat... when they're implemented.
           [for-each rest (val |
-            [set {x: [+ x val]}]
+            [-> {x: [+ x val]}]
           )]
           x
         )
@@ -345,30 +345,30 @@
     )]
 
     [run "list accessors" (do
-      [def {things: :[1 2 3 4 5]}]
+      [=> {things: :[1 2 3 4 5]}]
       [expect 2 [things 1]]
       [expect 3 things:2]
       [expect 4 [things [+ 1 2]]]
     )]
 
     [run "for-each callbacks" (do
-      [def {
+      [=> {
         Comp: {
           make: ({
             ^: Comp
             foo: "orig"
           })
-          mutate: (set @ {foo: "mutated"})
+          mutate: (-> @ {foo: "mutated"})
         }
       }]
 
       -- These are cases where we ended up with inadvertent copies of 'comp',
       -- so mutations wouldn't stick.
-      [def {comps: {comp: [Comp:make]}}]
+      [=> {comps: {comp: [Comp:make]}}]
       [for-each-entry comps (name value | [value:mutate])]
       [expect "mutated" comps:comp:foo]
 
-      [def {comps: [list [Comp:make]]}]
+      [=> {comps: [list [Comp:make]]}]
       [for-each comps (value | [value:mutate])]
       [expect "mutated" comps:0:foo]
     )]
@@ -387,7 +387,7 @@
     )]
 
     [run "if chain" (do
-      [def {
+      [=> {
         foo: {
           bar: {
             baz: 42
@@ -416,16 +416,16 @@
     )]
 
     [run "todo" (do
-      [def {
+      [=> {
         make-thing: (do
-          [def {thing: 42}]
+          [=> {thing: 42}]
           (foo | do
-            [set {thing: [+ 1 thing]}]
+            [-> {thing: [+ 1 thing]}]
             thing
           )
         )
       }]
-      [def {thang: [make-thing]}]
+      [=> {thang: [make-thing]}]
       [thang]
       [thang]
       [thang]
@@ -433,7 +433,7 @@
     )]
 
     [run "todo2" (do
-      [def {
+      [=> {
         thing: {
           foo: 42
           bar: (foo)
@@ -451,19 +451,19 @@
     )]
 
     [run "freeze / thaw" (do
-      [def {
+      [=> {
         obj: {
           x: [+ 1 2]
           fn: (x | + x 1)
         }
         frozen: [freeze obj]
       }]
-      [def {thawed: [thaw frozen]}]
+      [=> {thawed: [thaw frozen]}]
       [expect 4 [thawed:fn thawed:x]]
     )]
 
     [run "cond" (do
-      [def {
+      [=> {
         x: 42
         y: 54
         z: 37
@@ -478,7 +478,7 @@
       ]]
       [expect "baz" [cond
         (= x 43) "foo"
-        (= y 55) (set {z: 38})
+        (= y 55) (-> {z: 38})
         (= z 38) "bar"
         (= z 37) "baz"
         :else    "nope"

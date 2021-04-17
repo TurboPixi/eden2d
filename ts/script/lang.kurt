@@ -59,8 +59,8 @@ TODO:
   [block expr*]           -- rewrite to [{p0:expr0 p1:expr1 ...} expr] -- bind expr* to params, in order
 
 -[ Definition ]-
-  [def (env) {sym: expr ...}]  -- define :sym in env
-  [set (env) {sym: expr ...}]  -- set :sym in env (if defined)
+  [=> (env) {sym: expr ...}]  -- define :sym in env
+  [-> (env) {sym: expr ...}]  -- set :sym in env (if defined)
   [? (env):sym]                -- true if :sym is defined in env
 
 -[ Blocks ]-
@@ -109,7 +109,7 @@ TODO:
   [do
     [def :max 0]
     [for-each list ([val]
-      [if [> max val] (set :max val)]
+      [if [> max val] (-> :max val)]
     )]
   ]
 )]

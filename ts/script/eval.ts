@@ -341,7 +341,7 @@ function applyDef(env: Dict, list: EList): EExpr {
 }
 
 function applySet(env: Dict, list: EList): EExpr {
-  // TODO: Make it possible to [set target sym-holding-dict], like it is for [def] above.
+  // TODO: Make it possible to [-> target sym-holding-dict], like it is for [=>] above.
   switch (list.length) {
     case 2: {
       // If env is unspecified, set the value at the nearest env where it's defined.
