@@ -30,9 +30,9 @@
       make-items: (chunk0 chunk1 | do
         [chunk0:add-at [Blocks:Stairs:make chunk1 0 5 false] 1 5 0]
         [chunk1:add-at [Blocks:Stairs:make chunk0 2 5 true] 1 5 0]
-        [chunk0:add-at [Items:Wand:make] 0 2 0]
-        [chunk0:add-at [Items:Key:make 123] 1 0 0]
-        [chunk0:add-at [Items:Key:make 456] 2 0 0]
+        [chunk0:add-at [Items:Wand:make] 1 2 0]
+        [chunk0:add-at [Items:Key:make 123] 1 1 0]
+        [chunk0:add-at [Items:Key:make 456] 2 1 0]
         [chunk0:add-at [Items:Brazier:make] 4 4 0]
         [chunk0:add-at [Items:Crate:make] 5 5 0]
         [chunk0:add-at [Items:Chest:make] 6 3 0]
@@ -40,11 +40,11 @@
       )
 
       make-wall: (wall |
-        {loc:  @:player:loc
-         wall: [wall:make]
-        }
+        {loc:   @:player:loc
+         wall:  [wall:make]
+         under: [@:player:top-with :solid]}
         [do
-          [@:chunk:add-at wall loc:x loc:y 0]
+          [@:chunk:add-at wall loc:x loc:y [if ?:under (under:top) 0]]
 
           -- TODO: It's a little gross having to manually update all the adjacent walls.
           -- Find a way to generalize this so it's automatic.

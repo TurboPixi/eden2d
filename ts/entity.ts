@@ -62,6 +62,10 @@ export class Entity implements IDict {
         ]
       )`),
 
+      'top': _parse('Entity:top', `(
+        if [and [? @ :loc] [? @ :solid]] (+ @:loc:z @:solid:height) 0
+      )`),
+
       'freeze': (env: Dict) => {
         return () => {
           return { native: 'Entity.Dict' };
