@@ -1,13 +1,13 @@
 [=> {
   Solid: {
-    make: (height mass moveable | {
+    make: (height mass moveable supports | {
       solid: {
         ^: -impl
         -- TODO: Could simplify these with an 'opt' macro.
         height: [if ?:height (height) 1]
         mass: [if ?:mass (mass) 1]
         moveable: [if ?:moveable (moveable) false]
-        solid: true
+        supports: [if ?:supports (supports) true]
       }
     })
 
@@ -24,10 +24,12 @@
             hb: hit:loc:z
             ht: [+ hb hit:solid:height]
           }
+
           -- See if the moving object collided with this one.
           -- If so, stop it from moving.
-          [if [or (and [>= mb hb] [> [- ht mb] 1]) -- leave room to step up 1m
-                  (and [>= mt hb] [< mt ht])]
+          [if [or [! hit:solid:supports]
+                  (or (and [>= mb hb] [> [- ht mb] 1]) -- leave room to step up 1m
+                      (and [>= mt hb] [< mt ht]))]
             -- Stop it from moving.
             (-> action {dx:0 dy:0 dz:0})
           ]

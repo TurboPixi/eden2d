@@ -232,14 +232,11 @@ export class Chunk implements IDict {
         loc.dx = 0; loc.dy = 0; loc.dz = 0;
 
         if (hit !== nil) {
-          let solid = hit.ref($('solid')) as Dict;
-          if (dictRef(solid, $('solid'))) {
-            let action = _eval(_root, [[$('Actions'), $$('collide')], moved, hit, dx, dy, dz]);
-            this.call('perform', _(action));
-            dx = _num(action, 'dx');
-            dy = _num(action, 'dy');
-            dz = _num(action, 'dz');
-          }
+          let action = _eval(_root, [[$('Actions'), $$('collide')], moved, hit, dx, dy, dz]);
+          this.call('perform', _(action));
+          dx = _num(action, 'dx');
+          dy = _num(action, 'dy');
+          dz = _num(action, 'dz');
         }
         loc.x += dx; loc.y += dy; loc.z += dz;
       }

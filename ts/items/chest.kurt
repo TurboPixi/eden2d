@@ -7,26 +7,22 @@
     make: (Entity:make [list
       [Located:make]
       [Rendered:make Chest:-img-closed]
-      [Solid:make]
+      [{height:0.25} Solid:make]
       [Usable:make (user obj tgt | obj:programmed:run user tgt)]
       {chest: {^: impl open: false}}
     ])
 
     impl: {
-      perform: (ent action |
-        if [= action:action :open] (do
+      perform: (ent action | cond
+        [= action:action :open] (do
           [-> @ {open: [! @:open]}]
           [@:-update ent]
         )
       )
 
-      -update: (ent |
-        -> ent:rendered {
-          image: [if @:open
-            -img-open
-            -img-closed
-          ]
-        }
+      -update: (ent | do
+        [-> ent:solid {supports: [! @:open]}]
+        [-> ent:rendered {image: [if @:open -img-open -img-closed]}]
       )
     }
   }

@@ -17,7 +17,7 @@
     make: (
       [Entity:make [list
         [Located:make]
-        [Solid:make]
+        [{height:0.5} Solid:make]
         [Rendered:make Brazier:-imgs-unlit:0]
         [Animated:make -imgs-unlit]
         [Ticks:make 1 (ent | ent:animated:tick ent)]
@@ -30,6 +30,7 @@
     perform: (ent action | cond
       (and (= :use action:action) (= true [?= action:object :flaming])) (do
         [-> @ {lit: true}]
+        [-> ent:solid {supports: [! @:lit]}]
         [-> ent:animated {
           frames: [if ent:brazier:lit
             (Brazier:-imgs-lit)
