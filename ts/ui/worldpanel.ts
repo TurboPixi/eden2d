@@ -1,6 +1,5 @@
 import { Container, Graphics } from "pixi.js";
-import { Chunk } from "../chunk";
-import { ProgPanel } from "./progpanel";
+import { Chunk, isChunk } from "../chunk";
 import { Panel, PanelOwner } from "../eden";
 import { Entity, isEntity } from "../entity";
 import { Key } from "./keys";
@@ -8,24 +7,17 @@ import { Dict, dictDef, isDict, _root } from "../script/dict";
 import { _eval } from "../script/eval";
 import { $, $$, EExpr, _ } from "../script/script";
 
-enum InputState {
-  default = 0,
-  use = 1,
-  open = 2,
-}
-
 export class WorldPanel implements Panel {
   private _container: Container;
   private _chunk: Chunk;
   private _invChunk: Chunk;
   private _player: Entity;
   private _impl: Dict;
-  private _inputState: InputState = InputState.default;
 
   constructor(private _owner: PanelOwner) {
     this._impl = isDict(_eval(_root, [[[$('UI'), $$('WorldPanel')], $$('make')]]));
 
-    let chunk = this.createChunk();
+    let chunk = isChunk(this.call('create-chunk'));
     this._player = isEntity(this.eval([[_(chunk), $$('add')], [[[$('Actors'), $$('Player')], $$('make')]]]));
     dictDef(this._impl, $('player'), this._player as Dict); // copy into impl
 
@@ -47,13 +39,6 @@ export class WorldPanel implements Panel {
     return this._container;
   }
 
-  private createChunk(): Chunk {
-    let chunk0 = this.call('toy-chunk') as Chunk;
-    let chunk1 = this.call('toy-chunk') as Chunk;
-    this.call('make-items', chunk0, chunk1);
-    return chunk0;
-  }
-
   tick(deltaMillis: number): void {
     // Follow the player across chunks.
     let chunk = this._player.chunk;
@@ -73,77 +58,20 @@ export class WorldPanel implements Panel {
   }
 
   keyDown(evt: KeyboardEvent) {
-    switch (this._inputState) {
-      case InputState.default:
-        this.defaultKey(evt);
-        break;
-
-      case InputState.use:
-        this.useKey(evt);
-        break;
-
-      case InputState.open:
-        this.openKey(evt);
-        break;
-    }
-  }
-
-  private defaultKey(evt: KeyboardEvent) {
     switch (evt.keyCode) {
-      case Key.UP:    this.call('move',  0, -1); break;
-      case Key.DOWN:  this.call('move',  0,  1); break;
-      case Key.LEFT:  this.call('move', -1,  0); break;
-      case Key.RIGHT: this.call('move',  1,  0); break;
+      default:
+        this.call('key-down', evt.keyCode);
+        break;
 
-      case Key.ENTER: this.call('enter'); break;
-      case Key.SPACE: this.call('take');  break;
-      case Key.R:     this.call('put');   break;
-
-      case Key.E:     this.progSelected();                break;
-      case Key.Q:     this._inputState = InputState.use;  break;
-      case Key.O:     this._inputState = InputState.open; break;
-
-      case Key.F:         this.call('make-wall', [$('Blocks'), $$('Bar')]); break;
-      case Key.G:         this.call('make-wall', [$('Blocks'), $$('StoneWall')]); break;
-      case Key.BACKSPACE: this.call('nuke-top'); break;
-
-      case Key._1: case Key._2: case Key._3:
-      case Key._4: case Key._5: case Key._6:
-      case Key._7: case Key._8: case Key._9: this.call('select-inv', evt.keyCode - Key._1); break;
-      case Key._0:                           this.call('select-inv', 9);                    break;
-
-      case Key.F1: this.call('save'); evt.preventDefault(); break;
+      // Save/load freezing experiment. Doesn't actually work right yet.
+      case Key.F1:
+        this.call('save');
+        evt.preventDefault();
+        break;
       case Key.F2:
         evt.preventDefault();
         console.log(this.call('load'));
         break;
-    }
-  }
-
-  private useKey(evt: KeyboardEvent) {
-    switch (evt.keyCode) {
-      case Key.UP:    this.call('use-selected',  0, -1); break;
-      case Key.DOWN:  this.call('use-selected',  0,  1); break;
-      case Key.LEFT:  this.call('use-selected', -1,  0); break;
-      case Key.RIGHT: this.call('use-selected',  1,  0); break;
-    }
-    this._inputState = InputState.default;
-  }
-
-  private openKey(evt: KeyboardEvent) {
-    switch (evt.keyCode) {
-      case Key.UP:    this.call('open',  0, -1); break;
-      case Key.DOWN:  this.call('open',  0,  1); break;
-      case Key.LEFT:  this.call('open', -1,  0); break;
-      case Key.RIGHT: this.call('open',  1,  0); break;
-    }
-    this._inputState = InputState.default;
-  }
-
-  private progSelected() {
-    let programmed = this.call('selected-programmed');
-    if (programmed) {
-      this._owner.showPanel(new ProgPanel(programmed, this._owner));
     }
   }
 
@@ -163,4 +91,12 @@ export class WorldPanel implements Panel {
   private eval(...expr: EExpr[]): EExpr {
     return _eval(_root, expr);
   }
+
+  // TODO: Reimplement this in kurt -- need to expose show-chunk.
+  // private progSelected() {
+  //   let programmed = this.call('selected-programmed');
+  //   if (programmed) {
+  //     this._owner.showPanel(new ProgPanel(programmed, this._owner));
+  //   }
+  // }
 }

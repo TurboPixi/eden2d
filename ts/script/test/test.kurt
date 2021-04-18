@@ -497,6 +497,28 @@
       ]]
     )]
 
+    [run "switch" (do
+      [=> {foo: 42}]
+      [expect :yes [switch foo
+        54 (:no)
+        42 (:yes)
+      ]]
+      [expect :yes [switch [+ foo 2]
+        54 (:no)
+        42 (:no)
+        44 (:yes)
+      ]]
+      [expect 42 [switch :yes
+        :no 54
+        :default (* 7 6)
+      ]]
+      [expect :yes [switch 5
+        0                           (:no)
+        10                          (:no)
+        (x | and [>= x 1] [<= x 9]) (:yes)
+      ]]
+    )]
+
     -- Wrap up.
     [log "--[ complete ]--"]
     [if [= 0 failures]

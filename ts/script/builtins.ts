@@ -109,6 +109,28 @@ export let builtinDefs = [_def, {
     return nil;
   }],
 
+  'switch': [$('expr'), $('...exprs'), _blk, (env: Dict) => {
+    let expr = dictRef(env, $('expr'));
+
+    let exprs = locList(env, $('exprs'));
+    if (exprs.length % 1 != 0) {
+      throw "switch body requires an even number of arguments";
+    }
+    for (let i = 0; i < exprs.length; i += 2) {
+      let val = exprs[i], result = exprs[i + 1];
+      if (isBlock(val)) {
+        if (expectBool(env, _eval(env, [val, expr]))) {
+          return _eval(env, [{}, result]);
+        }
+      }
+      if (eq(expr, val) ||
+          (isSym(val)?.["[sym]"] == 'default')) {
+        return _eval(env, [{}, result]);
+      }
+    }
+    return nil;
+  }],
+
   'while': [$('cond'), $('expr'), _blk, (env: Dict) => {
     let cond = dictRef(env, $('cond'));
     let expr = dictRef(env, $('expr'));

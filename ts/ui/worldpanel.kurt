@@ -5,14 +5,30 @@
         ^: WorldPanel:impl
         player: nil
         chunk: nil
+        input-state: :default
       }
     )
 
     impl: {
-      move: (dx dy | @:chunk:perform [Actions:move @:player dx dy])
+      create-chunk: (
+        {chunk0: [@:toy-chunk]
+         chunk1: [@:toy-chunk]}
+        [do
+          [chunk0:add-at [Blocks:Stairs:make chunk1 0 5 false] 1 5 0]
+          [chunk1:add-at [Blocks:Stairs:make chunk0 2 5 true] 1 5 0]
+          [chunk0:add-at [Items:Wand:make] 1 2 0]
+          [chunk0:add-at [Items:Key:make 123] 1 1 0]
+          [chunk0:add-at [Items:Key:make 456] 2 1 0]
+          [chunk0:add-at [Items:Brazier:make] 4 4 0]
+          [chunk0:add-at [Items:Crate:make] 5 5 0]
+          [chunk0:add-at [Items:Chest:make] 6 3 0]
+          [chunk0:add-at [Items:Torch:make] 3 3 0]
+          chunk0
+        ]
+      )
 
       toy-chunk: (
-        -- Ew. This would be so much less foul with simple Clojure-esque ranges & stuff.
+        -- TODO: Ew. This would be so much less foul with simple Clojure-esque ranges & stuff.
         {x:0 y:0 chunk:[World:make-chunk]}
         [do
           [while (< x 10) (do
@@ -27,17 +43,53 @@
         ]
       )
 
-      make-items: (chunk0 chunk1 | do
-        [chunk0:add-at [Blocks:Stairs:make chunk1 0 5 false] 1 5 0]
-        [chunk1:add-at [Blocks:Stairs:make chunk0 2 5 true] 1 5 0]
-        [chunk0:add-at [Items:Wand:make] 1 2 0]
-        [chunk0:add-at [Items:Key:make 123] 1 1 0]
-        [chunk0:add-at [Items:Key:make 456] 2 1 0]
-        [chunk0:add-at [Items:Brazier:make] 4 4 0]
-        [chunk0:add-at [Items:Crate:make] 5 5 0]
-        [chunk0:add-at [Items:Chest:make] 6 3 0]
-        [chunk0:add-at [Items:Torch:make] 3 3 0]
+      key-down: (key | switch @:input-state
+        :use     (@:-key-down-use key)
+        :open    (@:-key-down-open key)
+        :default (@:-key-down-def key)
       )
+
+      -key-down-use: (key | do
+        [switch key
+          Key:UP    (@:use-selected  0 -1)
+          Key:DOWN  (@:use-selected  0  1)
+          Key:LEFT  (@:use-selected -1  0)
+          Key:RIGHT (@:use-selected  1  0)
+        ]
+        [-> @ {input-state: :default}]
+      )
+
+      -key-down-open: (key | do
+        [switch key 
+          Key:UP    (@:open  0 -1)
+          Key:DOWN  (@:open  0  1)
+          Key:LEFT  (@:open -1  0)
+          Key:RIGHT (@:open  1  0)
+        ]
+        [-> @ {input-state: :default}]
+      )
+
+      -key-down-def: (key | switch key
+        Key:UP    (@:move  0 -1)
+        Key:DOWN  (@:move  0  1)
+        Key:LEFT  (@:move -1  0)
+        Key:RIGHT (@:move  1  0)
+
+        Key:SPACE (@:take)
+        Key:R     (@:put)
+        Key:ENTER (@:enter)
+        Key:Q     (-> @ {input-state: :use})
+        Key:O     (-> @ {input-state: :open})
+
+        Key:F         (@:make-wall Blocks:Bar)
+        Key:G         (@:make-wall Blocks:StoneWall)
+        Key:BACKSPACE (@:nuke-top)
+
+        (key | and [>= key Key:1] [<= key Key:9]) (@:select-inv [- key Key:1])
+        Key:0                                     (@:select-inv 9)
+      )
+
+      move: (dx dy | @:chunk:perform [Actions:move @:player dx dy])
 
       make-wall: (wall |
         {loc:   @:player:loc

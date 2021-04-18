@@ -8,7 +8,6 @@
       [Located:make]
       [Rendered:make Chest:-img-closed]
       [{height:0.25} Solid:make]
-      [Usable:make (user obj tgt | obj:programmed:run user tgt)]
       {chest: {^: impl open: false}}
     ])
 

@@ -13,26 +13,20 @@ Principles:
 
 
 TODO:
-- Some kind of keyword-like "full quote" (that self-evals, like Clojure keywords)
-  E.g., {foo: \[+ 1 2]] => full quoted list. 
-        foo             => \[+ 1 2]
-        [foo]           => \[+ 1 2]
-        /foo            =>  [+ 1 2]
-        [/foo]          =>  3
+- Actually try and create macros with (\ / :) -- maybe remove or simplify these?
+  Will this require dynamic dict keys to make it work?
+  Consider func [dict k1 v1 k2 v2 ...] => {k1:v1 k2:v2} to simplify this
 - Try/catch? Pattern-match error handling?
 - Affordance to resolve resolution ambiguity with parent/child envs.
 - Splats...
 - single-quote symbols
-- Resolve def/set ambiguity. nil =?= missing?
+- Resolve def/set ambiguity. nil should not mean 'missing'
 - Something about accessor functions? [ent :value] vs [[ent :value]]
-  Also consider something like [obj:set :foo 42] or [obj:set-foo 42] or [obj:set {foo = 42}]
-- Mixed env + positional args
-- Explore macros, quasi-quoting
-  Making this work will require dynamic dict keys
-  Should change format to { :key = ... } to rationalize this
+  Also consider something like [obj:-> {foo:42}]
 - Backquote string literals?
 - Read caller? (?= native impl uses this right now)
 - Read block name, params, env, expr?
+- == ref equality?
 ]-
 
 -[ Primitive values ]-
@@ -63,6 +57,13 @@ TODO:
   [-> (env) {sym: expr ...}]  -- set :sym in env (if defined)
   [? (env):sym]                -- true if :sym is defined in env
 
+-[ Quoting ]-
+  [=> {foo: \[+ 1 2]}] -- full quoted list. 
+  foo                  -- \[+ 1 2]
+  [foo]                -- \[+ 1 2]
+  /foo                 --  [+ 1 2]
+  [/foo]               --  3
+
 -[ Blocks ]-
   (x y | + x y)           -- block with two params
   (x | + x 1)             -- block with one param
@@ -71,11 +72,11 @@ TODO:
   (x y | {env} | + x y)   -- (TODO) block with two params, with an explicit environment
 
 -[ Block definition ]-
-[def {add: (a b | + a b)}]
-[def {+: (x y | native)}]
+[=> {add: (a b | + a b)}]
+[=> {+: (x y | native)}]
 
 -[ Rest params ]-
-[def :block (a b ...rest | do
+[=> :block (a b ...rest | do
   [log a] [log b] [log rest]
 )]
 [block 1 2 3 4 5]                    -- logs 1 / 2 / [3 4 5]
@@ -105,9 +106,9 @@ TODO:
 ]-
 
 -[ Closure ]-
-[def :greatest ([list]
+[=> :greatest ([list]
   [do
-    [def :max 0]
+    [=> {max: 0}]
     [for-each list ([val]
       [if [> max val] (-> :max val)]
     )]
@@ -115,11 +116,6 @@ TODO:
 )]
 
 -[ Dict with parent ]-
-[def {parent: {
-  foo: 42
-}}]
-[def {child: {
-  ^: parent
-  bar: 54
-}}]
+[=> {parent: { foo: 42 }}]
+[=> {child: { ^:parent bar:54 }}]
 [+ child:foo child:bar]
