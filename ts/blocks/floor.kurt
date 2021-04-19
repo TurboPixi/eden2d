@@ -1,11 +1,11 @@
 [def {
   WoodFloor: {
-    -img: [Rendered:image "blocks/floor-wood.png" {w:16 h:24 ay:16}]
+    -img: [Rendered:image "blocks/floor-wood.png" {w:16 h:24 ay:8}]
 
     make: (Entity:make [list
       [Located:make]
       [Rendered:make -img]
-      [Solid:make]
+      [{height:0.5} Solid:make]
     ])
   }
 }]

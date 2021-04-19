@@ -81,8 +81,9 @@
         Key:Q     (-> @ {input-state: :use})
         Key:O     (-> @ {input-state: :open})
 
-        Key:F         (@:make-wall Blocks:Bar)
+        Key:F         (@:make-floor)
         Key:G         (@:make-wall Blocks:StoneWall)
+        Key:H         (@:make-wall Blocks:Bar)
         Key:BACKSPACE (@:nuke-top)
 
         (key | and [>= key Key:1] [<= key Key:9]) (@:select-inv [- key Key:1])
@@ -96,13 +97,19 @@
          wall:  [wall:make]
          under: [@:player:top-with :solid]}
         [do
-          [@:chunk:add-at wall loc:x loc:y [if ?:under (under:top) 0]]
+          [@:chunk:add-at wall loc:x loc:y [if [!= nil under] (under:top) 0]]
 
           -- TODO: It's a little gross having to manually update all the adjacent walls.
           -- Find a way to generalize this so it's automatic.
           -- TODO: Maybe just use the update code?
           [for-each [wall:near-with :wall] (adj | adj:wall:update adj)]
         ]
+      )
+
+      make-floor: (
+        {loc:   @:player:loc
+         under: [@:player:top-with :solid]}
+        [@:chunk:add-at [Blocks:WoodFloor:make] loc:x loc:y [if [!= nil under] (under:top) -1]]
       )
 
       nuke-top: (?= [@:player:top-with :solid] (<-:remove))
