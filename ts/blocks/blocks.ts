@@ -1,6 +1,7 @@
 import { _ns } from "../script/dict";
 
 import floor from "./floor.kurt";
+import ground from "./ground.kurt";
 import wall from "./wall.kurt";
 import stairs from "./stairs.kurt";
 import door from "./door.kurt";
@@ -16,6 +17,6 @@ export function nsBlocks() {
       Solid:      Comps:Solid
       Transports: Comps:Transports
     }]`,
-    floor, wall, stairs, door
+    floor, ground, wall, stairs, door
   ]);
 }

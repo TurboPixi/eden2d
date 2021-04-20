@@ -81,9 +81,10 @@
         Key:Q     (-> @ {input-state: :use})
         Key:O     (-> @ {input-state: :open})
 
-        Key:F         (@:make-floor)
-        Key:G         (@:make-wall Blocks:StoneWall)
-        Key:H         (@:make-wall Blocks:Bar)
+        Key:F         (@:make-floor Blocks:Dirt)
+        Key:G         (@:make-floor Blocks:Grass)
+        Key:H         (@:make-wall Blocks:StoneWall)
+        Key:J         (@:make-wall Blocks:Bar)
         Key:BACKSPACE (@:nuke-top)
 
         (key | and [>= key Key:1] [<= key Key:9]) (@:select-inv [- key Key:1])
@@ -106,10 +107,14 @@
         ]
       )
 
-      make-floor: (
+      make-floor: (type |
         {loc:   @:player:loc
+         floor:  [type:make]
          under: [@:player:top-with :solid]}
-        [@:chunk:add-at [Blocks:WoodFloor:make] loc:x loc:y [if [!= nil under] (under:top) -1]]
+        [do
+          [@:chunk:add-at floor loc:x loc:y [if [!= nil under] (under:top) -1]]
+          [for-each [floor:near-with :grass] (adj | adj:grass:update adj)]
+        ]
       )
 
       nuke-top: (?= [@:player:top-with :solid] (<-:remove))

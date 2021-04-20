@@ -30,7 +30,7 @@
       [Located:make]
       [{height} Solid:make]
       [Rendered:make [imgs 0]]
-      {wall: {^:-impl wall:true imgs}}
+      {wall: {^:-impl imgs}}
     ])
 
     -impl: {
@@ -58,7 +58,7 @@
       }
     )]
 
-    make: (Wall:make 2 StoneWall:-imgs)
+    make: (Wall:make 2 -imgs)
   }
 
   Bar: {
@@ -70,6 +70,6 @@
       }
     )]
 
-    make: (Wall:make 1 Bar:-imgs)
+    make: (Wall:make 1 -imgs)
   }
 }]

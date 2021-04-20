@@ -1,0 +1,70 @@
+[=> {
+  Grass: {
+    -adj: [list
+      {dx:-1 dy: 0 bit:8}
+      {dx: 1 dy: 0 bit:4}
+      {dx: 0 dy:-1 bit:2}
+      {dx: 0 dy: 1 bit:1}
+    ]
+
+    -tiles: [list
+      \[1 2]  -- 0000
+      \[1 3]  -- 0001
+      \[1 1]  -- 0010
+      \[0 0]  -- 0011
+      \[2 2]  -- 0100
+      \[2 3]  -- 0101
+      \[2 1]  -- 0110
+      \[0 0]  -- 0111
+      \[0 2]  -- 1000
+      \[0 3]  -- 1001
+      \[0 1]  -- 1010
+      \[0 0]  -- 1011
+      \[0 0]  -- 1100
+      \[0 0]  -- 1101
+      \[0 0]  -- 1110
+      \[0 0]  -- 1111
+    ]
+
+    -imgs: [map -tiles (tile |
+      Rendered:image "blocks/grass.png" {
+        x: [* [/tile 0] 16]
+        y: [* [/tile 1] 16]
+        w:16 h:16
+      }
+    )]
+
+    make: (Entity:make [list
+      [Located:make]
+      [Rendered:make -imgs:0]
+      [{height:0} Solid:make]
+      {grass: {^: -impl}}
+    ])
+
+    -impl: {
+      update: (ent | -> ent:rendered {image:
+        [-imgs [
+          apply + [
+            map -adj (entry | {
+                x: [+ ent:loc:x entry:dx]
+                y: [+ ent:loc:y entry:dy]
+              }
+              [if [!= nil [ent:chunk:top-with x y :grass]] entry:bit 0]
+            )
+          ]
+        ]]
+      })
+    }
+  }
+
+  Dirt: {
+    -dirt-img: [Rendered:image "blocks/dirt.png" {x:0 y:0 w:16 h:32 ay:16}]
+
+    make: (Entity:make [list
+      [Located:make]
+      [Rendered:make -dirt-img]
+      [Solid:make]
+      {dirt: {}}
+    ])
+  }
+}]
