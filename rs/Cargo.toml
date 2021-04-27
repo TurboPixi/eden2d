@@ -1,0 +1,9 @@
+[package]
+name = "eden2d"
+version = "0.1.0"
+authors = ["Joel Webber <jgw@pobox.com>"]
+edition = "2018"
+
+[dependencies]
+pest = "2.0"
+pest_derive = "2.0"
